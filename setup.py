@@ -13,11 +13,17 @@ setup(
     license = "MIT",
     keywords = "linux system administration",
     url = "http://github.com/kojiwell/trops",
-    packages=['trops', 'tests'],
-    long_description=read('README'),
+    packages=['trops'],
+    long_description=read('README.md'),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
         "License :: MIT License",
     ],
+    entry_points={
+        'console_scripts': ['trops=trops.trops:main',
+                             'trgit=trops.trgit:main',
+                             'tredit=trops.tredit:main'],
+    },
+
 )
