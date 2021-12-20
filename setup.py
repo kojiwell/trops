@@ -22,7 +22,8 @@ setup(
     ],
     entry_points={
         'console_scripts': ['trops=trops.trops:main',
-                             'trgit=trops.trgit:main',
+                             'trgit=trops.trops:trgit',
+                             'trlog=trops.trlog:main',
                              'tredit=trops.tredit:main'],
     },
 
