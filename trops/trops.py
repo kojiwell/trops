@@ -35,10 +35,28 @@ class Trops:
         cmd = cmd + sys.argv[1:]
         subprocess.call(cmd)
 
+    def tredit(self):
+        cmd = ['vim']
+        cmd = cmd + sys.argv[1:]
+
+        subprocess.call(cmd)
+        for f in sys.argv[1:]:
+            if os.path.isfile(f):
+                cmd = ['trgit', 'add', f]
+                subprocess.call(cmd)
+                cmd = ['trgit', 'commit', '-m', 'Update ' + f, f]
+                subprocess.call(cmd)
+
+
 def trgit():
 
     tr = Trops()
     tr.trgit()
+
+def tredit():
+
+    tr = Trops()
+    tr.tredit()
 
 def main():
 
