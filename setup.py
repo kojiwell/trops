@@ -24,7 +24,7 @@ setup(
         'console_scripts': ['trops=trops.trops:main',
                              'trgit=trops.trops:trgit',
                              'trlog=trops.trlog:main',
-                             'tredit=trops.tredit:main'],
+                             'tredit=trops.tredit:tredit'],
     },
 
 )
