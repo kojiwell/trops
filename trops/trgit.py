@@ -4,9 +4,20 @@ import subprocess
 import configparser
 import distutils.util
 
+def check():
+    
+    if 'TROPS_DIR' not in os.environ:
+        messages = ['TROPS_DIR is not set',
+                    '',
+                    ' > source <project>/trops/tropsrc',
+                    '']
+        print('\n'.join(messages))
+        exit(1)
+
 def main():
+    check()
     config = configparser.ConfigParser()
-    conf_file = '$HOME/.config/trops/trops.cfg'
+    conf_file = '$TROPS_DIR/trops.cfg'
     config.read(os.path.expandvars(conf_file))
 
     sudo = distutils.util.strtobool(config['defaults']['sudo'])
