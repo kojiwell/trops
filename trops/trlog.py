@@ -5,7 +5,10 @@ from datetime import datetime
 
 def history():
     #os.environ['HISTTIMEFORMAT'] = "%Y-%d-%m_%H:%M  "
-    filename = os.path.expandvars("$HOME/.bash_history")
+    if 'HISTFILE' in os.environ:
+        filename = os.path.expandvars("$HISTFILE")
+    else:
+        filename = os.path.expandvars("$HOME/.bash_history")
     with open(filename) as f:
         line = f.readline()
         aligned_line = []
