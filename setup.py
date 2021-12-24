@@ -21,8 +21,6 @@ setup(
         "License :: MIT License",
     ],
     entry_points={
-        'console_scripts': ['trops=trops.trops:main',
-                             'trlog=trops.trlog:main'],
+        'console_scripts': ['trops=trops.trops:main'],
     },
-
 )
