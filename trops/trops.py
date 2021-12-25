@@ -81,7 +81,7 @@ class Trops:
             print(dedent(message))
             exit(1)
 
-    def git(self, args, unknown):
+    def git(self, args, other_args):
 
         self._check()
         sudo = distutils.util.strtobool(self.config['defaults']['sudo'])
@@ -91,7 +91,7 @@ class Trops:
         cmd = ['git', '--git-dir=' + git_dir, '--work-tree=' + work_tree]
         if sudo:
             cmd = ['sudo'] + cmd
-        cmd = cmd + unknown
+        cmd = cmd + other_args
         subprocess.call(cmd)
 
     def edit(self, args, edited_files):
@@ -140,7 +140,7 @@ class Trops:
         output = subprocess.check_output(cmd)
         return output.decode("utf-8").splitlines()
 
-    def log(self, args, unknown):
+    def log(self, args, other_args):
         output = self._history() + self._gitlog()
         output.sort()
         verbose = False
@@ -167,9 +167,9 @@ class Trops:
         parser_log = subparsers.add_parser('log', help='see `log -h`')
         parser_log.set_defaults(handler=self.log)
 
-        args, unknown = parser.parse_known_args()
+        args, other_args = parser.parse_known_args()
         if hasattr(args, 'handler'):
-            args.handler(args, unknown)
+            args.handler(args, other_args)
         else:
             parser.print_help()
 
