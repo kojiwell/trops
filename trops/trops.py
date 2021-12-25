@@ -15,6 +15,7 @@ class Trops:
         self.config = configparser.ConfigParser()
         self.conf_file = '$TROPS_DIR/trops.cfg'
         self.config.read(os.path.expandvars(self.conf_file))
+        self.sudo = distutils.util.strtobool(self.config['defaults']['sudo'])
 
     def initialize(self, args, unkown):
 
@@ -84,23 +85,24 @@ class Trops:
     def git(self, args, other_args):
 
         self._check()
-        sudo = distutils.util.strtobool(self.config['defaults']['sudo'])
         git_dir = os.path.expandvars(self.config['defaults']['git_dir'])
         work_tree = os.path.expandvars(self.config['defaults']['work_tree'])
 
         cmd = ['git', '--git-dir=' + git_dir, '--work-tree=' + work_tree]
-        if sudo:
+        if self.sudo or args.sudo:
             cmd = ['sudo'] + cmd
         cmd = cmd + other_args
         subprocess.call(cmd)
 
-    def edit(self, args, edited_files):
+    def edit(self, args, other_args):
 
         cmd = [args.editor]
-        cmd = cmd + edited_files
+        if self.sudo or args.sudo:
+            cmd = ['sudo'] + cmd
+        cmd = cmd + other_args
 
         subprocess.call(cmd)
-        for f in edited_files:
+        for f in other_args:
             if os.path.isfile(f):
                 git_vars = ['add', f]
                 self.git(args, git_vars)
@@ -161,8 +163,12 @@ class Trops:
         parser_edit = subparsers.add_parser('edit', help='see `edit -h`')
         parser_edit.add_argument(
             "-e", "--editor", default="vim", help="editor")
+        parser_edit.add_argument(
+            '-s', '--sudo', help="Use sudo", action='store_true')
         parser_edit.set_defaults(handler=self.edit)
         parser_git = subparsers.add_parser('git', help='see `git -h`')
+        parser_git.add_argument(
+            '-s', '--sudo', help="Use sudo", action='store_true')
         parser_git.set_defaults(handler=self.git)
         parser_log = subparsers.add_parser('log', help='see `log -h`')
         parser_log.set_defaults(handler=self.log)
