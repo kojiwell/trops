@@ -99,7 +99,7 @@ class Trops:
         parser_edit.set_defaults(handler=self.edit)
         parser_git = subparsers.add_parser('git', help='see `git -h`')
         parser_git.set_defaults(handler=self.git)
-        parser_log = subparsers.add_parser('log', help='see `git -h`')
+        parser_log = subparsers.add_parser('log', help='see `log -h`')
         parser_log.set_defaults(handler=self.log)
 
         args, unknown = parser.parse_known_args()
