@@ -4,7 +4,9 @@ import subprocess
 import argparse
 import configparser
 import distutils.util
+from textwrap import dedent
 from datetime import datetime
+
 
 class Trops:
 
@@ -14,16 +16,70 @@ class Trops:
         self.conf_file = '$TROPS_DIR/trops.cfg'
         self.config.read(os.path.expandvars(self.conf_file))
 
-    def _check(self):
-    
-        if 'TROPS_DIR' not in os.environ:
-            messages = ['TROPS_DIR is not set',
-                        '',
-                        ' > source <project>/trops/tropsrc',
-                        '']
-            print('\n'.join(messages))
+    def initialize(self, args, unkown):
+
+        if not os.path.isdir(args.dir):
+            print(f"{ args.dir } doe not exist")
             exit(1)
 
+        trops_dir = args.dir + '/trops'
+        trops_rcfile = trops_dir + '/tropsrc'
+        trops_conf = trops_dir + '/trops.cfg'
+        trops_git_dir = trops_dir + '/trops.git'
+
+        if not os.path.isdir(trops_dir):
+            os.mkdir(trops_dir)
+
+        if not os.path.isfile(trops_rcfile):
+            with open(trops_rcfile, mode='w') as f:
+                default_rcfile = """\
+                    export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
+                    
+                    shopt -s histappend
+                    PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
+                    
+                    alias tredit="trops edit"
+                    alias trvim="trops edit --editor=vim"
+                    alias trgit="trops git"
+                    alias trlog="trops log"
+                    """
+                f.write(dedent(default_rcfile))
+        if not os.path.isfile(trops_conf):
+            with open(trops_conf, mode='w') as f:
+                default_conf = """\
+                    [defaults]
+                    git_dir = $TROPS_DIR/trops.git
+                    sudo = False
+                    work_tree = /
+                    """
+                f.write(dedent(default_conf))
+        if not os.path.isdir(trops_git_dir):
+            cmd = ['git', 'init', '--bare', trops_git_dir]
+            subprocess.call(cmd)
+
+        with open(trops_git_dir + '/config', mode='r') as f:
+            if 'showUntrackedFiles = no' not in f.read():
+                cmd = ['git', '--git-dir=' + trops_git_dir, 'config',
+                       '--local', 'status.showUntrackedFiles', 'no']
+                subprocess.call(cmd)
+
+        cmd = ['git', '--git-dir=' + trops_git_dir, 'branch', '--show-current']
+        branch_name = subprocess.check_output(cmd).decode("utf-8")
+        if 'trops' not in branch_name:
+            cmd = ['git', '--git-dir=' + trops_git_dir, '--work-tree=/',
+                   'checkout', '-b', 'trops']
+            subprocess.call(cmd)
+
+    def _check(self):
+
+        if 'TROPS_DIR' not in os.environ:
+            message = """\
+                TROPS_DIR is not set
+
+                    > source <project>/trops/tropsrc
+                """
+            print(dedent(message))
+            exit(1)
 
     def git(self, args, unknown):
 
@@ -32,8 +88,9 @@ class Trops:
         git_dir = os.path.expandvars(self.config['defaults']['git_dir'])
         work_tree = os.path.expandvars(self.config['defaults']['work_tree'])
 
-        cmd = ['git', '--git-dir=' + git_dir, '--work-tree=' + work_tree ]
-        if sudo: cmd = ['sudo'] + cmd
+        cmd = ['git', '--git-dir=' + git_dir, '--work-tree=' + work_tree]
+        if sudo:
+            cmd = ['sudo'] + cmd
         cmd = cmd + unknown
         subprocess.call(cmd)
 
@@ -66,8 +123,10 @@ class Trops:
                 if items:
                     if items[0][0] == '#' and len(items[0]) == 11:
                         if timestamp and cmd:
-                            aligned_line.append("{}  {}".format(timestamp, ' '.join(cmd)))
-                        timestamp = datetime.fromtimestamp(int(items[0][1:])).strftime("%Y-%m-%d_%H:%M:%S")
+                            aligned_line.append(
+                                "{}  {}".format(timestamp, ' '.join(cmd)))
+                        timestamp = datetime.fromtimestamp(
+                            int(items[0][1:])).strftime("%Y-%m-%d_%H:%M:%S")
                         cmd = []
                     else:
                         cmd += items
@@ -75,11 +134,12 @@ class Trops:
         return aligned_line
 
     def _gitlog(self):
- 
-        cmd = ['trops', 'git', 'log', '--oneline', '--pretty=format:%cd  trgit show %h #%d %s <%an>', '--date=format:%Y-%m-%d_%H:%M:%S']
+
+        cmd = ['trops', 'git', 'log', '--oneline',
+               '--pretty=format:%cd  trgit show %h #%d %s <%an>', '--date=format:%Y-%m-%d_%H:%M:%S']
         output = subprocess.check_output(cmd)
         return output.decode("utf-8").splitlines()
-    
+
     def log(self, args, unknown):
         output = self._history() + self._gitlog()
         output.sort()
@@ -92,10 +152,15 @@ class Trops:
 
     def main(self):
 
-        parser = argparse.ArgumentParser(description='Trops - Tracking Operations')
+        parser = argparse.ArgumentParser(
+            description='Trops - Tracking Operations')
         subparsers = parser.add_subparsers()
+        parser_init = subparsers.add_parser('init', help='see `init -h`')
+        parser_init.set_defaults(handler=self.initialize)
+        parser_init.add_argument("dir", help="Initialize Trops")
         parser_edit = subparsers.add_parser('edit', help='see `edit -h`')
-        parser_edit.add_argument("-e", "--editor", default="vim", help="editor")
+        parser_edit.add_argument(
+            "-e", "--editor", default="vim", help="editor")
         parser_edit.set_defaults(handler=self.edit)
         parser_git = subparsers.add_parser('git', help='see `git -h`')
         parser_git.set_defaults(handler=self.git)
@@ -113,6 +178,7 @@ def main():
 
     tr = Trops()
     tr.main()
+
 
 if __name__ == "__main__":
     main()
