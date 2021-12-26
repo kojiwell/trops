@@ -143,6 +143,7 @@ class Trops:
         return output.decode("utf-8").splitlines()
 
     def log(self, args, other_args):
+
         output = self._history() + self._gitlog()
         output.sort()
         verbose = False
@@ -152,14 +153,22 @@ class Trops:
                 cmd = l.split()[1:4]
                 subprocess.call(cmd)
 
+    def ll(self, args, other_args):
+
+        dirs = [args.dir] + other_args
+        for dir in dirs:
+            if os.path.isdir(dir):
+                os.chdir(dir)
+                self.git(args, ['ls-files'])
+
     def main(self):
 
         parser = argparse.ArgumentParser(
             description='Trops - Tracking Operations')
         subparsers = parser.add_subparsers()
-        parser_init = subparsers.add_parser('init', help='see `init -h`')
+        parser_init = subparsers.add_parser('init', help='Initialize Trops')
         parser_init.set_defaults(handler=self.initialize)
-        parser_init.add_argument("dir", help="Initialize Trops")
+        parser_init.add_argument('dir', help="Directory path")
         parser_edit = subparsers.add_parser('edit', help='see `edit -h`')
         parser_edit.add_argument(
             "-e", "--editor", default="vim", help="editor")
@@ -172,6 +181,11 @@ class Trops:
         parser_git.set_defaults(handler=self.git)
         parser_log = subparsers.add_parser('log', help='see `log -h`')
         parser_log.set_defaults(handler=self.log)
+        parser_ll = subparsers.add_parser('ll', help="List files")
+        parser_ll.add_argument('dir', help='dorectory path')
+        parser_ll.add_argument(
+            '-s', '--sudo', help="Use sudo", action='store_true')
+        parser_ll.set_defaults(handler=self.ll)
 
         args, other_args = parser.parse_known_args()
         if hasattr(args, 'handler'):
