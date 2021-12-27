@@ -154,6 +154,9 @@ class Trops:
         return aligned_line
 
     def _gitlog(self):
+        """Get git log with the same date format as bash history
+        and return it as a list
+        """
 
         cmd = ['trops', 'git', 'log', '--oneline',
                '--pretty=format:%cd  trgit show %h #%d %s <%an>', '--date=format:%Y-%m-%d_%H:%M:%S']
@@ -161,9 +164,13 @@ class Trops:
         return output.decode("utf-8").splitlines()
 
     def log(self, args, other_args):
+        """Shows bash history and git log together in a timeline"""
 
         output = self._history() + self._gitlog()
         output.sort()
+
+        # Just testing varbose output, not being used yet.
+        # TODO: Add --verbose option to trops log
         verbose = False
         for l in output:
             print(l)
@@ -172,7 +179,10 @@ class Trops:
                 subprocess.call(cmd)
 
     def ll(self, args, other_args):
+        """Shows file list"""
 
+        # TODO: Show file owner, group, and permission
+        #       like `ls -alF` which is aliased as `ll`
         dirs = [args.dir] + other_args
         for dir in dirs:
             if os.path.isdir(dir):
@@ -180,6 +190,7 @@ class Trops:
                 self.git(args, ['ls-files'])
 
     def main(self):
+        """Get subcommand and arguments and pass them to the hander"""
 
         parser = argparse.ArgumentParser(
             description='Trops - Tracking Operations')
