@@ -16,10 +16,14 @@ class Trops:
         self.config = configparser.ConfigParser()
         self.conf_file = '$TROPS_DIR/trops.cfg'
         self.config.read(os.path.expandvars(self.conf_file))
-        self.sudo = distutils.util.strtobool(self.config['defaults']['sudo'])
         self.git_dir = os.path.expandvars(self.config['defaults']['git_dir'])
         self.work_tree = os.path.expandvars(
             self.config['defaults']['work_tree'])
+        self.sudo = distutils.util.strtobool(self.config['defaults']['sudo'])
+        self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                        '--work-tree=' + self.work_tree]
+        if self.sudo or args.sudo:
+            self.git_cmd = ['sudo'] + self.git_cmd
 
     def initialize(self, args, unkown):
         """Setup trops project"""
@@ -105,19 +109,38 @@ class Trops:
 
         self._check()
 
-        cmd = ['git', '--git-dir=' + self.git_dir,
-               '--work-tree=' + self.work_tree]
-        if self.sudo or args.sudo:
-            cmd = ['sudo'] + cmd
-        cmd = cmd + other_args
+        cmd = self.git_cmd + other_args
         subprocess.call(cmd)
 
     def edit(self, args, other_args):
         """Wrapper of editor"""
 
-        # Add sudo if -s/--sudo is True
+        # Add file to git repo
+        # TODO: Make this work
+        for f in other_args:
+            # Check if the f is file
+            if os.path.isfile(f):
+                pass
+                # Check if the path is in the git repo
+                # git_cmd = ['git', '--git-dir=' + self.git_dir,
+                #           '--work-tree=' + self.work_tree]
+                # if self.sudo or args.sudo:
+                #    git_cmd = ['sudo'] + git_cmd
+                #cmd = git_cmd + ['ls-files', args.path]
+                #output = subprocess.check_output(cmd).decode("utf-8")
+                # if args.path in output:
+                #    git_msg = f"Update { args.path }"
+                # else:
+                #    git_msg = f"Add { args.path }"
+                #cmd = git_cmd + ['add', args.path]
+                # subprocess.call(cmd)
+                #cmd = git_cmd + ['commit', '-m', git_msg, args.path]
+                # subprocess.call(cmd)
+
+                # Add sudo if -s/--sudo is True
+
         cmd = [args.editor]
-        if self.sudo or args.sudo:
+        if args.sudo:
             cmd = ['sudo'] + cmd
         cmd = cmd + other_args
         subprocess.call(cmd)
