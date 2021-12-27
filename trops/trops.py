@@ -9,6 +9,7 @@ from datetime import datetime
 
 
 class Trops:
+    """Trops Class"""
 
     def __init__(self):
 
@@ -18,6 +19,7 @@ class Trops:
         self.sudo = distutils.util.strtobool(self.config['defaults']['sudo'])
 
     def initialize(self, args, unkown):
+        """Setup trops project"""
 
         if not os.path.isdir(args.dir):
             print(f"{ args.dir } doe not exist")
@@ -28,9 +30,11 @@ class Trops:
         trops_conf = trops_dir + '/trops.cfg'
         trops_git_dir = trops_dir + '/trops.git'
 
+        # Create the directory if it doesn't exist
         if not os.path.isdir(trops_dir):
             os.mkdir(trops_dir)
 
+        # Create tropsrc file if it doesn't exist
         if not os.path.isfile(trops_rcfile):
             with open(trops_rcfile, mode='w') as f:
                 default_rcfile = """\
@@ -45,6 +49,8 @@ class Trops:
                     alias trlog="trops log"
                     """
                 f.write(dedent(default_rcfile))
+
+        # Create trops.cfg file if it doesn't exists
         if not os.path.isfile(trops_conf):
             with open(trops_conf, mode='w') as f:
                 default_conf = """\
@@ -54,16 +60,22 @@ class Trops:
                     work_tree = /
                     """
                 f.write(dedent(default_conf))
+
+        # Create trops's bare git directory
         if not os.path.isdir(trops_git_dir):
             cmd = ['git', 'init', '--bare', trops_git_dir]
             subprocess.call(cmd)
 
+        # Set "status.showUntrackedFiles no" locally
         with open(trops_git_dir + '/config', mode='r') as f:
             if 'showUntrackedFiles = no' not in f.read():
                 cmd = ['git', '--git-dir=' + trops_git_dir, 'config',
                        '--local', 'status.showUntrackedFiles', 'no']
                 subprocess.call(cmd)
 
+        # Set branch name as trops
+        # TODO: work-tree should become an option in the CLI. The default value is '/'
+        # TODO: branch name should be come an option, too
         cmd = ['git', '--git-dir=' + trops_git_dir, 'branch', '--show-current']
         branch_name = subprocess.check_output(cmd).decode("utf-8")
         if 'trops' not in branch_name:
@@ -72,6 +84,7 @@ class Trops:
             subprocess.call(cmd)
 
     def _check(self):
+        """Checks TROPS_DIR"""
 
         if 'TROPS_DIR' not in os.environ:
             message = """\
@@ -83,6 +96,7 @@ class Trops:
             exit(1)
 
     def git(self, args, other_args):
+        """Git wrapper command"""
 
         self._check()
         git_dir = os.path.expandvars(self.config['defaults']['git_dir'])
@@ -95,13 +109,16 @@ class Trops:
         subprocess.call(cmd)
 
     def edit(self, args, other_args):
+        """Wrapper of editor"""
 
+        # Add sudo if -s/--sudo is True
         cmd = [args.editor]
         if self.sudo or args.sudo:
             cmd = ['sudo'] + cmd
         cmd = cmd + other_args
-
         subprocess.call(cmd)
+
+        # Add and commmit after editing a file
         for f in other_args:
             if os.path.isfile(f):
                 git_vars = ['add', f]
@@ -110,6 +127,7 @@ class Trops:
                 self.git(args, git_vars)
 
     def _history(self):
+        """Gets the history and return it as a list object"""
 
         if 'HISTFILE' in os.environ:
             filename = os.path.expandvars("$HISTFILE")
