@@ -25,6 +25,8 @@ class Trops:
             print(f"{ args.dir } doe not exist")
             exit(1)
 
+        # TODO: All or some of these variables should be
+        # set in the __init__()
         trops_dir = args.dir + '/trops'
         trops_rcfile = trops_dir + '/tropsrc'
         trops_conf = trops_dir + '/trops.cfg'
@@ -182,12 +184,27 @@ class Trops:
         """Shows file list"""
 
         # TODO: Show file owner, group, and permission
-        #       like `ls -alF` which is aliased as `ll`
+        # like `ls -alF` which is aliased as `ll`
         dirs = [args.dir] + other_args
         for dir in dirs:
             if os.path.isdir(dir):
                 os.chdir(dir)
                 self.git(args, ['ls-files'])
+
+    def container_create(self):
+        """Creates a container with trops directory mounted"""
+        # TODO: New feature
+        pass
+
+    def container_shell(self):
+        """Enther the shell of the container"""
+        # TODO: New feature
+        pass
+
+    def container_destroy(self):
+        """Destroy the container"""
+        # TODO: New feature
+        pass
 
     def main(self):
         """Get subcommand and arguments and pass them to the hander"""
