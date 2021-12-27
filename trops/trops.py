@@ -17,6 +17,9 @@ class Trops:
         self.conf_file = '$TROPS_DIR/trops.cfg'
         self.config.read(os.path.expandvars(self.conf_file))
         self.sudo = distutils.util.strtobool(self.config['defaults']['sudo'])
+        self.git_dir = os.path.expandvars(self.config['defaults']['git_dir'])
+        self.work_tree = os.path.expandvars(
+            self.config['defaults']['work_tree'])
 
     def initialize(self, args, unkown):
         """Setup trops project"""
@@ -101,10 +104,9 @@ class Trops:
         """Git wrapper command"""
 
         self._check()
-        git_dir = os.path.expandvars(self.config['defaults']['git_dir'])
-        work_tree = os.path.expandvars(self.config['defaults']['work_tree'])
 
-        cmd = ['git', '--git-dir=' + git_dir, '--work-tree=' + work_tree]
+        cmd = ['git', '--git-dir=' + self.git_dir,
+               '--work-tree=' + self.work_tree]
         if self.sudo or args.sudo:
             cmd = ['sudo'] + cmd
         cmd = cmd + other_args
@@ -191,6 +193,30 @@ class Trops:
                 os.chdir(dir)
                 self.git(args, ['ls-files'])
 
+    def touch(self, args, other_args):
+        """Add a file or directory in the git repo"""
+
+        # Check if the path exists
+        if not os.path.exists(args.path):
+            print(f"{ args.path } doesn't exists")
+            exit(1)
+
+        # Check if the path is in the git repo
+        git_cmd = ['git', '--git-dir=' + self.git_dir,
+                   '--work-tree=' + self.work_tree]
+        if self.sudo or args.sudo:
+            git_cmd = ['sudo'] + git_cmd
+        cmd = git_cmd + ['ls-files', args.path]
+        output = subprocess.check_output(cmd).decode("utf-8")
+        if args.path in output:
+            git_msg = f"Update { args.path }"
+        else:
+            git_msg = f"Add { args.path }"
+        cmd = git_cmd + ['add', args.path]
+        subprocess.call(cmd)
+        cmd = git_cmd + ['commit', '-m', git_msg, args.path]
+        subprocess.call(cmd)
+
     def container_create(self):
         """Creates a container with trops directory mounted"""
         # TODO: New feature
@@ -236,10 +262,17 @@ class Trops:
         parser_log.set_defaults(handler=self.log)
         # trops ll
         parser_ll = subparsers.add_parser('ll', help="List files")
-        parser_ll.add_argument('dir', help='dorectory path')
+        parser_ll.add_argument('dir', help='directory path')
         parser_ll.add_argument(
             '-s', '--sudo', help="Use sudo", action='store_true')
         parser_ll.set_defaults(handler=self.ll)
+        # trops touch
+        parser_touch = subparsers.add_parser(
+            'touch', help="Add file in git repo")
+        parser_touch.add_argument('path', help='path of file or directory')
+        parser_touch.add_argument(
+            '-s', '--sudo', help="Use sudo", action='store_true')
+        parser_touch.set_defaults(handler=self.touch)
 
         # Pass args and other args to the hander
         args, other_args = parser.parse_known_args()
