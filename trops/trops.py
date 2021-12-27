@@ -75,6 +75,7 @@ class Trops:
             cmd = ['git', 'init', '--bare', trops_git_dir]
             subprocess.call(cmd)
 
+        # TODO: Set user.name and user.email
         # Set "status.showUntrackedFiles no" locally
         with open(trops_git_dir + '/config', mode='r') as f:
             if 'showUntrackedFiles = no' not in f.read():
@@ -82,9 +83,9 @@ class Trops:
                        '--local', 'status.showUntrackedFiles', 'no']
                 subprocess.call(cmd)
 
-        # Set branch name as trops
         # TODO: work-tree should become an option in the CLI. The default value is '/'
         # TODO: branch name should be come an option, too
+        # Set branch name as trops
         cmd = ['git', '--git-dir=' + trops_git_dir, 'branch', '--show-current']
         branch_name = subprocess.check_output(cmd).decode("utf-8")
         if 'trops' not in branch_name:
