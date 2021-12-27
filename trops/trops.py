@@ -75,12 +75,19 @@ class Trops:
             cmd = ['git', 'init', '--bare', trops_git_dir]
             subprocess.call(cmd)
 
-        # TODO: Set user.name and user.email
         # Set "status.showUntrackedFiles no" locally
+        git_cmd = ['git', '--git-dir=' + trops_git_dir, 'config', '--local']
         with open(trops_git_dir + '/config', mode='r') as f:
             if 'showUntrackedFiles = no' not in f.read():
-                cmd = ['git', '--git-dir=' + trops_git_dir, 'config',
-                       '--local', 'status.showUntrackedFiles', 'no']
+                cmd = git_cmd + ['status.showUntrackedFiles', 'no']
+                subprocess.call(cmd)
+            if 'name =' not in f.read():
+                username = os.environ['USER']
+                cmd = git_cmd + ['user.name', username]
+                subprocess.call(cmd)
+            if 'email =' not in f.read():
+                useremail = username + '@' + os.uname().nodename
+                cmd = git_cmd + ['user.email', useremail]
                 subprocess.call(cmd)
 
         # TODO: work-tree should become an option in the CLI. The default value is '/'
