@@ -91,7 +91,7 @@ class Trops:
                 subprocess.call(cmd)
 
         # TODO: work-tree should become an option in the CLI. The default value is '/'
-        # TODO: branch name should be come an option, too
+        # TODO: branch name should become an option, too
         # Set branch name as trops
         cmd = ['git', '--git-dir=' + trops_git_dir, 'branch', '--show-current']
         branch_name = subprocess.check_output(cmd).decode("utf-8")
