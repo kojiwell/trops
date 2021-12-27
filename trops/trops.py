@@ -184,27 +184,36 @@ class Trops:
         parser = argparse.ArgumentParser(
             description='Trops - Tracking Operations')
         subparsers = parser.add_subparsers()
+        # trops init <dir>
         parser_init = subparsers.add_parser('init', help='Initialize Trops')
         parser_init.set_defaults(handler=self.initialize)
         parser_init.add_argument('dir', help="Directory path")
+        # trops edit <file>
+        #       -e/--editor <editor>
+        #       -s/--sudo
         parser_edit = subparsers.add_parser('edit', help='see `edit -h`')
         parser_edit.add_argument(
             "-e", "--editor", default="vim", help="editor")
         parser_edit.add_argument(
             '-s', '--sudo', help="Use sudo", action='store_true')
         parser_edit.set_defaults(handler=self.edit)
+        # trops git <file/dir>
+        #       -s/--sudo
         parser_git = subparsers.add_parser('git', help='see `git -h`')
         parser_git.add_argument(
             '-s', '--sudo', help="Use sudo", action='store_true')
         parser_git.set_defaults(handler=self.git)
+        # trops log
         parser_log = subparsers.add_parser('log', help='see `log -h`')
         parser_log.set_defaults(handler=self.log)
+        # trops ll
         parser_ll = subparsers.add_parser('ll', help="List files")
         parser_ll.add_argument('dir', help='dorectory path')
         parser_ll.add_argument(
             '-s', '--sudo', help="Use sudo", action='store_true')
         parser_ll.set_defaults(handler=self.ll)
 
+        # Pass args and other args to the hander
         args, other_args = parser.parse_known_args()
         if hasattr(args, 'handler'):
             args.handler(args, other_args)
