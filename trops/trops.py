@@ -262,6 +262,15 @@ class Trops:
         cmd = git_cmd + ['commit', '-m', git_msg, args.path]
         subprocess.call(cmd)
 
+    def dnf(self, args, other_args):
+        """
+        dnf wrapper command to keep track of package list, which
+        generates the package list and add to git repo
+        before and after the package installation
+        """
+        # TODO: New feature
+        pass
+
     def container_create(self):
         """Creates a container with trops directory mounted"""
         # TODO: New feature
