@@ -14,19 +14,27 @@ class Trops:
     def __init__(self):
 
         self.config = configparser.ConfigParser()
-        self.conf_file = '$TROPS_DIR/trops.cfg'
-        self.config.read(os.path.expandvars(self.conf_file))
-        self.git_dir = os.path.expandvars(self.config['defaults']['git_dir'])
-        self.work_tree = os.path.expandvars(
-            self.config['defaults']['work_tree'])
-        self.sudo = distutils.util.strtobool(self.config['defaults']['sudo'])
-        self.git_cmd = ['git', '--git-dir=' + self.git_dir,
-                        '--work-tree=' + self.work_tree]
-        if self.sudo or args.sudo:
-            self.git_cmd = ['sudo'] + self.git_cmd
+        self.conf_file = os.path.expandvars('$TROPS_DIR/trops.cfg')
+        if os.path.isfile(self.conf_file):
+            self.config.read(self.conf_file)
+            self.git_dir = os.path.expandvars(
+                self.config['defaults']['git_dir'])
+            self.sudo = distutils.util.strtobool(
+                self.config['defaults']['sudo'])
+            self.work_tree = os.path.expandvars(
+                self.config['defaults']['work_tree'])
+            self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                            '--work-tree=' + self.work_tree]
+            if self.sudo:
+                self.git_cmd = ['sudo'] + self.git_cmd
 
     def initialize(self, args, unkown):
         """Setup trops project"""
+
+        # TODO: Return error when trops init is executed
+        # at an already initialized project directory
+        # TODO: Decide how to handle history by default or
+        # add option about history
 
         if not os.path.isdir(args.dir):
             print(f"{ args.dir } doe not exist")
@@ -48,10 +56,10 @@ class Trops:
             with open(trops_rcfile, mode='w') as f:
                 default_rcfile = """\
                     export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
-                    
+
                     shopt -s histappend
                     PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
-                    
+
                     alias tredit="trops edit"
                     alias trvim="trops edit --editor=vim"
                     alias trgit="trops git"
@@ -138,15 +146,15 @@ class Trops:
                 #           '--work-tree=' + self.work_tree]
                 # if self.sudo or args.sudo:
                 #    git_cmd = ['sudo'] + git_cmd
-                #cmd = git_cmd + ['ls-files', args.path]
-                #output = subprocess.check_output(cmd).decode("utf-8")
+                # cmd = git_cmd + ['ls-files', args.path]
+                # output = subprocess.check_output(cmd).decode("utf-8")
                 # if args.path in output:
                 #    git_msg = f"Update { args.path }"
                 # else:
                 #    git_msg = f"Add { args.path }"
-                #cmd = git_cmd + ['add', args.path]
+                # cmd = git_cmd + ['add', args.path]
                 # subprocess.call(cmd)
-                #cmd = git_cmd + ['commit', '-m', git_msg, args.path]
+                # cmd = git_cmd + ['commit', '-m', git_msg, args.path]
                 # subprocess.call(cmd)
 
                 # Add sudo if -s/--sudo is True
@@ -160,10 +168,10 @@ class Trops:
         # Add and commmit after editing a file
         for f in other_args:
             if os.path.isfile(f):
-                git_vars = ['add', f]
-                self.git(args, git_vars)
-                git_vars = ['commit', '-m', 'Update ' + f, f]
-                self.git(args, git_vars)
+                cmd = self.git_cmd + ['add', f]
+                subprocess.call(cmd)
+                cmd = self.git_cmd + ['commit', '-m', 'Update ' + f, f]
+                subprocess.call(cmd)
 
     def _history(self):
         """Gets the history and return it as a list object"""
@@ -218,15 +226,17 @@ class Trops:
                 subprocess.call(cmd)
 
     def ll(self, args, other_args):
-        """Shows file list"""
+        """Shows the list of git-tracked files"""
 
-        # TODO: Show file owner, group, and permission
-        # like `ls -alF` which is aliased as `ll`
         dirs = [args.dir] + other_args
         for dir in dirs:
             if os.path.isdir(dir):
                 os.chdir(dir)
-                self.git(args, ['ls-files'])
+                cmd = self.git_cmd + ['ls-files']
+                output = subprocess.check_output(cmd)
+                for f in output.decode("utf-8").splitlines():
+                    cmd = ['ls', '-al', f]
+                    subprocess.call(cmd)
 
     def touch(self, args, other_args):
         """Add a file or directory in the git repo"""
@@ -297,7 +307,8 @@ class Trops:
         parser_log.set_defaults(handler=self.log)
         # trops ll
         parser_ll = subparsers.add_parser('ll', help="List files")
-        parser_ll.add_argument('dir', help='directory path')
+        parser_ll.add_argument('dir', help='directory path',
+                               nargs='?', default=os.getcwd())
         parser_ll.add_argument(
             '-s', '--sudo', help="Use sudo", action='store_true')
         parser_ll.set_defaults(handler=self.ll)
