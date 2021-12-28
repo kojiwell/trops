@@ -51,6 +51,11 @@ class Trops:
         if not os.path.isdir(trops_dir):
             os.mkdir(trops_dir)
 
+        # Create TROPS_DIR/history
+        history_dir = trops_dir + '/history'
+        if not os.path.isdir(history_dir):
+            os.mkdir(history_dir)
+
         # Create tropsrc file if it doesn't exist
         if not os.path.isfile(trops_rcfile):
             with open(trops_rcfile, mode='w') as f:
@@ -58,23 +63,26 @@ class Trops:
                     export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
 
                     shopt -s histappend
+                    export HISTCONTROL=ignoreboth:erasedups
+                    #HISTFILE="$TROPS_DIR/history/${USER}@${HOSTNAME}"
                     PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 
                     alias tredit="trops edit"
                     alias trvim="trops edit --editor=vim"
                     alias trgit="trops git"
                     alias trlog="trops log"
+                    alias trtouch="trops touch"
                     """
                 f.write(dedent(default_rcfile))
 
         # Create trops.cfg file if it doesn't exists
         if not os.path.isfile(trops_conf):
             with open(trops_conf, mode='w') as f:
-                default_conf = """\
+                default_conf = f"""\
                     [defaults]
                     git_dir = $TROPS_DIR/trops.git
                     sudo = False
-                    work_tree = /
+                    work_tree = { args.work_tree }
                     """
                 f.write(dedent(default_conf))
 
@@ -206,7 +214,7 @@ class Trops:
         """
 
         cmd = ['trops', 'git', 'log', '--oneline',
-               '--pretty=format:%cd  trgit show %h #%d %s <%an>', '--date=format:%Y-%m-%d_%H:%M:%S']
+               '--pretty=format:%cd  trops git show %h #%d %s <%an>', '--date=format:%Y-%m-%d_%H:%M:%S']
         output = subprocess.check_output(cmd)
         return output.decode("utf-8").splitlines()
 
@@ -294,6 +302,8 @@ class Trops:
         subparsers = parser.add_subparsers()
         # trops init <dir>
         parser_init = subparsers.add_parser('init', help='Initialize Trops')
+        parser_init.add_argument(
+            '-w', '--work-tree', default='/', help='Set work-tree')
         parser_init.set_defaults(handler=self.initialize)
         parser_init.add_argument('dir', help="Directory path")
         # trops edit <file>
