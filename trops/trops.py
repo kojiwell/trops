@@ -75,20 +75,24 @@ class Trops:
             cmd = ['git', 'init', '--bare', trops_git_dir]
             subprocess.call(cmd)
 
-        # Set "status.showUntrackedFiles no" locally
+        # Prepare for updating trops.git/config
         git_cmd = ['git', '--git-dir=' + trops_git_dir, 'config', '--local']
-        with open(trops_git_dir + '/config', mode='r') as f:
-            if 'showUntrackedFiles = no' not in f.read():
-                cmd = git_cmd + ['status.showUntrackedFiles', 'no']
-                subprocess.call(cmd)
-            if 'name =' not in f.read():
-                username = os.environ['USER']
-                cmd = git_cmd + ['user.name', username]
-                subprocess.call(cmd)
-            if 'email =' not in f.read():
-                useremail = username + '@' + os.uname().nodename
-                cmd = git_cmd + ['user.email', useremail]
-                subprocess.call(cmd)
+        git_conf = config = configparser.ConfigParser()
+        git_conf.read(trops_git_dir + '/config')
+        # Set "status.showUntrackedFiles no" locally
+        if not git_conf.has_option('status', 'showUntrackedFiles'):
+            cmd = git_cmd + ['status.showUntrackedFiles', 'no']
+            subprocess.call(cmd)
+        # Set $USER as user.name
+        if not git_conf.has_option('user', 'name'):
+            username = os.environ['USER']
+            cmd = git_cmd + ['user.name', username]
+            subprocess.call(cmd)
+        # Set $USER@$HOSTNAME as user.email
+        if not git_conf.has_option('user', 'email'):
+            useremail = username + '@' + os.uname().nodename
+            cmd = git_cmd + ['user.email', useremail]
+            subprocess.call(cmd)
 
         # TODO: work-tree should become an option in the CLI. The default value is '/'
         # TODO: branch name should become an option, too
