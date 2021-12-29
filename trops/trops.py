@@ -14,17 +14,18 @@ class Trops:
     def __init__(self):
 
         self.config = configparser.ConfigParser()
-        self.conf_file = os.path.expandvars('$TROPS_DIR/trops.cfg')
+        self.trops_dir = os.path.expandvars('$TROPS_DIR')
+        self.conf_file = self.trops_dir + '/trops.cfg'
         if os.path.isfile(self.conf_file):
             self.config.read(self.conf_file)
             self.git_dir = os.path.expandvars(
                 self.config['defaults']['git_dir'])
-            self.sudo = distutils.util.strtobool(
-                self.config['defaults']['sudo'])
             self.work_tree = os.path.expandvars(
                 self.config['defaults']['work_tree'])
             self.git_cmd = ['git', '--git-dir=' + self.git_dir,
                             '--work-tree=' + self.work_tree]
+            self.sudo = distutils.util.strtobool(
+                self.config['defaults']['sudo'])
             if self.sudo:
                 self.git_cmd = ['sudo'] + self.git_cmd
 
@@ -64,7 +65,7 @@ class Trops:
 
                     shopt -s histappend
                     export HISTCONTROL=ignoreboth:erasedups
-                    # HISTFILE="$TROPS_DIR/history/${USER}@${HOSTNAME}"
+                    # export HISTFILE="$TROPS_DIR/history/${USER}@${HOSTNAME}"
                     PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 
                     alias tredit="trops edit"
@@ -275,6 +276,22 @@ class Trops:
         cmd = self.git_cmd + ['commit', '-m', git_msg, args.path]
         subprocess.call(cmd)
 
+    def _update_pkg_list(self, args):
+
+        # Update the pkg_List
+        pkg_list_file = self.trops_dir + '/pkg_list'
+        f = open(pkg_list_file, 'w')
+        cmd = ['apt', 'list', '--installed']
+        if args.sudo:
+            cmd.insert(0, 'sudo')
+        pkg_list = subprocess.check_output(cmd).decode('utf-8')
+        f.write(pkg_list)
+        f.close()
+        # Commit the change if needed
+        cmd = self.git_cmd + ['commit', '-m',
+                              f'Update { pkg_list_file }', pkg_list_file]
+        subprocess.call(cmd)
+
     def apt(self, args, other_args):
         """
         apt wrapper command to keep track of package list, which
@@ -282,7 +299,13 @@ class Trops:
         before and after the package installation
         """
 
-        print(args)
+        self._update_pkg_list(args)
+        # Run apt command
+        cmd = ['apt'] + other_args
+        if args.sudo:
+            cmd.insert(0, 'sudo')
+        subprocess.call(cmd)
+        self._update_pkg_list(args)
 
     def container_create(self):
         """Creates a container with trops directory mounted"""
