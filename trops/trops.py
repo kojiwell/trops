@@ -255,19 +255,16 @@ class Trops:
             exit(1)
 
         # Check if the path is in the git repo
-        git_cmd = ['git', '--git-dir=' + self.git_dir,
-                   '--work-tree=' + self.work_tree]
-        if self.sudo or args.sudo:
-            git_cmd = ['sudo'] + git_cmd
-        cmd = git_cmd + ['ls-files', args.path]
+        cmd = self.git_cmd + ['ls-files', args.path]
         output = subprocess.check_output(cmd).decode("utf-8")
-        if args.path in output:
+        print(output)
+        if output:
             git_msg = f"Update { args.path }"
         else:
             git_msg = f"Add { args.path }"
-        cmd = git_cmd + ['add', args.path]
+        cmd = self.git_cmd + ['add', args.path]
         subprocess.call(cmd)
-        cmd = git_cmd + ['commit', '-m', git_msg, args.path]
+        cmd = self.git_cmd + ['commit', '-m', git_msg, args.path]
         subprocess.call(cmd)
 
     def dnf(self, args, other_args):
