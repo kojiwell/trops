@@ -64,7 +64,7 @@ class Trops:
 
                     shopt -s histappend
                     export HISTCONTROL=ignoreboth:erasedups
-                    #HISTFILE="$TROPS_DIR/history/${USER}@${HOSTNAME}"
+                    # HISTFILE="$TROPS_DIR/history/${USER}@${HOSTNAME}"
                     PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 
                     alias tredit="trops edit"
@@ -253,28 +253,36 @@ class Trops:
         if not os.path.exists(args.path):
             print(f"{ args.path } doesn't exists")
             exit(1)
+        # TODO: Allow touch directory later
+        if not os.path.isfile(args.path):
+            message = f"""\
+                Error: { args.path } is not a file
+                Only file is allowed to be touched"""
+            print(dedent(message))
+            exit(1)
 
         # Check if the path is in the git repo
         cmd = self.git_cmd + ['ls-files', args.path]
         output = subprocess.check_output(cmd).decode("utf-8")
-        print(output)
+        # Set the message based on the output
         if output:
             git_msg = f"Update { args.path }"
         else:
             git_msg = f"Add { args.path }"
+        # Add and commit
         cmd = self.git_cmd + ['add', args.path]
         subprocess.call(cmd)
         cmd = self.git_cmd + ['commit', '-m', git_msg, args.path]
         subprocess.call(cmd)
 
-    def dnf(self, args, other_args):
+    def apt(self, args, other_args):
         """
-        dnf wrapper command to keep track of package list, which
+        apt wrapper command to keep track of package list, which
         generates the package list and add to git repo
         before and after the package installation
         """
-        # TODO: New feature
-        pass
+
+        print(args)
 
     def container_create(self):
         """Creates a container with trops directory mounted"""
@@ -296,6 +304,8 @@ class Trops:
 
         parser = argparse.ArgumentParser(
             description='Trops - Tracking Operations')
+        parser.add_argument('-s', '--sudo', help="Use sudo",
+                            action='store_true')
         subparsers = parser.add_subparsers()
         # trops init <dir>
         parser_init = subparsers.add_parser('init', help='Initialize Trops')
@@ -304,19 +314,12 @@ class Trops:
         parser_init.set_defaults(handler=self.initialize)
         parser_init.add_argument('dir', help="Directory path")
         # trops edit <file>
-        #       -e/--editor <editor>
-        #       -s/--sudo
         parser_edit = subparsers.add_parser('edit', help='see `edit -h`')
         parser_edit.add_argument(
             "-e", "--editor", default="vim", help="editor")
-        parser_edit.add_argument(
-            '-s', '--sudo', help="Use sudo", action='store_true')
         parser_edit.set_defaults(handler=self.edit)
         # trops git <file/dir>
-        #       -s/--sudo
         parser_git = subparsers.add_parser('git', help='see `git -h`')
-        parser_git.add_argument(
-            '-s', '--sudo', help="Use sudo", action='store_true')
         parser_git.set_defaults(handler=self.git)
         # trops log
         parser_log = subparsers.add_parser('log', help='see `log -h`')
@@ -325,16 +328,15 @@ class Trops:
         parser_ll = subparsers.add_parser('ll', help="List files")
         parser_ll.add_argument('dir', help='directory path',
                                nargs='?', default=os.getcwd())
-        parser_ll.add_argument(
-            '-s', '--sudo', help="Use sudo", action='store_true')
         parser_ll.set_defaults(handler=self.ll)
         # trops touch
         parser_touch = subparsers.add_parser(
             'touch', help="Add file in git repo")
         parser_touch.add_argument('path', help='path of file or directory')
-        parser_touch.add_argument(
-            '-s', '--sudo', help="Use sudo", action='store_true')
         parser_touch.set_defaults(handler=self.touch)
+        # trops apt
+        parser_apt = subparsers.add_parser('apt', help='Apt wrapper command')
+        parser_apt.set_defaults(handler=self.apt)
 
         # Pass args and other args to the hander
         args, other_args = parser.parse_known_args()
