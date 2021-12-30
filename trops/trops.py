@@ -24,8 +24,12 @@ class Trops:
             except NoSectionError or NoOptionError:
                 print('git_dir does not exist in your configuration file')
                 exit(1)
-            self.work_tree = os.path.expandvars(
-                self.config['defaults']['work_tree'])
+            try:
+                self.work_tree = os.path.expandvars(
+                    self.config['defaults']['work_tree'])
+            except NoSectionError or NoOptionError:
+                # TODO
+                exit(1)
             self.git_cmd = ['git', '--git-dir=' + self.git_dir,
                             '--work-tree=' + self.work_tree]
             self.sudo = distutils.util.strtobool(
