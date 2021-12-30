@@ -18,8 +18,12 @@ class Trops:
         self.conf_file = self.trops_dir + '/trops.cfg'
         if os.path.isfile(self.conf_file):
             self.config.read(self.conf_file)
-            self.git_dir = os.path.expandvars(
-                self.config['defaults']['git_dir'])
+            try:
+                self.git_dir = os.path.expandvars(
+                    self.config['defaults']['git_dir'])
+            except NoSectionError or NoOptionError:
+                print('git_dir does not exist in your configuration file')
+                exit(1)
             self.work_tree = os.path.expandvars(
                 self.config['defaults']['work_tree'])
             self.git_cmd = ['git', '--git-dir=' + self.git_dir,
