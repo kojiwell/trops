@@ -2,8 +2,8 @@ import os
 import sys
 import subprocess
 import argparse
-import configparser
 import distutils.util
+from configparser import ConfigParser
 from textwrap import dedent
 from datetime import datetime
 
@@ -13,7 +13,7 @@ class Trops:
 
     def __init__(self):
 
-        self.config = configparser.ConfigParser()
+        self.config = ConfigParser()
         self.trops_dir = os.path.expandvars('$TROPS_DIR')
         self.conf_file = self.trops_dir + '/trops.cfg'
         if os.path.isfile(self.conf_file):
@@ -21,19 +21,22 @@ class Trops:
             try:
                 self.git_dir = os.path.expandvars(
                     self.config['defaults']['git_dir'])
-            except NoSectionError or NoOptionError:
+            except KeyError:
                 print('git_dir does not exist in your configuration file')
                 exit(1)
             try:
                 self.work_tree = os.path.expandvars(
                     self.config['defaults']['work_tree'])
             except NoSectionError or NoOptionError:
-                # TODO
+                print('work_tree does not exist in your configuration file')
                 exit(1)
+            try:
+                self.sudo = distutils.util.strtobool(
+                    self.config['defaults']['sudo'])
+            except NoSectionError or NoOptionError:
+                pass
             self.git_cmd = ['git', '--git-dir=' + self.git_dir,
                             '--work-tree=' + self.work_tree]
-            self.sudo = distutils.util.strtobool(
-                self.config['defaults']['sudo'])
             if self.sudo:
                 self.git_cmd = ['sudo'] + self.git_cmd
 
@@ -102,7 +105,7 @@ class Trops:
 
         # Prepare for updating trops.git/config
         git_cmd = ['git', '--git-dir=' + trops_git_dir, 'config', '--local']
-        git_conf = config = configparser.ConfigParser()
+        git_conf = ConfigParser()
         git_conf.read(trops_git_dir + '/config')
         # Set "status.showUntrackedFiles no" locally
         if not git_conf.has_option('status', 'showUntrackedFiles'):
