@@ -87,6 +87,7 @@ class Trops:
                     """
                 f.write(dedent(default_rcfile))
 
+        # TODO: Maybe "sudo = False" should be "sudo_git = False"?
         # Create trops.cfg file if it doesn't exists
         if not os.path.isfile(trops_conf):
             with open(trops_conf, mode='w') as f:
@@ -155,30 +156,21 @@ class Trops:
     def edit(self, args, other_args):
         """Wrapper of editor"""
 
-        # Add file to git repo
-        # TODO: Make this work
-        for f in other_args:
+        for ff in other_args:
             # Check if the f is file
-            if os.path.isfile(f):
-                pass
-                # Check if the path is in the git repo
-                # git_cmd = ['git', '--git-dir=' + self.git_dir,
-                #           '--work-tree=' + self.work_tree]
-                # if self.sudo or args.sudo:
-                #    git_cmd = ['sudo'] + git_cmd
-                # cmd = git_cmd + ['ls-files', args.path]
-                # output = subprocess.check_output(cmd).decode("utf-8")
-                # if args.path in output:
-                #    git_msg = f"Update { args.path }"
-                # else:
-                #    git_msg = f"Add { args.path }"
-                # cmd = git_cmd + ['add', args.path]
-                # subprocess.call(cmd)
-                # cmd = git_cmd + ['commit', '-m', git_msg, args.path]
-                # subprocess.call(cmd)
+            if os.path.isfile(ff):
+                cmd = self.git_cmd + ['ls-files', ff]
+                output = subprocess.check_output(cmd).decode("utf-8")
+                if ff in output:
+                    git_msg = f"Update { ff }"
+                else:
+                    git_msg = f"Add { ff }"
+                cmd = self.git_cmd + ['add', ff]
+                subprocess.call(cmd)
+                cmd = self.git_cmd + ['commit', '-m', git_msg, ff]
+                subprocess.call(cmd)
 
-                # Add sudo if -s/--sudo is True
-
+        # TODO: When `-s` is in other_args, ignore or return error
         cmd = [args.editor]
         if args.sudo:
             cmd = ['sudo'] + cmd
