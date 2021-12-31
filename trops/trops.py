@@ -156,6 +156,10 @@ class Trops:
     def edit(self, args, other_args):
         """Wrapper of editor"""
 
+        if 'TROPS_DIR' not in os.environ:
+            print('TROPS_DIR is not defined')
+            exit(1)
+
         for ff in other_args:
             # Check if the f is file
             if os.path.isfile(ff):
