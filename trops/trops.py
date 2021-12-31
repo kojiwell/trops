@@ -334,8 +334,6 @@ class Trops:
 
         parser = argparse.ArgumentParser(
             description='Trops - Tracking Operations')
-        parser.add_argument('-s', '--sudo', help="Use sudo",
-                            action='store_true')
         subparsers = parser.add_subparsers()
         # trops init <dir>
         parser_init = subparsers.add_parser('init', help='Initialize Trops')
@@ -345,12 +343,16 @@ class Trops:
         parser_init.add_argument('dir', help="Directory path")
         # trops edit <file>
         parser_edit = subparsers.add_parser('edit', help='see `edit -h`')
+        parser_edit.add_argument('-s', '--sudo', help="Use sudo",
+                                 action='store_true')
         parser_edit.add_argument(
             "-e", "--editor", default="vim", help="editor")
         parser_edit.set_defaults(handler=self.edit)
         # trops git <file/dir>
         parser_git = subparsers.add_parser('git', help='see `git -h`')
         parser_git.set_defaults(handler=self.git)
+        parser_git.add_argument('-s', '--sudo', help="Use sudo",
+                                action='store_true')
         # trops log
         parser_log = subparsers.add_parser('log', help='see `log -h`')
         parser_log.set_defaults(handler=self.log)
@@ -366,6 +368,8 @@ class Trops:
         parser_touch.set_defaults(handler=self.touch)
         # trops apt
         parser_apt = subparsers.add_parser('apt', help='Apt wrapper command')
+        parser_apt.add_argument('-s', '--sudo', help="Use sudo",
+                                action='store_true')
         parser_apt.set_defaults(handler=self.apt)
 
         # Pass args and other args to the hander
