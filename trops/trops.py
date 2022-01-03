@@ -3,7 +3,7 @@ import sys
 import subprocess
 import argparse
 import distutils.util
-from configparser import ConfigParser
+from configparser import ConfigParser, NoSectionError, NoOptionError
 from textwrap import dedent
 from datetime import datetime
 
@@ -27,18 +27,21 @@ class Trops:
             try:
                 self.work_tree = os.path.expandvars(
                     self.config['defaults']['work_tree'])
-            except NoSectionError or NoOptionError:
+            except KeyError:
                 print('work_tree does not exist in your configuration file')
                 exit(1)
             try:
+                self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                                '--work-tree=' + self.work_tree]
+            except KeyError:
+                pass
+            try:
                 self.sudo = distutils.util.strtobool(
                     self.config['defaults']['sudo'])
-            except NoSectionError or NoOptionError:
+                if self.sudo:
+                    self.git_cmd = ['sudo'] + self.git_cmd
+            except KeyError:
                 pass
-            self.git_cmd = ['git', '--git-dir=' + self.git_dir,
-                            '--work-tree=' + self.work_tree]
-            if self.sudo:
-                self.git_cmd = ['sudo'] + self.git_cmd
 
     def initialize(self, args, unkown):
         """Setup trops project"""
