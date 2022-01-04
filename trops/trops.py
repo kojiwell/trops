@@ -280,6 +280,9 @@ class Trops:
                         git_msg = f"Add { ii_path }"
                     # Add and commit
                     cmd = self.git_cmd + ['add', ii_path]
+                    # TODO: Switch from subprocess.call to something else
+                    # and capture stdout, stderr, and rc to print a better
+                    # message
                     subprocess.call(cmd)
                     cmd = self.git_cmd + ['commit', '-m', git_msg, ii_path]
                     subprocess.call(cmd)
