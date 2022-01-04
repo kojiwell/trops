@@ -215,7 +215,6 @@ class Trops:
         logging.basicConfig(format='%(asctime)s %(message)s',
                             datefmt='%Y/%m/%d %H:%M:%S',
                             filename=self.trops_dir + '/log/trops.log',
-                            encoding='utf-8',
                             level=logging.DEBUG)
         executed_cmd = other_args
         # Create trops_dir/tmp directory
