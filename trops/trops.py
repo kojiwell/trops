@@ -267,6 +267,9 @@ class Trops:
                 else:
                     ii_path = ii
                 if os.path.isfile(ii_path):
+                    # TODO: Check if the ii_path is part of another git repo
+                    # and ignore if it is.
+
                     # Check if the path is in the git repo
                     cmd = self.git_cmd + ['ls-files', ii_path]
                     output = subprocess.check_output(cmd).decode("utf-8")
