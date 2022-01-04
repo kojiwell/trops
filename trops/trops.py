@@ -371,13 +371,6 @@ class Trops:
         parser_init.add_argument(
             '-w', '--work-tree', default='/', help='Set work-tree')
         parser_init.set_defaults(handler=self.initialize)
-        # trops edit <file>
-        parser_edit = subparsers.add_parser('edit', help='see `edit -h`')
-        parser_edit.add_argument('-s', '--sudo', help="Use sudo",
-                                 action='store_true')
-        parser_edit.add_argument(
-            "-e", "--editor", default="vim", help="editor")
-        parser_edit.set_defaults(handler=self.edit)
         # trops git <file/dir>
         parser_git = subparsers.add_parser('git', help='see `git -h`')
         parser_git.add_argument('-s', '--sudo', help="Use sudo",
