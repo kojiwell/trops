@@ -212,6 +212,7 @@ class Trops:
         NOTE: You need to set PROMPT_COMMAND in bash as shown below:
         PROMPT_COMMAND='trops log $(history 1)'"""
 
+        # TODO: This is a very primitive logging. Improve logging
         logging.basicConfig(format='%(asctime)s %(message)s',
                             datefmt='%Y/%m/%d %H:%M:%S',
                             filename=self.trops_dir + '/log/trops.log',
