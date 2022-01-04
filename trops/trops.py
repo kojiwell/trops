@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import argparse
+import logging
 import distutils.util
 from configparser import ConfigParser, NoSectionError, NoOptionError
 from textwrap import dedent
@@ -14,7 +15,10 @@ class Trops:
     def __init__(self):
 
         self.config = ConfigParser()
-        self.trops_dir = os.path.expandvars('$TROPS_DIR')
+        if 'TROPS_DIR' in os.environ:
+            self.trops_dir = os.path.expandvars('$TROPS_DIR/trops')
+        else:
+            self.trops_dir = os.path.expandvars('$HOME/.trops')
         self.conf_file = self.trops_dir + '/trops.cfg'
         if os.path.isfile(self.conf_file):
             self.config.read(self.conf_file)
@@ -51,16 +55,17 @@ class Trops:
         # TODO: Decide how to handle history by default or
         # add option about history
 
-        if not os.path.isdir(args.dir):
-            print(f"{ args.dir } doe not exist")
-            exit(1)
+        # set trops_dir
+        if args.trops_dir:
+            trops_dir = os.path.expandvars(args.trops_dir) + '/trops'
+        elif 'TROPS_DIR' in os.environ:
+            trops_dir = os.path.expandvars('$TROPS_DIR') + '/trops'
+        else:
+            trops_dir = os.path.expandvars('$HOME') + '/.trops'
 
-        # TODO: All or some of these variables should be
-        # set in the __init__()
-        trops_dir = args.dir + '/trops'
         trops_rcfile = trops_dir + '/tropsrc'
         trops_conf = trops_dir + '/trops.cfg'
-        trops_git_dir = trops_dir + '/trops.git'
+        trops_git_dir = trops_dir + '/default.git'
 
         # Create the directory if it doesn't exist
         if not os.path.isdir(trops_dir):
@@ -79,13 +84,9 @@ class Trops:
 
                     shopt -s histappend
                     export HISTCONTROL=ignoreboth:erasedups
-                    # export HISTFILE="$TROPS_DIR/history/${USER}@${HOSTNAME}"
-                    PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
+                    PROMPT_COMMAND='trops log $(history 1);$PROMPT_COMMAND'
 
-                    alias tredit="trops edit"
-                    alias trvim="trops edit --editor=vim"
                     alias trgit="trops git"
-                    alias trlog="trops log"
                     alias trtouch="trops touch"
                     """
                 f.write(dedent(default_rcfile))
@@ -96,7 +97,7 @@ class Trops:
             with open(trops_conf, mode='w') as f:
                 default_conf = f"""\
                     [defaults]
-                    git_dir = $TROPS_DIR/trops.git
+                    git_dir = { trops_dir }/trops.git
                     sudo = False
                     work_tree = { args.work_tree }
                     """
@@ -126,7 +127,6 @@ class Trops:
             cmd = git_cmd + ['user.email', useremail]
             subprocess.call(cmd)
 
-        # TODO: work-tree should become an option in the CLI. The default value is '/'
         # TODO: branch name should become an option, too
         # Set branch name as trops
         cmd = ['git', '--git-dir=' + trops_git_dir, 'branch', '--show-current']
@@ -151,17 +151,11 @@ class Trops:
     def git(self, args, other_args):
         """Git wrapper command"""
 
-        self._check()
-
         cmd = self.git_cmd + other_args
         subprocess.call(cmd)
 
     def edit(self, args, other_args):
         """Wrapper of editor"""
-
-        if 'TROPS_DIR' not in os.environ:
-            print('TROPS_DIR is not defined')
-            exit(1)
 
         for ff in other_args:
             # Check if the f is file
@@ -229,7 +223,7 @@ class Trops:
         output = subprocess.check_output(cmd)
         return output.decode("utf-8").splitlines()
 
-    def log(self, args, other_args):
+    def show_log(self, args, other_args):
         """Shows bash history and git log together in a timeline"""
 
         output = self._history() + self._gitlog()
@@ -243,6 +237,69 @@ class Trops:
             if 'trops git show' in l and verbose:
                 cmd = l.split()[1:4]
                 subprocess.call(cmd)
+
+    def log(self, args, other_args):
+        """\
+        log executed command
+        NOTE: You need to set PROMPT_COMMAND in bash as shown below:
+        PROMPT_COMMAND='trops log $(history 1)'"""
+
+        logging.basicConfig(format='%(asctime)s %(message)s',
+                            datefmt='%Y/%m/%d %H:%M:%S',
+                            filename=self.trops_dir + '/log/trops.log',
+                            encoding='utf-8',
+                            level=logging.DEBUG)
+        executed_cmd = other_args
+        # Create trops_dir/tmp directory
+        tmp_dir = self.trops_dir + '/tmp'
+        if not os.path.isdir(tmp_dir):
+            os.mkdir(tmp_dir)
+        # Compare the executed_cmd if last_cmd exists
+        last_cmd = tmp_dir + '/last_cmd'
+        if os.path.isfile(last_cmd):
+            with open(last_cmd, mode='r') as f:
+                if ' '.join(executed_cmd) in f.read():
+                    exit(0)
+        with open(last_cmd, mode='w') as f:
+            f.write(' '.join(executed_cmd))
+
+        for n in range(args.ignore_fields):
+            executed_cmd.pop(0)
+
+        logging.info(' '.join(executed_cmd) + f" # ({ os.environ['PWD'] })")
+        self._apt_log(executed_cmd)
+        self._update_files(executed_cmd)
+
+    def _apt_log(self, executed_cmd):
+
+        if 'apt' in executed_cmd and ('upgrade' in executed_cmd
+                                      or 'install' in executed_cmd
+                                      or 'remove' in executed_cmd):
+            self._update_pkg_list(' '.join(executed_cmd))
+
+    def _update_files(self, executed_cmd):
+        """Add a file or directory in the git repo"""
+
+        if 'vim' == executed_cmd[0] or 'vi' == executed_cmd[0]:
+            for ii in executed_cmd[1:]:
+                if '~' in ii:
+                    ii_path = os.path.expanduser(ii)
+                if '$' in ii:
+                    ii_path = os.path.expandvars(ii)
+                if os.path.isfile(ii_path):
+                    # Check if the path is in the git repo
+                    cmd = self.git_cmd + ['ls-files', ii_path]
+                    output = subprocess.check_output(cmd).decode("utf-8")
+                    # Set the message based on the output
+                    if output:
+                        git_msg = f"Update { ii_path }"
+                    else:
+                        git_msg = f"Add { ii_path }"
+                    # Add and commit
+                    cmd = self.git_cmd + ['add', ii_path]
+                    subprocess.call(cmd)
+                    cmd = self.git_cmd + ['commit', '-m', git_msg, ii_path]
+                    subprocess.call(cmd)
 
     def ll(self, args, other_args):
         """Shows the list of git-tracked files"""
@@ -292,12 +349,14 @@ class Trops:
         pkg_list_file = self.trops_dir + '/pkg_list'
         f = open(pkg_list_file, 'w')
         cmd = ['apt', 'list', '--installed']
-        if args.sudo:
+        if self.sudo:
             cmd.insert(0, 'sudo')
         pkg_list = subprocess.check_output(cmd).decode('utf-8')
         f.write(pkg_list)
         f.close()
         # Commit the change if needed
+        cmd = self.git_cmd + ['add', pkg_list_file]
+        subprocess.call(cmd)
         cmd = self.git_cmd + ['commit', '-m',
                               f'Update { pkg_list_file }', pkg_list_file]
         subprocess.call(cmd)
@@ -339,11 +398,11 @@ class Trops:
             description='Trops - Tracking Operations')
         subparsers = parser.add_subparsers()
         # trops init <dir>
-        parser_init = subparsers.add_parser('init', help='Initialize Trops')
+        parser_init = subparsers.add_parser('init', help='initialize trops')
+        parser_init.add_argument('-t', '--trops-dir', help='trops directory')
         parser_init.add_argument(
             '-w', '--work-tree', default='/', help='Set work-tree')
         parser_init.set_defaults(handler=self.initialize)
-        parser_init.add_argument('dir', help="Directory path")
         # trops edit <file>
         parser_edit = subparsers.add_parser('edit', help='see `edit -h`')
         parser_edit.add_argument('-s', '--sudo', help="Use sudo",
@@ -353,12 +412,18 @@ class Trops:
         parser_edit.set_defaults(handler=self.edit)
         # trops git <file/dir>
         parser_git = subparsers.add_parser('git', help='see `git -h`')
-        parser_git.set_defaults(handler=self.git)
         parser_git.add_argument('-s', '--sudo', help="Use sudo",
                                 action='store_true')
-        # trops log
-        parser_log = subparsers.add_parser('log', help='see `log -h`')
+        parser_git.set_defaults(handler=self.git)
+        # trops log [new]
+        parser_log = subparsers.add_parser('log', help='log command')
+        parser_log.add_argument(
+            '-i', '--ignore-fields', type=int, default=1, help='set number of fields to ingore')
         parser_log.set_defaults(handler=self.log)
+        # trops show-log [old version of trops log]
+        parser_show_log = subparsers.add_parser(
+            'show-log', help='show log [old version of trops log]')
+        parser_show_log.set_defaults(handler=self.show_log)
         # trops ll
         parser_ll = subparsers.add_parser('ll', help="List files")
         parser_ll.add_argument('dir', help='directory path',
