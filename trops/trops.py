@@ -154,38 +154,6 @@ class Trops:
         cmd = self.git_cmd + other_args
         subprocess.call(cmd)
 
-    def edit(self, args, other_args):
-        """Wrapper of editor"""
-
-        for ff in other_args:
-            # Check if the f is file
-            if os.path.isfile(ff):
-                cmd = self.git_cmd + ['ls-files', ff]
-                output = subprocess.check_output(cmd).decode("utf-8")
-                if ff in output:
-                    git_msg = f"Update { ff }"
-                else:
-                    git_msg = f"Add { ff }"
-                cmd = self.git_cmd + ['add', ff]
-                subprocess.call(cmd)
-                cmd = self.git_cmd + ['commit', '-m', git_msg, ff]
-                subprocess.call(cmd)
-
-        # TODO: When `-s` is in other_args, ignore or return error
-        cmd = [args.editor]
-        if args.sudo:
-            cmd = ['sudo'] + cmd
-        cmd = cmd + other_args
-        subprocess.call(cmd)
-
-        # Add and commmit after editing a file
-        for f in other_args:
-            if os.path.isfile(f):
-                cmd = self.git_cmd + ['add', f]
-                subprocess.call(cmd)
-                cmd = self.git_cmd + ['commit', '-m', 'Update ' + f, f]
-                subprocess.call(cmd)
-
     def _history(self):
         """Gets the history and return it as a list object"""
 
