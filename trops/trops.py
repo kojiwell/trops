@@ -236,7 +236,7 @@ class Trops:
 
         logging.info(' '.join(executed_cmd) + f" # ({ os.environ['PWD'] })")
         self._apt_log(executed_cmd)
-        self._update_files(executed_cmd)
+        self._update_files(executed_cmd, logging)
 
     def _apt_log(self, executed_cmd):
 
@@ -244,16 +244,29 @@ class Trops:
                                       or 'install' in executed_cmd
                                       or 'remove' in executed_cmd):
             self._update_pkg_list(' '.join(executed_cmd))
+        # TODO: Add log trops git show hex
 
-    def _update_files(self, executed_cmd):
+    def _update_files(self, executed_cmd, logging):
         """Add a file or directory in the git repo"""
 
-        if 'vim' == executed_cmd[0] or 'vi' == executed_cmd[0]:
+        # Remove sudo from executed_cmd
+        if 'sudo' == executed_cmd[0]:
+            executed_cmd.pop(0)
+        # TODO: Pop Sudo options such as -u and -E
+
+        # Check if editor is launched
+        if ('vim' == executed_cmd[0] or
+                'vi' == executed_cmd[0] or
+                'emacs' == executed_cmd[0] or
+                'nano' == executed_cmd[0]):
+            # Add the edited file in trops git
             for ii in executed_cmd[1:]:
-                if '~' in ii:
+                if '~' == ii[0]:
                     ii_path = os.path.expanduser(ii)
-                if '$' in ii:
+                elif '$' in ii:
                     ii_path = os.path.expandvars(ii)
+                else:
+                    ii_path = ii
                 if os.path.isfile(ii_path):
                     # Check if the path is in the git repo
                     cmd = self.git_cmd + ['ls-files', ii_path]
@@ -268,6 +281,14 @@ class Trops:
                     subprocess.call(cmd)
                     cmd = self.git_cmd + ['commit', '-m', git_msg, ii_path]
                     subprocess.call(cmd)
+                    cmd = self.git_cmd + ['log', '--oneline', '-1']
+                    output = subprocess.check_output(
+                        cmd).decode("utf-8").split()
+                    if ii_path in output:
+                        logging.info(
+                            f"trops git show { output[0] }:{ ii_path.lstrip('/')}")
+
+                        # TODO: Add log trops git show hex
 
     def ll(self, args, other_args):
         """Shows the list of git-tracked files"""
