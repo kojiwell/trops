@@ -158,18 +158,6 @@ class Trops:
                    'checkout', '-b', 'trops']
             subprocess.call(cmd)
 
-    def _check(self):
-        """Checks TROPS_DIR"""
-
-        if 'TROPS_DIR' not in os.environ:
-            message = """\
-                TROPS_DIR is not set
-
-                    > source <project>/trops/tropsrc
-                """
-            print(dedent(message))
-            exit(1)
-
     def git(self, args, other_args):
         """Git wrapper command"""
 
