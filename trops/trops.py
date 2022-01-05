@@ -7,6 +7,7 @@ import distutils.util
 from configparser import ConfigParser, NoSectionError, NoOptionError
 from textwrap import dedent
 from datetime import datetime
+from trops.utils import run, real_path
 
 
 class Trops:
@@ -57,13 +58,14 @@ class Trops:
 
         # set trops_dir
         if args.trops_dir:
-            trops_dir = os.path.expandvars(args.trops_dir) + '/trops'
+            trops_dir = real_path(args.trops_dir) + '/trops'
         elif 'TROPS_DIR' in os.environ:
             trops_dir = os.path.expandvars('$TROPS_DIR') + '/trops'
         else:
             trops_dir = os.path.expandvars('$HOME') + '/.trops'
 
-        trops_rcfile = trops_dir + '/tropsrc'
+        trops_bash_defaultrc = trops_dir + '/bash_defaultrc'
+        trops_zsh_defaultrc = trops_dir + '/zsh_defaultrc'
         trops_conf = trops_dir + '/trops.cfg'
         trops_git_dir = trops_dir + '/default.git'
 
@@ -76,10 +78,10 @@ class Trops:
         if not os.path.isdir(history_dir):
             os.mkdir(history_dir)
 
-        # Create tropsrc file if it doesn't exist
-        if not os.path.isfile(trops_rcfile):
-            with open(trops_rcfile, mode='w') as f:
-                default_rcfile = """\
+        # Create bash_defaultrc file if it doesn't exist
+        if not os.path.isfile(trops_bash_defaultrc):
+            with open(trops_bash_defaultrc, mode='w') as f:
+                lines = """\
                     export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
 
                     shopt -s histappend
@@ -89,7 +91,22 @@ class Trops:
                     alias trgit="trops git"
                     alias trtouch="trops touch"
                     """
-                f.write(dedent(default_rcfile))
+                f.write(dedent(lines))
+
+        # Create zsh_defaultrc file if it doesn't exist
+        if not os.path.isfile(trops_zsh_defaultrc):
+            with open(trops_zsh_defaultrc, mode='w') as f:
+                lines = f"""\
+                    export TROPS_DIR={ trops_dir }
+
+                    precmd() {{
+                        trops log -i 1 $(history|tail -1)
+                    }}
+
+                    alias trgit="trops git"
+                    alias trtouch="trops touch"
+                    """
+                f.write(dedent(lines))
 
         # TODO: Maybe "sudo = False" should be "sudo_git = False"?
         # Create trops.cfg file if it doesn't exists
@@ -97,7 +114,7 @@ class Trops:
             with open(trops_conf, mode='w') as f:
                 default_conf = f"""\
                     [defaults]
-                    git_dir = { trops_dir }/trops.git
+                    git_dir = { trops_dir }/default.git
                     sudo = False
                     work_tree = { args.work_tree }
                     """
@@ -106,7 +123,12 @@ class Trops:
         # Create trops's bare git directory
         if not os.path.isdir(trops_git_dir):
             cmd = ['git', 'init', '--bare', trops_git_dir]
-            subprocess.call(cmd)
+            rc, stdout, stderr = run(cmd)
+            msg = f"""\
+                returncode: { rc }
+                stdout: { stdout }
+                stderr: { stderr }"""
+            print(dedent(msg))
 
         # Prepare for updating trops.git/config
         git_cmd = ['git', '--git-dir=' + trops_git_dir, 'config', '--local']
@@ -276,9 +298,9 @@ class Trops:
 
                     # Check if the path is in the git repo
                     cmd = self.git_cmd + ['ls-files', ii_path]
-                    output = subprocess.check_output(cmd).decode("utf-8")
+                    rc, output, error = run(cmd)
                     # Set the message based on the output
-                    if output:
+                    if output.decode("utf-8"):
                         git_msg = f"Update { ii_path }"
                     else:
                         git_msg = f"Add { ii_path }"
