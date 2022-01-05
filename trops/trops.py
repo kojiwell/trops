@@ -51,11 +51,6 @@ class Trops:
     def initialize(self, args, unkown):
         """Setup trops project"""
 
-        # TODO: Return error when trops init is executed
-        # at an already initialized project directory
-        # TODO: Decide how to handle history by default or
-        # add option about history
-
         # set trops_dir
         if args.trops_dir:
             trops_dir = real_path(args.trops_dir) + '/trops'
@@ -71,8 +66,11 @@ class Trops:
         trops_log_dir = trops_dir + '/log'
 
         # Create the directory if it doesn't exist
-        if not os.path.isdir(trops_dir):
+        try:
             os.mkdir(trops_dir)
+        except FileExistsError:
+            print(f"{ trops_dir } already exists")
+            exit(1)
 
         # Create TROPS_DIR/history
         history_dir = trops_dir + '/history'
