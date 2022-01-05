@@ -234,6 +234,8 @@ class Trops:
         for n in range(args.ignore_fields):
             executed_cmd.pop(0)
 
+        # TODO: Capture return code in some way and
+        #       when return code is not 0, log the command as warning
         logging.info(' '.join(executed_cmd) + f" # ({ os.environ['PWD'] })")
         self._apt_log(executed_cmd)
         self._update_files(executed_cmd, logging)
