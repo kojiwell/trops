@@ -7,7 +7,7 @@ import distutils.util
 from configparser import ConfigParser, NoSectionError, NoOptionError
 from textwrap import dedent
 from datetime import datetime
-from trops.utils import run, real_path
+from trops.utils import real_path
 
 
 class Trops:
@@ -291,9 +291,9 @@ class Trops:
 
                     # Check if the path is in the git repo
                     cmd = self.git_cmd + ['ls-files', ii_path]
-                    rc, output, error = run(cmd)
+                    result = subprocess.run(cmd, capture_output=True)
                     # Set the message based on the output
-                    if output.decode("utf-8"):
+                    if ii_path in result.stdout.decode("utf-8"):
                         git_msg = f"Update { ii_path }"
                     else:
                         git_msg = f"Add { ii_path }"
