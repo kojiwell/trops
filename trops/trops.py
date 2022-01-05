@@ -68,6 +68,7 @@ class Trops:
         trops_zsh_defaultrc = trops_dir + '/zsh_defaultrc'
         trops_conf = trops_dir + '/trops.cfg'
         trops_git_dir = trops_dir + '/default.git'
+        trops_log_dir = trops_dir + '/log'
 
         # Create the directory if it doesn't exist
         if not os.path.isdir(trops_dir):
@@ -123,12 +124,16 @@ class Trops:
         # Create trops's bare git directory
         if not os.path.isdir(trops_git_dir):
             cmd = ['git', 'init', '--bare', trops_git_dir]
-            rc, stdout, stderr = run(cmd)
-            msg = f"""\
-                returncode: { rc }
-                stdout: { stdout }
-                stderr: { stderr }"""
-            print(dedent(msg))
+            result = subprocess.run(cmd, capture_output=True)
+            if result.returncode == 0:
+                print(result.stdout.decode('utf-8'))
+            else:
+                print(result.stderr.decode('utf-8'))
+                exit(result.returncode)
+
+        # Create trops_dir/log
+        if not os.path.isdir(trops_log_dir):
+            os.mkdir(trops_log_dir)
 
         # Prepare for updating trops.git/config
         git_cmd = ['git', '--git-dir=' + trops_git_dir, 'config', '--local']
