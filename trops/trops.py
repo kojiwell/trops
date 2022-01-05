@@ -97,12 +97,12 @@ class Trops:
         # Create zsh_defaultrc file if it doesn't exist
         if not os.path.isfile(trops_zsh_defaultrc):
             with open(trops_zsh_defaultrc, mode='w') as f:
-                lines = f"""\
-                    export TROPS_DIR={ trops_dir }
+                lines = """\
+                    export TROPS_DIR=$(dirname $(realpath ${(%):-%N}))
 
-                    precmd() {{
+                    precmd() {
                         trops log -i 1 $(history|tail -1)
-                    }}
+                    }
 
                     alias trgit="trops git"
                     alias trtouch="trops touch"
@@ -309,9 +309,8 @@ class Trops:
                     output = subprocess.check_output(
                         cmd).decode("utf-8").split()
                     if ii_path in output:
-                        # TODO: Print the ii_path as its absolute path not relative path
                         logging.info(
-                            f"trops git show { output[0] }:{ ii_path.lstrip('/')}")
+                            f"trops git show { output[0] }:{ real_path(ii_path).lstrip('/')}")
 
                         # TODO: Log touch ll ii_path so that file ownership/permission
                         #       can be found in the log
