@@ -167,58 +167,6 @@ class Trops:
         cmd = self.git_cmd + other_args
         subprocess.call(cmd)
 
-    def _history(self):
-        """Gets the history and return it as a list object"""
-
-        if 'HISTFILE' in os.environ:
-            filename = os.path.expandvars("$HISTFILE")
-        else:
-            filename = os.path.expandvars("$HOME/.bash_history")
-        with open(filename) as f:
-            line = f.readline()
-            aligned_line = []
-            timestamp = ''
-            cmd = []
-            while line:
-                items = line.split()
-                if items:
-                    if items[0][0] == '#' and len(items[0]) == 11:
-                        if timestamp and cmd:
-                            aligned_line.append(
-                                "{}  {}".format(timestamp, ' '.join(cmd)))
-                        timestamp = datetime.fromtimestamp(
-                            int(items[0][1:])).strftime("%Y-%m-%d_%H:%M:%S")
-                        cmd = []
-                    else:
-                        cmd += items
-                line = f.readline()
-        return aligned_line
-
-    def _gitlog(self):
-        """Get git log with the same date format as bash history
-        and return it as a list
-        """
-
-        cmd = ['trops', 'git', 'log', '--oneline',
-               '--pretty=format:%cd  trops git show %h #%d %s <%an>', '--date=format:%Y-%m-%d_%H:%M:%S']
-        output = subprocess.check_output(cmd)
-        return output.decode("utf-8").splitlines()
-
-    def show_log(self, args, other_args):
-        """Shows bash history and git log together in a timeline"""
-
-        output = self._history() + self._gitlog()
-        output.sort()
-
-        # Just testing varbose output, not being used yet.
-        # TODO: Add --verbose option to trops log
-        verbose = False
-        for l in output:
-            print(l)
-            if 'trops git show' in l and verbose:
-                cmd = l.split()[1:4]
-                subprocess.call(cmd)
-
     def log(self, args, other_args):
         """\
         log executed command
@@ -425,10 +373,6 @@ class Trops:
         parser_log.add_argument(
             '-i', '--ignore-fields', type=int, default=1, help='set number of fields to ingore')
         parser_log.set_defaults(handler=self.log)
-        # trops show-log [old version of trops log]
-        parser_show_log = subparsers.add_parser(
-            'show-log', help='show log [old version of trops log]')
-        parser_show_log.set_defaults(handler=self.show_log)
         # trops ll
         parser_ll = subparsers.add_parser('ll', help="List files")
         parser_ll.add_argument('dir', help='directory path',
