@@ -16,7 +16,7 @@ class Trops:
 
         self.config = ConfigParser()
         if 'TROPS_DIR' in os.environ:
-            self.trops_dir = os.path.expandvars('$TROPS_DIR/trops')
+            self.trops_dir = os.path.expandvars('$TROPS_DIR')
         else:
             self.trops_dir = os.path.expandvars('$HOME/.trops')
         self.conf_file = self.trops_dir + '/trops.cfg'
