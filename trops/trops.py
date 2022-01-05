@@ -294,6 +294,7 @@ class Trops:
                     output = subprocess.check_output(
                         cmd).decode("utf-8").split()
                     if ii_path in output:
+                        # TODO: Print the ii_path as its absolute path not relative path
                         logging.info(
                             f"trops git show { output[0] }:{ ii_path.lstrip('/')}")
 
