@@ -321,21 +321,6 @@ class Trops:
                               f'Update { pkg_list_file }', pkg_list_file]
         subprocess.call(cmd)
 
-    def apt(self, args, other_args):
-        """
-        apt wrapper command to keep track of package list, which
-        generates the package list and add to git repo
-        before and after the package installation
-        """
-
-        self._update_pkg_list(args)
-        # Run apt command
-        cmd = ['apt'] + other_args
-        if args.sudo:
-            cmd.insert(0, 'sudo')
-        subprocess.call(cmd)
-        self._update_pkg_list(args)
-
     def container_create(self):
         """Creates a container with trops directory mounted"""
         # TODO: New feature
@@ -383,11 +368,6 @@ class Trops:
             'touch', help="Add file in git repo")
         parser_touch.add_argument('path', help='path of file or directory')
         parser_touch.set_defaults(handler=self.touch)
-        # trops apt
-        parser_apt = subparsers.add_parser('apt', help='Apt wrapper command')
-        parser_apt.add_argument('-s', '--sudo', help="Use sudo",
-                                action='store_true')
-        parser_apt.set_defaults(handler=self.apt)
 
         # Pass args and other args to the hander
         args, other_args = parser.parse_known_args()
