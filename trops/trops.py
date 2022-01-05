@@ -298,7 +298,8 @@ class Trops:
                         logging.info(
                             f"trops git show { output[0] }:{ ii_path.lstrip('/')}")
 
-                        # TODO: Add log trops git show hex
+                        # TODO: Log touch ll ii_path so that file ownership/permission
+                        #       can be found in the log
 
     def ll(self, args, other_args):
         """Shows the list of git-tracked files"""
