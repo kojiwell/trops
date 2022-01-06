@@ -304,7 +304,10 @@ class Trops:
             cmd = ['cat', log_file]
         else:
             cmd = ['tail', '-15', log_file]
-        subprocess.call(cmd)
+        try:
+            subprocess.call(cmd)
+        except KeyboardInterrupt:
+            print('\nClosing trops show-log...')
 
     def ll(self, args, other_args):
         """Shows the list of git-tracked files"""
