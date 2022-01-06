@@ -292,6 +292,18 @@ class Trops:
                         # TODO: Log touch ll ii_path so that file ownership/permission
                         #       can be found in the log
 
+    def show_log(self, args, other_args):
+
+        log_file = self.trops_dir + '/log/trops.log'
+
+        if args.follow:
+            cmd = ['tail', '-f', log_file]
+        elif args.tail:
+            cmd = ['tail', f'-{ args.tail }', log_file]
+        else:
+            cmd = ['cat', log_file]
+        subprocess.call(cmd)
+
     def ll(self, args, other_args):
         """Shows the list of git-tracked files"""
 
@@ -390,6 +402,13 @@ class Trops:
         parser_log.add_argument(
             '-i', '--ignore-fields', type=int, default=1, help='set number of fields to ingore')
         parser_log.set_defaults(handler=self.log)
+        # trops show-log
+        parser_show_log = subparsers.add_parser('show-log', help='show log')
+        parser_show_log.add_argument(
+            '-t', '--tail', type=int, help='set number of lines to show')
+        parser_show_log.add_argument(
+            '-f', '--follow', action='store_true', help='follow log interactively')
+        parser_show_log.set_defaults(handler=self.show_log)
         # trops ll
         parser_ll = subparsers.add_parser('ll', help="List files")
         parser_ll.add_argument('dir', help='directory path',
