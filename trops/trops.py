@@ -7,6 +7,8 @@ import distutils.util
 from configparser import ConfigParser, NoSectionError, NoOptionError
 from textwrap import dedent
 from datetime import datetime
+from pathlib import Path
+
 from trops.utils import real_path
 
 
@@ -198,10 +200,10 @@ class Trops:
 
         if rc == 0:
             logging.info(' '.join(executed_cmd) +
-                         f" # ({ os.environ['PWD'] }, EXIT={ rc })")
+                         f"  # PWD={ os.environ['PWD'] },EXIT={ rc }")
         else:
             logging.warning(' '.join(executed_cmd) +
-                            f" # ({ os.environ['PWD']}, EXIT={ rc })")
+                            f"  # PWD={ os.environ['PWD']},EXIT={ rc }")
         self._yum_log(executed_cmd)
         self._apt_log(executed_cmd)
         self._update_files(executed_cmd, logging)
@@ -289,8 +291,11 @@ class Trops:
                     output = subprocess.check_output(
                         cmd).decode("utf-8").split()
                     if ii_path in output:
+                        mode = oct(os.stat(ii_path).st_mode)[-4:]
+                        owner = Path(ii_path).owner()
+                        group = Path(ii_path).group()
                         logging.info(
-                            f"trops git show { output[0] }:{ real_path(ii_path).lstrip('/')}")
+                            f"trops git show { output[0] }:{ real_path(ii_path).lstrip('/')}  # O={ owner },G={ group },M={ mode }")
 
                         # TODO: Log touch ll ii_path so that file ownership/permission
                         #       can be found in the log
