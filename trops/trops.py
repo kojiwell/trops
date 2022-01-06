@@ -52,8 +52,8 @@ class Trops:
         """Setup trops project"""
 
         # set trops_dir
-        if args.trops_dir:
-            trops_dir = real_path(args.trops_dir) + '/trops'
+        if args.dir:
+            trops_dir = real_path(args.dir)
         elif 'TROPS_DIR' in os.environ:
             trops_dir = os.path.expandvars('$TROPS_DIR') + '/trops'
         else:
@@ -225,16 +225,15 @@ class Trops:
                 'nano' == executed_cmd[0]):
             # Add the edited file in trops git
             for ii in executed_cmd[1:]:
-                if '~' == ii[0]:
-                    ii_path = os.path.expanduser(ii)
-                elif '$' in ii:
-                    ii_path = os.path.expandvars(ii)
-                else:
-                    ii_path = ii
+                ii_path = real_path(ii)
                 if os.path.isfile(ii_path):
-                    # TODO: Check if the ii_path is part of another git repo
-                    # and ignore if it is.
-
+                    # Ignore the file if it is under a git repository
+                    ii_parent_dir = os.path.dirname(ii_path)
+                    os.chdir(ii_parent_dir)
+                    cmd = ['git', 'rev-parse', '--is-inside-work-tree']
+                    result = subprocess.run(cmd, capture_output=True)
+                    if result.returncode == 0:
+                        exit(0)
                     # Check if the path is in the git repo
                     cmd = self.git_cmd + ['ls-files', ii_path]
                     result = subprocess.run(cmd, capture_output=True)
@@ -344,7 +343,8 @@ class Trops:
         subparsers = parser.add_subparsers()
         # trops init <dir>
         parser_init = subparsers.add_parser('init', help='initialize trops')
-        parser_init.add_argument('-t', '--trops-dir', help='trops directory')
+        parser_init.add_argument('dir', help='trops directory',
+                                 nargs='?', default='$HOME/.trops')
         parser_init.add_argument(
             '-w', '--work-tree', default='/', help='Set work-tree')
         parser_init.set_defaults(handler=self.initialize)
