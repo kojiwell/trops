@@ -297,9 +297,6 @@ class Trops:
                         logging.info(
                             f"trops git show { output[0] }:{ real_path(ii_path).lstrip('/')}  # O={ owner },G={ group },M={ mode }")
 
-                        # TODO: Log touch ll ii_path so that file ownership/permission
-                        #       can be found in the log
-
     def show_log(self, args, other_args):
 
         log_file = self.trops_dir + '/log/trops.log'
