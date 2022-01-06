@@ -199,8 +199,28 @@ class Trops:
         #       when return code is not 0, log the command as warning
         #       > trops --return-code=$? -i 3 $(history -1)
         logging.info(' '.join(executed_cmd) + f" # ({ os.environ['PWD'] })")
+        self._yum_log(executed_cmd)
         self._apt_log(executed_cmd)
         self._update_files(executed_cmd, logging)
+
+    def _yum_log(self, executed_cmd):
+
+        # Check if sudo is used
+        if 'sudo' == executed_cmd[0]:
+            executed_cmd.pop(0)
+
+        if executed_cmd[0] in ['yum', 'dnf'] and ('install' in executed_cmd
+                                                  or 'update' in executed_cmd
+                                                  or 'remove' in executed_cmd):
+            cmd = ['rpm', '-qa']
+            result = subprocess.run(cmd, capture_output=True)
+            pkg_list = result.stdout.decode('utf-8').splitlines()
+            pkg_list.sort()
+
+            pkg_list_file = self.trops_dir + '/rpm_pkg_list'
+            f = open(pkg_list_file, 'w')
+            f.write('\n'.join(pkg_list))
+            f.close()
 
     def _apt_log(self, executed_cmd):
 
