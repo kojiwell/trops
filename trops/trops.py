@@ -173,9 +173,10 @@ class Trops:
         NOTE: You need to set PROMPT_COMMAND in bash as shown below:
         PROMPT_COMMAND='trops log $(history 1)'"""
 
-        # TODO: This is a very primitive logging. Improve logging
-        logging.basicConfig(format='%(asctime)s %(message)s',
-                            datefmt='%Y/%m/%d %H:%M:%S',
+        rc = args.return_code
+
+        logging.basicConfig(format='%(asctime)s %(levelname)s  %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S',
                             filename=self.trops_dir + '/log/trops.log',
                             level=logging.DEBUG)
         executed_cmd = other_args
@@ -195,10 +196,12 @@ class Trops:
         for n in range(args.ignore_fields):
             executed_cmd.pop(0)
 
-        # TODO: Capture return code in some way and
-        #       when return code is not 0, log the command as warning
-        #       > trops --return-code=$? -i 3 $(history -1)
-        logging.info(' '.join(executed_cmd) + f" # ({ os.environ['PWD'] })")
+        if rc == 0:
+            logging.info(' '.join(executed_cmd) +
+                         f" # ({ os.environ['PWD'] }, EXIT={ rc })")
+        else:
+            logging.warning(' '.join(executed_cmd) +
+                            f" # ({ os.environ['PWD']}, EXIT={ rc })")
         self._yum_log(executed_cmd)
         self._apt_log(executed_cmd)
         self._update_files(executed_cmd, logging)
@@ -392,8 +395,8 @@ class Trops:
         subparsers = parser.add_subparsers()
         # trops init <dir>
         parser_init = subparsers.add_parser('init', help='initialize trops')
-        parser_init.add_argument('dir', help='trops directory',
-                                 nargs='?', default='$HOME/.trops')
+        parser_init.add_argument(
+            'dir', help='trops directory', nargs='?', default='$HOME/.trops')
         parser_init.add_argument(
             '-w', '--work-tree', default='/', help='Set work-tree')
         parser_init.set_defaults(handler=self.initialize)
@@ -406,6 +409,8 @@ class Trops:
         parser_log = subparsers.add_parser('log', help='log command')
         parser_log.add_argument(
             '-i', '--ignore-fields', type=int, default=1, help='set number of fields to ingore')
+        parser_log.add_argument(
+            '-r', '--return-code', type=int, default=0, help='set return code')
         parser_log.set_defaults(handler=self.log)
         # trops show-log
         parser_show_log = subparsers.add_parser('show-log', help='show log')
@@ -418,8 +423,8 @@ class Trops:
         parser_show_log.set_defaults(handler=self.show_log)
         # trops ll
         parser_ll = subparsers.add_parser('ll', help="List files")
-        parser_ll.add_argument('dir', help='directory path',
-                               nargs='?', default=os.getcwd())
+        parser_ll.add_argument(
+            'dir', help='directory path', nargs='?', default=os.getcwd())
         parser_ll.set_defaults(handler=self.ll)
         # trops touch
         parser_touch = subparsers.add_parser(
