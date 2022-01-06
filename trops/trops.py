@@ -300,8 +300,10 @@ class Trops:
             cmd = ['tail', '-f', log_file]
         elif args.tail:
             cmd = ['tail', f'-{ args.tail }', log_file]
-        else:
+        elif args.all:
             cmd = ['cat', log_file]
+        else:
+            cmd = ['tail', '-15', log_file]
         subprocess.call(cmd)
 
     def ll(self, args, other_args):
@@ -408,6 +410,8 @@ class Trops:
             '-t', '--tail', type=int, help='set number of lines to show')
         parser_show_log.add_argument(
             '-f', '--follow', action='store_true', help='follow log interactively')
+        parser_show_log.add_argument(
+            '-a', '--all', action='store_true', help='show all log')
         parser_show_log.set_defaults(handler=self.show_log)
         # trops ll
         parser_ll = subparsers.add_parser('ll', help="List files")
