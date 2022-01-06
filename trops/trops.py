@@ -219,10 +219,8 @@ class Trops:
         # TODO: Pop Sudo options such as -u and -E
 
         # Check if editor is launched
-        if ('vim' == executed_cmd[0] or
-                'vi' == executed_cmd[0] or
-                'emacs' == executed_cmd[0] or
-                'nano' == executed_cmd[0]):
+        editors = ['vim', 'vi', 'emacs', 'nano']
+        if executed_cmd[0] in editors:
             # Add the edited file in trops git
             for ii in executed_cmd[1:]:
                 ii_path = real_path(ii)
