@@ -50,6 +50,12 @@ class Trops:
             except KeyError:
                 pass
 
+        logging.basicConfig(format='%(asctime)s %(levelname)s  %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S',
+                            filename=self.trops_dir + '/log/trops.log',
+                            level=logging.DEBUG)
+        self.logger = logging.getLogger()
+
     def initialize(self, args, unkown):
         """Setup trops project"""
 
@@ -177,10 +183,6 @@ class Trops:
 
         rc = args.return_code
 
-        logging.basicConfig(format='%(asctime)s %(levelname)s  %(message)s',
-                            datefmt='%Y-%m-%d %H:%M:%S',
-                            filename=self.trops_dir + '/log/trops.log',
-                            level=logging.DEBUG)
         executed_cmd = other_args
         # Create trops_dir/tmp directory
         tmp_dir = self.trops_dir + '/tmp'
@@ -199,14 +201,14 @@ class Trops:
             executed_cmd.pop(0)
 
         if rc == 0:
-            logging.info(' '.join(executed_cmd) +
-                         f"  # PWD={ os.environ['PWD'] },EXIT={ rc }")
+            self.logger.info(' '.join(executed_cmd) +
+                             f"  # PWD={ os.environ['PWD'] },EXIT={ rc }")
         else:
-            logging.warning(' '.join(executed_cmd) +
-                            f"  # PWD={ os.environ['PWD']},EXIT={ rc }")
+            self.logger.warning(' '.join(executed_cmd) +
+                                f"  # PWD={ os.environ['PWD']},EXIT={ rc }")
         self._yum_log(executed_cmd)
         self._apt_log(executed_cmd)
-        self._update_files(executed_cmd, logging)
+        self._update_files(executed_cmd)
 
     def _yum_log(self, executed_cmd):
 
@@ -249,7 +251,7 @@ class Trops:
             self._update_pkg_list(' '.join(executed_cmd))
         # TODO: Add log trops git show hex
 
-    def _update_files(self, executed_cmd, logging):
+    def _update_files(self, executed_cmd):
         """Add a file or directory in the git repo"""
 
         # Remove sudo from executed_cmd
@@ -287,14 +289,14 @@ class Trops:
                     subprocess.call(cmd)
                     cmd = self.git_cmd + ['commit', '-m', git_msg, ii_path]
                     subprocess.call(cmd)
-                    cmd = self.git_cmd + ['log', '--oneline', '-1']
+                    cmd = self.git_cmd + ['log', '--oneline', '-1', ii_path]
                     output = subprocess.check_output(
                         cmd).decode("utf-8").split()
                     if ii_path in output:
                         mode = oct(os.stat(ii_path).st_mode)[-4:]
                         owner = Path(ii_path).owner()
                         group = Path(ii_path).group()
-                        logging.info(
+                        self.logger.info(
                             f"trops git show { output[0] }:{ real_path(ii_path).lstrip('/')}  # O={ owner },G={ group },M={ mode }")
 
     def show_log(self, args, other_args):
@@ -330,31 +332,42 @@ class Trops:
     def touch(self, args, other_args):
         """Add a file or directory in the git repo"""
 
+        file_path = real_path(args.path)
+
         # Check if the path exists
-        if not os.path.exists(args.path):
-            print(f"{ args.path } doesn't exists")
+        if not os.path.exists(file_path):
+            print(f"{ file_path } doesn't exists")
             exit(1)
         # TODO: Allow touch directory later
-        if not os.path.isfile(args.path):
+        if not os.path.isfile(file_path):
             message = f"""\
-                Error: { args.path } is not a file
+                Error: { file_path } is not a file
                 Only file is allowed to be touched"""
             print(dedent(message))
             exit(1)
 
         # Check if the path is in the git repo
-        cmd = self.git_cmd + ['ls-files', args.path]
+        cmd = self.git_cmd + ['ls-files', file_path]
         output = subprocess.check_output(cmd).decode("utf-8")
         # Set the message based on the output
         if output:
-            git_msg = f"Update { args.path }"
+            git_msg = f"Update { file_path }"
         else:
-            git_msg = f"Add { args.path }"
+            git_msg = f"Add { file_path }"
         # Add and commit
-        cmd = self.git_cmd + ['add', args.path]
+        cmd = self.git_cmd + ['add', file_path]
         subprocess.call(cmd)
-        cmd = self.git_cmd + ['commit', '-m', git_msg, args.path]
+        cmd = self.git_cmd + ['commit', '-m', git_msg, file_path]
         subprocess.call(cmd)
+        cmd = self.git_cmd + ['log', '--oneline', '-1', file_path]
+        output = subprocess.check_output(
+            cmd).decode("utf-8").split()
+        if file_path in output:
+            mode = oct(os.stat(file_path).st_mode)[-4:]
+            owner = Path(file_path).owner()
+            group = Path(file_path).group()
+            self.logger.info(
+                f"trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  # O={ owner },G={ group },M={ mode }")
 
     def _update_pkg_list(self, args):
 
