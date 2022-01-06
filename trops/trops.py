@@ -222,6 +222,20 @@ class Trops:
             f.write('\n'.join(pkg_list))
             f.close()
 
+            # Check if the path is in the git repo
+            cmd = self.git_cmd + ['ls-files', pkg_list_file]
+            output = subprocess.check_output(cmd).decode("utf-8")
+            # Set the message based on the output
+            if output:
+                git_msg = f"Update { pkg_list_file }"
+            else:
+                git_msg = f"Add { pkg_list_file }"
+            # Add and commit
+            cmd = self.git_cmd + ['add', pkg_list_file]
+            subprocess.call(cmd)
+            cmd = self.git_cmd + ['commit', '-m', git_msg, pkg_list_file]
+            subprocess.call(cmd)
+
     def _apt_log(self, executed_cmd):
 
         if 'apt' in executed_cmd and ('upgrade' in executed_cmd
