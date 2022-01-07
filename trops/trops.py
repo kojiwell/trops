@@ -9,7 +9,7 @@ from textwrap import dedent
 from datetime import datetime
 from pathlib import Path
 
-from trops.utils import real_path, random_word
+from trops.utils import real_path, random_name
 
 
 class Trops:
@@ -491,12 +491,10 @@ class Trops:
             'untouch', help="Remove file from the git repo")
         parser_touch.add_argument('path', help='path of file')
         parser_touch.set_defaults(handler=self.untouch)
-        # trops random-word
-        parser_random_word = subparsers.add_parser(
-            'random-word', help='generate random word')
-        parser_random_word.add_argument(
-            '-n', '--number', type=int, help='set number of words')
-        parser_random_word.set_defaults(handler=random_word)
+        # trops random-name
+        parser_random_name = subparsers.add_parser(
+            'random-name', help='generate random name')
+        parser_random_name.set_defaults(handler=random_name)
 
         # Pass args and other args to the hander
         args, other_args = parser.parse_known_args()

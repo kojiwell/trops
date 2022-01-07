@@ -2,6 +2,8 @@ from subprocess import Popen, PIPE
 import os
 import random
 
+from trops.namesgenerator import get_random_name
+
 
 def real_path(path):
     """\
@@ -31,3 +33,8 @@ def random_word(args, other_args):
     except FileNotFoundError:
         cmd = ['shuf', '-i', '1-100000', '-n', '1']
         subprocess.call(cmd)
+
+
+def random_name(args, other_args):
+
+    print(get_random_name())
