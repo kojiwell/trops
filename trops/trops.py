@@ -272,6 +272,8 @@ class Trops:
                     cmd = ['git', 'rev-parse', '--is-inside-work-tree']
                     result = subprocess.run(cmd, capture_output=True)
                     if result.returncode == 0:
+                        self.logger.info(
+                            f"TROPS IGNORE { ii_path } -- The file is under a git repository")
                         exit(0)
                     # Check if the path is in the git repo
                     cmd = self.git_cmd + ['ls-files', ii_path]
