@@ -424,12 +424,13 @@ class Trops:
         parser_git.add_argument('-s', '--sudo', help="Use sudo",
                                 action='store_true')
         parser_git.set_defaults(handler=self.git)
-        # trops log [new]
-        parser_log = subparsers.add_parser('log', help='log command')
-        parser_log.add_argument(
-            '-i', '--ignore-fields', type=int, default=1, help='set number of fields to ingore')
-        parser_log.add_argument(
-            '-r', '--return-code', type=int, default=0, help='set return code')
+        # trops log <ignore_fields> <return_code> <command>
+        parser_log = subparsers.add_parser(
+            'log', help='log command', add_help=False)
+        parser_log.add_argument('ignore_fields', type=int,
+                                default=1, help='set number of fields to ingore')
+        parser_log.add_argument('return_code', type=int,
+                                default=0, help='set return code')
         parser_log.set_defaults(handler=self.log)
         # trops show-log
         parser_show_log = subparsers.add_parser('show-log', help='show log')
