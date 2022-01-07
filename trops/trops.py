@@ -200,12 +200,14 @@ class Trops:
         for n in range(args.ignore_fields):
             executed_cmd.pop(0)
 
+        message = ' '.join(executed_cmd) + \
+            f"  # PWD={ os.environ['PWD'] },EXIT={ rc }"
+        if 'TROPS_SESSION_ID' in os.environ:
+            message = message + ',SESSION=' + os.environ['TROPS_SESSION_ID']
         if rc == 0:
-            self.logger.info(' '.join(executed_cmd) +
-                             f"  # PWD={ os.environ['PWD'] },EXIT={ rc }")
+            self.logger.info(message)
         else:
-            self.logger.warning(' '.join(executed_cmd) +
-                                f"  # PWD={ os.environ['PWD']},EXIT={ rc }")
+            self.logger.warning(message)
         self._yum_log(executed_cmd)
         self._apt_log(executed_cmd)
         self._update_files(executed_cmd)
