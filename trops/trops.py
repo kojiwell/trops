@@ -9,7 +9,7 @@ from textwrap import dedent
 from datetime import datetime
 from pathlib import Path
 
-from trops.utils import real_path
+from trops.utils import real_path, random_word
 
 
 class Trops:
@@ -448,6 +448,12 @@ class Trops:
             'touch', help="Add file in git repo")
         parser_touch.add_argument('path', help='path of file or directory')
         parser_touch.set_defaults(handler=self.touch)
+        # trops random-word
+        parser_random_word = subparsers.add_parser(
+            'random-word', help='generate random word')
+        parser_random_word.add_argument(
+            '-n', '--number', type=int, help='set number of words')
+        parser_random_word.set_defaults(handler=random_word)
 
         # Pass args and other args to the hander
         args, other_args = parser.parse_known_args()
