@@ -198,6 +198,10 @@ class Trops:
         for n in range(args.ignore_fields):
             executed_cmd.pop(0)
 
+        ignored_cmds = ['trops', 'ls', 'top', 'cat']
+        if executed_cmd[0] in ignored_cmds:
+            exit(0)
+
         message = ' '.join(executed_cmd) + \
             f"  # PWD={ os.environ['PWD'] }, EXIT={ rc }"
         if 'TROPS_SID' in os.environ:
@@ -279,10 +283,12 @@ class Trops:
                     cmd = self.git_cmd + ['ls-files', ii_path]
                     result = subprocess.run(cmd, capture_output=True)
                     # Set the message based on the output
-                    if ii_path in result.stdout.decode("utf-8"):
+                    if result.stdout.decode("utf-8"):
                         git_msg = f"Update { ii_path }"
+                        log_note = 'UPDATE'
                     else:
                         git_msg = f"Add { ii_path }"
+                        log_note = 'ADD'
                     # Add and commit
                     cmd = self.git_cmd + ['add', ii_path]
                     # TODO: Switch from subprocess.call to something else
@@ -299,7 +305,7 @@ class Trops:
                         owner = Path(ii_path).owner()
                         group = Path(ii_path).group()
                         self.logger.info(
-                            f"trops git show { output[0] }:{ real_path(ii_path).lstrip('/')}  # O={ owner },G={ group },M={ mode }")
+                            f"trops git show { output[0] }:{ real_path(ii_path).lstrip('/')}  # { log_note }, O={ owner },G={ group },M={ mode }")
 
     def show_log(self, args, other_args):
 
@@ -354,8 +360,10 @@ class Trops:
         # Set the message based on the output
         if output:
             git_msg = f"Update { file_path }"
+            log_note = "UPDATE"
         else:
             git_msg = f"Add { file_path }"
+            log_note = "ADD"
         # Add and commit
         cmd = self.git_cmd + ['add', file_path]
         subprocess.call(cmd)
@@ -369,9 +377,9 @@ class Trops:
             owner = Path(file_path).owner()
             group = Path(file_path).group()
             self.logger.info(
-                f"trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  # O={ owner },G={ group },M={ mode }")
+                f"trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  # { log_note } O={ owner },G={ group },M={ mode }")
 
-    def untouch(self, args, other_args):
+    def bye(self, args, other_args):
         """Remove a file from the git repo"""
 
         file_path = real_path(args.path)
@@ -404,7 +412,8 @@ class Trops:
         cmd = self.git_cmd + ['log', '--oneline', '-1', file_path]
         output = subprocess.check_output(
             cmd).decode("utf-8").split()
-        self.logger.info(f"trops git show { output[0] }")
+        self.logger.info(
+            f"trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  # BYE")
 
     def _update_pkg_list(self, args):
 
@@ -453,7 +462,7 @@ class Trops:
             '-w', '--work-tree', default='/', help='Set work-tree')
         parser_init.set_defaults(handler=self.initialize)
         # trops git <file/dir>
-        parser_git = subparsers.add_parser('git', help='see `git -h`')
+        parser_git = subparsers.add_parser('git', help='git wrapper')
         parser_git.add_argument('-s', '--sudo', help="Use sudo",
                                 action='store_true')
         parser_git.set_defaults(handler=self.git)
@@ -475,20 +484,20 @@ class Trops:
             '-a', '--all', action='store_true', help='show all log')
         parser_show_log.set_defaults(handler=self.show_log)
         # trops ll
-        parser_ll = subparsers.add_parser('ll', help="List files")
+        parser_ll = subparsers.add_parser('ll', help="list files")
         parser_ll.add_argument(
             'dir', help='directory path', nargs='?', default=os.getcwd())
         parser_ll.set_defaults(handler=self.ll)
         # trops touch
         parser_touch = subparsers.add_parser(
-            'touch', help="Add file in the git repo")
+            'touch', help="add/update file in the git repo")
         parser_touch.add_argument('path', help='path of file')
         parser_touch.set_defaults(handler=self.touch)
-        # trops untouch
-        parser_touch = subparsers.add_parser(
-            'untouch', help="Remove file from the git repo")
-        parser_touch.add_argument('path', help='path of file')
-        parser_touch.set_defaults(handler=self.untouch)
+        # trops bye
+        parser_bye = subparsers.add_parser(
+            'bye', help="remove file from the git repo")
+        parser_bye.add_argument('path', help='path of file')
+        parser_bye.set_defaults(handler=self.bye)
         # trops random-name
         parser_random_name = subparsers.add_parser(
             'random-name', help='generate random name')
