@@ -21,10 +21,13 @@ def real_path(path):
 
 def random_word(args, other_args):
 
-    with open('/usr/share/dict/american-english') as f:
-        word_list = f.read().split()
-    words = random.sample(word_list, args.number)
-
-    for i in range(len(words)):
-        words[i] = ''.join(e for e in words[i] if e.isalnum()).lower()
-    print('_'.join(words))
+    try:
+        with open('/usr/share/dict/words') as f:
+            word_list = f.read().split()
+        words = random.sample(word_list, args.number)
+        for i in range(len(words)):
+            words[i] = ''.join(e for e in words[i] if e.isalnum()).lower()
+        print('_'.join(words))
+    except FileNotFoundError:
+        cmd = ['shuf', '-i', '1-100000', '-n', '1']
+        subprocess.call(cmd)
