@@ -90,13 +90,11 @@ class Trops:
             with open(trops_bash_defaultrc, mode='w') as f:
                 lines = """\
                     export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
+                    export TROPS_SID=$(trops random-name)
 
-                    shopt -s histappend
-                    export HISTCONTROL=ignoreboth:erasedups
-                    PROMPT_COMMAND='trops log $(history 1);$PROMPT_COMMAND'
+                    PROMPT_COMMAND='trops log 1 $? $(history 1)'
 
                     alias trgit="trops git"
-                    alias trtouch="trops touch"
                     """
                 f.write(dedent(lines))
 
@@ -105,13 +103,13 @@ class Trops:
             with open(trops_zsh_defaultrc, mode='w') as f:
                 lines = """\
                     export TROPS_DIR=$(dirname $(realpath ${(%):-%N}))
+                    export TROPS_SID=$(trops random-name)
 
                     precmd() {
-                        trops log -i 1 $(history|tail -1)
+                        trops log 1 $? $(history|tail -1)
                     }
 
                     alias trgit="trops git"
-                    alias trtouch="trops touch"
                     """
                 f.write(dedent(lines))
 
@@ -201,9 +199,9 @@ class Trops:
             executed_cmd.pop(0)
 
         message = ' '.join(executed_cmd) + \
-            f"  # PWD={ os.environ['PWD'] },EXIT={ rc }"
-        if 'TROPS_SESSION_ID' in os.environ:
-            message = message + ',SESSION=' + os.environ['TROPS_SESSION_ID']
+            f"  # PWD={ os.environ['PWD'] }, EXIT={ rc }"
+        if 'TROPS_SID' in os.environ:
+            message = message + ', TROPS_SID=' + os.environ['TROPS_SID']
         if rc == 0:
             self.logger.info(message)
         else:
