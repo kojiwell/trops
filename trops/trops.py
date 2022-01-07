@@ -373,6 +373,41 @@ class Trops:
             self.logger.info(
                 f"trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  # O={ owner },G={ group },M={ mode }")
 
+    def untouch(self, args, other_args):
+        """Remove a file from the git repo"""
+
+        file_path = real_path(args.path)
+
+        # Check if the path exists
+        if not os.path.exists(file_path):
+            print(f"{ file_path } doesn't exists")
+            exit(1)
+        # TODO: Allow touch directory later
+        if not os.path.isfile(file_path):
+            message = f"""\
+                Error: { file_path } is not a file.
+                A directory is not allowed to be untouched"""
+            print(dedent(message))
+            exit(1)
+
+        # Check if the path is in the git repo
+        cmd = self.git_cmd + ['ls-files', file_path]
+        output = subprocess.check_output(cmd).decode("utf-8")
+        # Set the message based on the output
+        if output:
+            cmd = self.git_cmd + ['rm', '--cached', file_path]
+            subprocess.call(cmd)
+            message = f"Untouch { file_path }"
+            cmd = self.git_cmd + ['commit', '-m', message]
+            subprocess.call(cmd)
+        else:
+            message = f"{ file_path } is not in the git repo"
+            exit(1)
+        cmd = self.git_cmd + ['log', '--oneline', '-1', file_path]
+        output = subprocess.check_output(
+            cmd).decode("utf-8").split()
+        self.logger.info(f"trops git show { output[0] }")
+
     def _update_pkg_list(self, args):
 
         # Update the pkg_List
@@ -448,9 +483,14 @@ class Trops:
         parser_ll.set_defaults(handler=self.ll)
         # trops touch
         parser_touch = subparsers.add_parser(
-            'touch', help="Add file in git repo")
-        parser_touch.add_argument('path', help='path of file or directory')
+            'touch', help="Add file in the git repo")
+        parser_touch.add_argument('path', help='path of file')
         parser_touch.set_defaults(handler=self.touch)
+        # trops untouch
+        parser_touch = subparsers.add_parser(
+            'untouch', help="Remove file from the git repo")
+        parser_touch.add_argument('path', help='path of file')
+        parser_touch.set_defaults(handler=self.untouch)
         # trops random-word
         parser_random_word = subparsers.add_parser(
             'random-word', help='generate random word')
