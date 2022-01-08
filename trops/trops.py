@@ -61,7 +61,7 @@ class Trops:
 
         # set trops_dir
         if args.dir:
-            trops_dir = real_path(args.dir)
+            trops_dir = real_path(args.dir) + '/trops'
         elif 'TROPS_DIR' in os.environ:
             trops_dir = os.path.expandvars('$TROPS_DIR') + '/trops'
         else:
