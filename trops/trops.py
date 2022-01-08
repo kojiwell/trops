@@ -216,6 +216,7 @@ class Trops:
         self._yum_log(executed_cmd)
         self._apt_log(executed_cmd)
         self._update_files(executed_cmd)
+        # TODO: catch chmod and chown and log owner and permission
 
     def _yum_log(self, executed_cmd):
 
