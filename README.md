@@ -1,6 +1,10 @@
 # Trops - Track Operations
 
-Trops is a simple tool to track Linux system operations. It is basically a wrapper of Git to track updates of files on a Linux system. It is inspired by [The best way to store your dotfiles: A bare Git repository](https://www.atlassian.com/git/tutorials/dotfiles).
+Trops is a simple command-line tool to track Linux system operations. It is basically a wrapper of Git to track updates of files on a Linux system. It is inspired by [The best way to store your dotfiles: A bare Git repository](https://www.atlassian.com/git/tutorials/dotfiles).
+
+## Preriquisites
+
+- Python-3.7 or higher
 
 ## Installation
 
@@ -8,24 +12,42 @@ Trops is a simple tool to track Linux system operations. It is basically a wrapp
 pip install trops
 ```
 
-## Usage
+## Setup
 
 Set up a trops project directory
 
 ```
-trops init .
+trops init
 ```
 
 Set up the trops environment
 
 ```
-source trops/tropsrc
+# bash
+. ~/.trops/trops/bash_tropsrc
+# zsh
+. ~/.trops/trops/bash_tropsrc
 ```
 
-- `trops git` or `trgit` to add/commit/push updates
-- `trops edit` or `tredit/trvim` to edit a file
-- `trops log` or `trlog` to show log
+## Usage
 
-## Notes
+```
+trops -h         
+usage: trops [-h] {init,git,log,show-log,ll,touch,bye,random-name} ...
 
-- `trops log` only supports Bash. Zsh support will be added later.
+Trops - Tracking Operations
+
+positional arguments:
+  {init,git,log,show-log,ll,touch,bye,random-name}
+    init                initialize trops
+    git                 git wrapper
+    log                 log command
+    show-log            show log
+    ll                  list files
+    touch               add/update file in the git repo
+    bye                 remove file from the git repo
+    random-name         generate random name
+
+optional arguments:
+  -h, --help            show this help message and exit
+```
