@@ -5,6 +5,15 @@ Trops is a simple command-line tool to track Linux system operations. It is basi
 ## Preriquisites
 
 - Python-3.7 or higher
+- Git
+
+```
+# Ubuntu
+pip install python3 python3-pip git
+
+# CentOS
+TBD
+```
 
 ## Installation
 
