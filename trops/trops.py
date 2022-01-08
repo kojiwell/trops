@@ -216,7 +216,8 @@ class Trops:
         self._yum_log(executed_cmd)
         self._apt_log(executed_cmd)
         self._update_files(executed_cmd)
-        # TODO: catch chmod and chown and log owner and permission
+        # TODO: Catch chmod and chown and log owner and permission
+        # TODO: Show username and hostname in the log
 
     def _yum_log(self, executed_cmd):
 
@@ -436,21 +437,6 @@ class Trops:
         cmd = self.git_cmd + ['commit', '-m',
                               f'Update { pkg_list_file }', pkg_list_file]
         subprocess.call(cmd)
-
-    def container_create(self):
-        """Creates a container with trops directory mounted"""
-        # TODO: New feature
-        pass
-
-    def container_shell(self):
-        """Enther the shell of the container"""
-        # TODO: New feature
-        pass
-
-    def container_destroy(self):
-        """Destroy the container"""
-        # TODO: New feature
-        pass
 
     def main(self):
         """Get subcommand and arguments and pass them to the hander"""
