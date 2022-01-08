@@ -179,6 +179,9 @@ class Trops:
         NOTE: You need to set PROMPT_COMMAND in bash as shown below:
         PROMPT_COMMAND='trops log $(history 1)'"""
 
+        # TODO: Rename fuction something else (maybe capture-cls) because it
+        # is confused with trops show-log.
+
         rc = args.return_code
 
         executed_cmd = other_args
