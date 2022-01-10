@@ -8,6 +8,8 @@ from configparser import ConfigParser, NoSectionError, NoOptionError
 from textwrap import dedent
 from datetime import datetime
 from pathlib import Path
+from getpass import getuser
+from socket import gethostname
 
 from trops.utils import real_path, random_name
 
@@ -57,7 +59,10 @@ class Trops:
             except KeyError:
                 pass
 
-        logging.basicConfig(format='%(asctime)s %(levelname)s  %(message)s',
+        username = getuser()
+        hostname = gethostname()
+
+        logging.basicConfig(format=f'%(asctime)s {username}@{hostname} %(levelname)s  %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S',
                             filename=self.trops_dir + '/log/trops.log',
                             level=logging.DEBUG)
