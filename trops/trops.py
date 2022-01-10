@@ -180,7 +180,7 @@ class Trops:
         cmd = self.git_cmd + other_args
         subprocess.call(cmd)
 
-    def log(self, args, other_args):
+    def capture_cmd(self, args, other_args):
         """\
         log executed command
         NOTE: You need to set PROMPT_COMMAND in bash as shown below:
@@ -323,7 +323,7 @@ class Trops:
                     else:
                         print('No update')
 
-    def show_log(self, args, other_args):
+    def log(self, args, other_args):
 
         log_file = self.trops_dir + '/log/trops.log'
 
@@ -468,22 +468,22 @@ class Trops:
                                 action='store_true')
         parser_git.set_defaults(handler=self.git)
         # trops log <ignore_fields> <return_code> <command>
-        parser_log = subparsers.add_parser(
-            'log', help='log command', add_help=False)
-        parser_log.add_argument('ignore_fields', type=int,
-                                default=1, help='set number of fields to ingore')
-        parser_log.add_argument('return_code', type=int,
-                                default=0, help='set return code')
-        parser_log.set_defaults(handler=self.log)
+        parser_capture_cmd = subparsers.add_parser(
+            'capture-cmd', help='Capture command line strings', add_help=False)
+        parser_capture_cmd.add_argument('ignore_fields', type=int,
+                                        default=1, help='set number of fields to ingore')
+        parser_capture_cmd.add_argument('return_code', type=int,
+                                        default=0, help='set return code')
+        parser_capture_cmd.set_defaults(handler=self.capture_cmd)
         # trops show-log
-        parser_show_log = subparsers.add_parser('show-log', help='show log')
-        parser_show_log.add_argument(
+        parser_log = subparsers.add_parser('log', help='show log')
+        parser_log.add_argument(
             '-t', '--tail', type=int, help='set number of lines to show')
-        parser_show_log.add_argument(
+        parser_log.add_argument(
             '-f', '--follow', action='store_true', help='follow log interactively')
-        parser_show_log.add_argument(
+        parser_log.add_argument(
             '-a', '--all', action='store_true', help='show all log')
-        parser_show_log.set_defaults(handler=self.show_log)
+        parser_log.set_defaults(handler=self.log)
         # trops ll
         parser_ll = subparsers.add_parser('ll', help="list files")
         parser_ll.add_argument(
