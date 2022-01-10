@@ -81,7 +81,7 @@ class Trops:
         print(f'  git-dir = {self.git_dir}')
         print(f'  work-tree = {self.work_tree}')
 
-    def initialize(self, args, unkown):
+    def env_init(self, args, unkown):
         """Setup trops project"""
 
         # set trops_dir
@@ -95,15 +95,15 @@ class Trops:
         trops_bash_defaultrc = trops_dir + '/bash_defaultrc'
         trops_zsh_defaultrc = trops_dir + '/zsh_defaultrc'
         trops_conf = trops_dir + '/trops.cfg'
-        trops_git_dir = trops_dir + '/default.git'
+        trops_git_dir = trops_dir + f'/{ args.env }.git'
         trops_log_dir = trops_dir + '/log'
 
         # Create the directory if it doesn't exist
-        try:
-            os.mkdir(trops_dir)
-        except FileExistsError:
-            print(f"{ trops_dir } already exists")
-            exit(1)
+        # try:
+        #    os.mkdir(trops_dir)
+        # except FileExistsError:
+        #    print(f"{ trops_dir } already exists")
+        #    exit(1)
 
         # Create TROPS_DIR/history
         history_dir = trops_dir + '/history'
@@ -141,10 +141,10 @@ class Trops:
         # TODO: Maybe "sudo = False" should be "sudo_git = False"?
         # Create trops.cfg file if it doesn't exists
         config = ConfigParser()
-        config['default'] = {'git_dir': '$TROPS_DIR/default.git',
-                             'sudo': 'False',
-                             'work_tree': f'{ args.work_tree }'}
-        with open(trops_conf, mode='w') as configfile:
+        config[args.env] = {'git_dir': f'$TROPS_DIR/{ args.env }.git',
+                            'sudo': 'False',
+                            'work_tree': f'{ args.work_tree }'}
+        with open(trops_conf, mode='a') as configfile:
             config.write(configfile)
 
         # Create trops's bare git directory
@@ -470,19 +470,22 @@ class Trops:
         parser = argparse.ArgumentParser(
             description='Trops - Tracking Operations')
         subparsers = parser.add_subparsers()
-        # trops init <dir>
-        parser_init = subparsers.add_parser('init', help='initialize trops')
-        parser_init.add_argument(
-            'dir', help='trops directory', nargs='?', default='$HOME/.trops')
-        parser_init.add_argument(
-            '-w', '--work-tree', default='/', help='Set work-tree')
-        parser_init.set_defaults(handler=self.initialize)
         # trops env
         parser_env = subparsers.add_parser('env', help='initialize trops')
         env_subparsers = parser_env.add_subparsers()
         perser_env_show = env_subparsers.add_parser(
             'show', help='show the current environment')
         perser_env_show.set_defaults(handler=self.env_show)
+        # trops env init <dir>
+        parser_env_init = env_subparsers.add_parser(
+            'init', help='initialize trops')
+        parser_env_init.add_argument(
+            'dir', help='trops directory', nargs='?', default='$HOME/.trops')
+        parser_env_init.add_argument(
+            '-w', '--work-tree', default='/', help='Set work-tree')
+        parser_env_init.add_argument(
+            '-e', '--env', default='default', help='Set environment name')
+        parser_env_init.set_defaults(handler=self.env_init)
         # trops git <file/dir>
         parser_git = subparsers.add_parser('git', help='git wrapper')
         parser_git.add_argument('-s', '--sudo', help="Use sudo",
