@@ -117,7 +117,7 @@ class Trops:
                     export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
                     export TROPS_SID=$(trops random-name)
 
-                    PROMPT_COMMAND='trops log 1 $? $(history 1)'
+                    PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
 
                     alias trgit="trops git"
                     """
@@ -131,7 +131,7 @@ class Trops:
                     export TROPS_SID=$(trops random-name)
 
                     precmd() {
-                        trops log 1 $? $(history|tail -1)
+                        trops capture-cmd 1 $? $(history|tail -1)
                     }
 
                     alias trgit="trops git"
@@ -140,6 +140,8 @@ class Trops:
 
         # TODO: Maybe "sudo = False" should be "sudo_git = False"?
         # Create trops.cfg file if it doesn't exists
+        # TODO: Ensure the env config doesn't exist before actually
+        # adding it
         config = ConfigParser()
         config[args.env] = {'git_dir': f'$TROPS_DIR/{ args.env }.git',
                             'sudo': 'False',
