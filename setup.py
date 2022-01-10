@@ -12,7 +12,7 @@ setup(
     author="Koji Tanaka",
     author_email="kojiwelly@gmail.com",
     description=("Track operations"),
-    long_description_content_type="Markdown",
+    long_description_content_type="text/markdown",
     license="MIT",
     keywords="linux system administration",
     url="http://github.com/kojiwell/trops",
