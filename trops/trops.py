@@ -18,11 +18,12 @@ class Trops:
     def __init__(self):
 
         self.config = ConfigParser()
+        # Set trops_dir
         if 'TROPS_DIR' in os.environ:
             self.trops_dir = os.path.expandvars('$TROPS_DIR')
         else:
             self.trops_dir = os.path.expandvars('$HOME/.trops')
-
+        # Set trops_env
         if 'TROPS_ENV' in os.environ:
             self.trops_env = os.environ['TROPS_ENV']
         else:
@@ -125,7 +126,7 @@ class Trops:
             with open(trops_conf, mode='w') as f:
                 default_conf = f"""\
                     [default]
-                    git_dir = { trops_dir }/default.git
+                    git_dir = $TROPS_DIR/default.git
                     sudo = False
                     work_tree = { args.work_tree }
                     """
