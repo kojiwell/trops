@@ -7,56 +7,30 @@ Trops is a simple command-line tool to track Linux system operations. It is basi
 - Python-3.7 or higher
 - Git
 
-```
-# Ubuntu
-pip install python3 python3-pip git
+Ubuntu
 
-# CentOS
-TBD
-```
+    apt install python3 python3-pip git
+
+CentOS
+
+    TBD
 
 ## Installation
 
-```
-pip install trops
-```
+    pip install trops
 
 ## Setup
 
 Set up a trops project directory
 
-```
-trops init
-```
+    trops init
 
 Set up the trops environment
 
-```
-# bash
-. ~/.trops/trops/bash_tropsrc
-# zsh
-. ~/.trops/trops/bash_tropsrc
-```
+    # bash
+    . ~/.trops/trops/bash_tropsrc
+    
+    # zsh
+    . ~/.trops/trops/zsh_tropsrc
 
 ## Usage
-
-```
-trops -h         
-usage: trops [-h] {init,git,log,show-log,ll,touch,bye,random-name} ...
-
-Trops - Tracking Operations
-
-positional arguments:
-  {init,git,log,show-log,ll,touch,bye,random-name}
-    init                initialize trops
-    git                 git wrapper
-    log                 log command
-    show-log            show log
-    ll                  list files
-    touch               add/update file in the git repo
-    bye                 remove file from the git repo
-    random-name         generate random name
-
-optional arguments:
-  -h, --help            show this help message and exit
-```
