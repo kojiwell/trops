@@ -18,6 +18,7 @@ setup(
     url="http://github.com/kojiwell/trops",
     packages=['trops'],
     long_description=read('README.md'),
+    python_requires='>=3.8',
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
