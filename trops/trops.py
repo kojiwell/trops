@@ -22,18 +22,24 @@ class Trops:
             self.trops_dir = os.path.expandvars('$TROPS_DIR')
         else:
             self.trops_dir = os.path.expandvars('$HOME/.trops')
+
+        if 'TROPS_ENV' in os.environ:
+            self.trops_env = os.environ['TROPS_ENV']
+        else:
+            self.trops_env = 'default'
+
         self.conf_file = self.trops_dir + '/trops.cfg'
         if os.path.isfile(self.conf_file):
             self.config.read(self.conf_file)
             try:
                 self.git_dir = os.path.expandvars(
-                    self.config['defaults']['git_dir'])
+                    self.config[self.trops_env]['git_dir'])
             except KeyError:
                 print('git_dir does not exist in your configuration file')
                 exit(1)
             try:
                 self.work_tree = os.path.expandvars(
-                    self.config['defaults']['work_tree'])
+                    self.config[self.trops_env]['work_tree'])
             except KeyError:
                 print('work_tree does not exist in your configuration file')
                 exit(1)
@@ -44,7 +50,7 @@ class Trops:
                 pass
             try:
                 self.sudo = distutils.util.strtobool(
-                    self.config['defaults']['sudo'])
+                    self.config[self.trops_env]['sudo'])
                 if self.sudo:
                     self.git_cmd = ['sudo'] + self.git_cmd
             except KeyError:
@@ -118,7 +124,7 @@ class Trops:
         if not os.path.isfile(trops_conf):
             with open(trops_conf, mode='w') as f:
                 default_conf = f"""\
-                    [defaults]
+                    [default]
                     git_dir = { trops_dir }/default.git
                     sudo = False
                     work_tree = { args.work_tree }
@@ -294,23 +300,27 @@ class Trops:
                     else:
                         git_msg = f"Add { ii_path }"
                         log_note = 'ADD'
-                    # Add and commit
+                    # Add the file and commit
                     cmd = self.git_cmd + ['add', ii_path]
-                    # TODO: Switch from subprocess.call to something else
-                    # and capture stdout, stderr, and rc to print a better
-                    # message
-                    subprocess.call(cmd)
+                    result = subprocess.run(cmd, capture_output=True)
                     cmd = self.git_cmd + ['commit', '-m', git_msg, ii_path]
-                    subprocess.call(cmd)
-                    cmd = self.git_cmd + ['log', '--oneline', '-1', ii_path]
-                    output = subprocess.check_output(
-                        cmd).decode("utf-8").split()
-                    if ii_path in output:
-                        mode = oct(os.stat(ii_path).st_mode)[-4:]
-                        owner = Path(ii_path).owner()
-                        group = Path(ii_path).group()
-                        self.logger.info(
-                            f"trops git show { output[0] }:{ real_path(ii_path).lstrip('/')}  # { log_note }, O={ owner },G={ group },M={ mode }")
+                    result = subprocess.run(cmd, capture_output=True)
+                    # If there's an update, log it in the log file
+                    if result.returncode == 0:
+                        msg = result.stdout.decode('utf-8').splitlines()[0]
+                        print(msg)
+                        cmd = self.git_cmd + \
+                            ['log', '--oneline', '-1', ii_path]
+                        output = subprocess.check_output(
+                            cmd).decode("utf-8").split()
+                        if ii_path in output:
+                            mode = oct(os.stat(ii_path).st_mode)[-4:]
+                            owner = Path(ii_path).owner()
+                            group = Path(ii_path).group()
+                            self.logger.info(
+                                f"trops git show { output[0] }:{ real_path(ii_path).lstrip('/')}  # { log_note }, O={ owner },G={ group },M={ mode }")
+                    else:
+                        print('No update')
 
     def show_log(self, args, other_args):
 
