@@ -140,15 +140,12 @@ class Trops:
 
         # TODO: Maybe "sudo = False" should be "sudo_git = False"?
         # Create trops.cfg file if it doesn't exists
-        if not os.path.isfile(trops_conf):
-            with open(trops_conf, mode='w') as f:
-                default_conf = f"""\
-                    [default]
-                    git_dir = $TROPS_DIR/default.git
-                    sudo = False
-                    work_tree = { args.work_tree }
-                    """
-                f.write(dedent(default_conf))
+        config = ConfigParser()
+        config['default'] = {'git_dir': '$TROPS_DIR/default.git',
+                             'sudo': 'False',
+                             'work_tree': f'{ args.work_tree }'}
+        with open(trops_conf, mode='w') as configfile:
+            config.write(configfile)
 
         # Create trops's bare git directory
         if not os.path.isdir(trops_git_dir):
