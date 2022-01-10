@@ -63,6 +63,19 @@ class Trops:
                             level=logging.DEBUG)
         self.logger = logging.getLogger()
 
+    def env_show(self, args, other_args):
+
+        print('ENV')
+        print(f"  TROPS_DIR = {os.environ['TROPS_DIR']}")
+        try:
+            print(f"  TROPS_ENV = {os.environ['TROPS_ENV']}")
+        except KeyError:
+            print('  TROPS_ENV = None')
+        print(f"  TROPS_SID = {os.environ['TROPS_SID']}")
+        print('Git')
+        print(f'  git-dir = {self.git_dir}')
+        print(f'  work-tree = {self.work_tree}')
+
     def initialize(self, args, unkown):
         """Setup trops project"""
 
@@ -462,6 +475,12 @@ class Trops:
         parser_init.add_argument(
             '-w', '--work-tree', default='/', help='Set work-tree')
         parser_init.set_defaults(handler=self.initialize)
+        # trops env
+        parser_env = subparsers.add_parser('env', help='initialize trops')
+        env_subparsers = parser_env.add_subparsers()
+        perser_env_show = env_subparsers.add_parser(
+            'show', help='show the current environment')
+        perser_env_show.set_defaults(handler=self.env_show)
         # trops git <file/dir>
         parser_git = subparsers.add_parser('git', help='git wrapper')
         parser_git.add_argument('-s', '--sudo', help="Use sudo",
