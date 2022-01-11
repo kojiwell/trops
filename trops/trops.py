@@ -69,19 +69,6 @@ class Trops:
                             level=logging.DEBUG)
         self.logger = logging.getLogger()
 
-    def env_show(self, args, other_args):
-
-        print('ENV')
-        print(f"  TROPS_DIR = {os.environ['TROPS_DIR']}")
-        try:
-            print(f"  TROPS_ENV = {os.environ['TROPS_ENV']}")
-        except KeyError:
-            print('  TROPS_ENV = None')
-        print(f"  TROPS_SID = {os.environ['TROPS_SID']}")
-        print('Git')
-        print(f'  git-dir = {self.git_dir}')
-        print(f'  work-tree = {self.work_tree}')
-
     def env_init(self, args, unkown):
         """Setup trops project"""
 
