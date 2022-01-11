@@ -117,7 +117,11 @@ class TropsEnv:
         self.trops_conf = self.trops_dir + '/trops.cfg'
 
         print('ENV')
-        print(f"  TROPS_DIR = {os.environ['TROPS_DIR']}")
+        try:
+            print(f"  TROPS_DIR = {os.environ['TROPS_DIR']}")
+        except KeyError:
+            print(f"  {os.environ['TROPS_DIR']} = None")
+            exit(1)
         try:
             print(f"  TROPS_ENV = {os.environ['TROPS_ENV']}")
             trops_env = os.environ['TROPS_ENV']
