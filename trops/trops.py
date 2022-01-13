@@ -72,6 +72,8 @@ class Trops:
     def env_init(self, args, other_args):
         """Setup trops project"""
 
+        # TODO: Pass env to Class instead to the env_init
+        # and set vars in TropsEnv.__init__()
         trenv = TropsEnv()
         trenv.env_init(args, other_args)
 
