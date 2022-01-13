@@ -1,4 +1,5 @@
 import os
+import subprocess
 from configparser import ConfigParser
 from textwrap import dedent
 
@@ -93,8 +94,8 @@ class TropsEnv:
         if os.path.isfile(self.trops_conf):
             config.read(self.trops_conf)
             if config.has_section(self.trops_env):
-                print(f"The '{ self.trops_env }' environment already exists")
-                exit(1)
+                print(
+                    f"The '{ self.trops_env }' environment already exists on { self.trops_conf }")
 
         config[self.trops_env] = {'git_dir': f'$TROPS_DIR/{ self.trops_env }.git',
                                   'sudo': 'False',
@@ -102,13 +103,54 @@ class TropsEnv:
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
 
-    def run(self, args, other_args):
+    def _setup_bare_git_repo(self):
+
+        # Create trops's bare git directory
+        if not os.path.isdir(self.trops_git_dir):
+            cmd = ['git', 'init', '--bare', self.trops_git_dir]
+            result = subprocess.run(cmd, capture_output=True)
+            if result.returncode == 0:
+                print(result.stdout.decode('utf-8'))
+            else:
+                print(result.stderr.decode('utf-8'))
+                exit(result.returncode)
+
+        # Prepare for updating trops.git/config
+        git_cmd = ['git', '--git-dir=' + self.trops_git_dir]
+        git_conf = ConfigParser()
+        git_conf.read(self.trops_git_dir + '/config')
+        # Set "status.showUntrackedFiles no" locally
+        if not git_conf.has_option('status', 'showUntrackedFiles'):
+            cmd = git_cmd + ['config', '--local',
+                             'status.showUntrackedFiles', 'no']
+            subprocess.call(cmd)
+        # Set $USER as user.name
+        if not git_conf.has_option('user', 'name'):
+            username = os.environ['USER']
+            cmd = git_cmd + ['config', '--local', 'user.name', username]
+            subprocess.call(cmd)
+        # Set $USER@$HOSTNAME as user.email
+        if not git_conf.has_option('user', 'email'):
+            useremail = username + '@' + os.uname().nodename
+            cmd = git_cmd + ['config', '--local', 'user.email', useremail]
+            subprocess.call(cmd)
+
+        # TODO: branch name should become an option, too
+        # Set branch name as trops
+        cmd = git_cmd + ['branch', '--show-current']
+        branch_name = subprocess.check_output(cmd).decode("utf-8")
+        if 'trops' not in branch_name:
+            cmd = git_cmd + ['--work-tree=/', 'checkout', '-b', 'trops']
+            subprocess.call(cmd)
+
+    def env_init(self, args, other_args):
 
         self._setup_initial_trops_dir(args)
         self._setup_vars(args)
         self._setup_dirs()
         self._setup_rcfiles()
         self._setup_trops_conf()
+        self._setup_bare_git_repo()
         print(f'trops_dir = { self.trops_dir }')
 
     def show(self, args, other_args):

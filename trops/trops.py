@@ -69,115 +69,11 @@ class Trops:
                             level=logging.DEBUG)
         self.logger = logging.getLogger()
 
-    def env_init(self, args, unkown):
+    def env_init(self, args, other_args):
         """Setup trops project"""
 
-        # set trops_dir
-        if args.dir:
-            trops_dir = real_path(args.dir) + '/trops'
-        elif 'TROPS_DIR' in os.environ:
-            trops_dir = os.path.expandvars('$TROPS_DIR') + '/trops'
-        else:
-            trops_dir = os.path.expandvars('$HOME') + '/.trops'
-
-        trops_bash_defaultrc = trops_dir + '/bash_defaultrc'
-        trops_zsh_defaultrc = trops_dir + '/zsh_defaultrc'
-        trops_conf = trops_dir + '/trops.cfg'
-        trops_git_dir = trops_dir + f'/{ args.env }.git'
-        trops_log_dir = trops_dir + '/log'
-
-        # Create the directory if it doesn't exist
-        try:
-            os.mkdir(trops_dir)
-        except FileExistsError:
-            print(f"{ trops_dir } already exists")
-        #    exit(1)
-
-        # Create TROPS_DIR/history
-        history_dir = trops_dir + '/history'
-        if not os.path.isdir(history_dir):
-            os.mkdir(history_dir)
-
-        # Create bash_defaultrc file if it doesn't exist
-        if not os.path.isfile(trops_bash_defaultrc):
-            with open(trops_bash_defaultrc, mode='w') as f:
-                lines = """\
-                    export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
-                    export TROPS_SID=$(trops random-name)
-
-                    PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
-
-                    alias trgit="trops git"
-                    """
-                f.write(dedent(lines))
-
-        # Create zsh_defaultrc file if it doesn't exist
-        if not os.path.isfile(trops_zsh_defaultrc):
-            with open(trops_zsh_defaultrc, mode='w') as f:
-                lines = """\
-                    export TROPS_DIR=$(dirname $(realpath ${(%):-%N}))
-                    export TROPS_SID=$(trops random-name)
-
-                    precmd() {
-                        trops capture-cmd 1 $? $(history|tail -1)
-                    }
-
-                    alias trgit="trops git"
-                    """
-                f.write(dedent(lines))
-
-        # TODO: Maybe "sudo = False" should be "sudo_git = False"?
-        # Create trops.cfg file if it doesn't exists
-        # TODO: Ensure the env config doesn't exist before actually
-        # adding it
-        config = ConfigParser()
-        config[args.env] = {'git_dir': f'$TROPS_DIR/{ args.env }.git',
-                            'sudo': 'False',
-                            'work_tree': f'{ args.work_tree }'}
-        with open(trops_conf, mode='a') as configfile:
-            config.write(configfile)
-
-        # Create trops's bare git directory
-        if not os.path.isdir(trops_git_dir):
-            cmd = ['git', 'init', '--bare', trops_git_dir]
-            result = subprocess.run(cmd, capture_output=True)
-            if result.returncode == 0:
-                print(result.stdout.decode('utf-8'))
-            else:
-                print(result.stderr.decode('utf-8'))
-                exit(result.returncode)
-
-        # Create trops_dir/log
-        if not os.path.isdir(trops_log_dir):
-            os.mkdir(trops_log_dir)
-
-        # Prepare for updating trops.git/config
-        git_cmd = ['git', '--git-dir=' + trops_git_dir, 'config', '--local']
-        git_conf = ConfigParser()
-        git_conf.read(trops_git_dir + '/config')
-        # Set "status.showUntrackedFiles no" locally
-        if not git_conf.has_option('status', 'showUntrackedFiles'):
-            cmd = git_cmd + ['status.showUntrackedFiles', 'no']
-            subprocess.call(cmd)
-        # Set $USER as user.name
-        if not git_conf.has_option('user', 'name'):
-            username = os.environ['USER']
-            cmd = git_cmd + ['user.name', username]
-            subprocess.call(cmd)
-        # Set $USER@$HOSTNAME as user.email
-        if not git_conf.has_option('user', 'email'):
-            useremail = username + '@' + os.uname().nodename
-            cmd = git_cmd + ['user.email', useremail]
-            subprocess.call(cmd)
-
-        # TODO: branch name should become an option, too
-        # Set branch name as trops
-        cmd = ['git', '--git-dir=' + trops_git_dir, 'branch', '--show-current']
-        branch_name = subprocess.check_output(cmd).decode("utf-8")
-        if 'trops' not in branch_name:
-            cmd = ['git', '--git-dir=' + trops_git_dir, '--work-tree=/',
-                   'checkout', '-b', 'trops']
-            subprocess.call(cmd)
+        trenv = TropsEnv()
+        trenv.env_init(args, other_args)
 
     def env_update(self, args, other_args):
 
@@ -502,17 +398,7 @@ class Trops:
         parser_env_init.add_argument(
             '-e', '--env', default='default', help='Set environment name')
         parser_env_init.set_defaults(handler=self.env_init)
-        # trops env devinit <dir>
-        parser_env_devinit = env_subparsers.add_parser(
-            'devinit', help='initialize trops environment')
-        parser_env_devinit.add_argument(
-            'dir', help='trops directory', nargs='?', default='$HOME/.trops')
-        parser_env_devinit.add_argument(
-            '-w', '--work-tree', default='/', help='Set work-tree')
-        parser_env_devinit.add_argument(
-            '-e', '--env', default='default', help='Set environment name')
-        parser_env_devinit.set_defaults(handler=trops_env.run)
-        # trops env init <dir>
+        # trops env update <dir>
         parser_env_update = env_subparsers.add_parser(
             'update', help='update trops environment')
         parser_env_update.add_argument(
