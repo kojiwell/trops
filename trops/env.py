@@ -134,8 +134,10 @@ class TropsEnv:
         # Set branch name as trops
         cmd = git_cmd + ['branch', '--show-current']
         branch_name = subprocess.check_output(cmd).decode("utf-8")
-        if 'trops' not in branch_name:
-            cmd = git_cmd + ['--work-tree=/', 'checkout', '-b', 'trops']
+        new_branch_name = 'trops_' + self.trops_env
+        if new_branch_name not in branch_name:
+            cmd = git_cmd + ['--work-tree=/',
+                             'checkout', '-b', new_branch_name]
             subprocess.call(cmd)
 
     def initialize(self):
