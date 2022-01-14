@@ -315,9 +315,15 @@ class Trops:
                 f"trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  # { log_note } O={ owner },G={ group },M={ mode }")
 
     def bye(self, args, other_args):
+
+        for file_path in args.paths:
+
+            self._bye_file(file_path)
+
+    def _bye_file(self, file_path):
         """Remove a file from the git repo"""
 
-        file_path = real_path(args.path)
+        file_path = real_path(file_path)
 
         # Check if the path exists
         if not os.path.exists(file_path):
@@ -327,7 +333,7 @@ class Trops:
         if not os.path.isfile(file_path):
             message = f"""\
                 Error: { file_path } is not a file.
-                A directory is not allowed to be untouched"""
+                A directory is not allowed to say goodbye"""
             print(dedent(message))
             exit(1)
 
@@ -338,7 +344,7 @@ class Trops:
         if output:
             cmd = self.git_cmd + ['rm', '--cached', file_path]
             subprocess.call(cmd)
-            message = f"Untouch { file_path }"
+            message = f"Goodbye { file_path }"
             cmd = self.git_cmd + ['commit', '-m', message]
             subprocess.call(cmd)
         else:
@@ -435,7 +441,7 @@ class Trops:
         # trops bye
         parser_bye = subparsers.add_parser(
             'bye', help="remove file from the git repo")
-        parser_bye.add_argument('path', help='path of file')
+        parser_bye.add_argument('paths', nargs='+', help='path of file')
         parser_bye.set_defaults(handler=self.bye)
         # trops random-name
         parser_random_name = subparsers.add_parser(
