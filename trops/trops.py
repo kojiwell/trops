@@ -73,7 +73,7 @@ class Trops:
         """Setup trops project"""
 
         trenv = TropsEnv(args, other_args)
-        trenv.env_init()
+        trenv.initialize()
 
     def env_show(self, args, other_args):
 
@@ -82,27 +82,9 @@ class Trops:
 
     def env_update(self, args, other_args):
 
-        config = ConfigParser()
-
-        if args.dir:
-            trops_dir = real_path(args.dir) + '/trops'
-        elif 'TROPS_DIR' in os.environ:
-            trops_dir = os.path.expandvars('$TROPS_DIR') + '/trops'
-        else:
-            trops_dir = os.path.expandvars('$HOME') + '/.trops'
-
-        trops_conf = trops_dir + '/trops.cfg'
-        trops_bashrc_file = trops_dir + f'/bash_{ args.env }rc'
-        trops_zshrc_file = trops_dir + f'/zsh_{ args.env }rc'
-        trops_git_dir = trops_dir + f'/{ args.env }.git'
-        trops_log_dir = trops_dir + '/log'
-        config.read(trops_conf)
-        if args.work_tree:
-            config.set(args.env, 'work_tree', args.work_tree)
-        if args.git_dir:
-            config.set(args.env, 'git_dir', args.git_dir)
-        with open(trops_conf, 'w') as configfile:
-            config.write(configfile)
+        print(args)
+        trenv = TropsEnv(args, other_args)
+        trenv.update()
 
     def git(self, args, other_args):
         """Git wrapper command"""
@@ -404,8 +386,6 @@ class Trops:
         # trops env update <dir>
         parser_env_update = env_subparsers.add_parser(
             'update', help='update trops environment')
-        parser_env_update.add_argument(
-            'dir', help='trops directory', nargs='?', default='$HOME/.trops')
         parser_env_update.add_argument(
             '-w', '--work-tree', help='work-tree')
         parser_env_update.add_argument(

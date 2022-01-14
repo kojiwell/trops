@@ -32,7 +32,6 @@ class TropsEnv:
             self.trops_git_dir = self.trops_dir + f'/{ self.trops_env }.git'
         except AttributeError:
             pass
-
         self.trops_conf = self.trops_dir + '/trops.cfg'
         self.trops_log_dir = self.trops_dir + '/log'
 
@@ -139,13 +138,27 @@ class TropsEnv:
             cmd = git_cmd + ['--work-tree=/', 'checkout', '-b', 'trops']
             subprocess.call(cmd)
 
-    def env_init(self):
+    def initialize(self):
 
         self._setup_dirs()
         self._setup_rcfiles()
         self._setup_trops_conf()
         self._setup_bare_git_repo()
-        print(f'trops_dir = { self.trops_dir }')
+
+    def update(self):
+
+        config = ConfigParser()
+        if os.path.isfile(self.trops_conf):
+            config.read(self.trops_conf)
+            if not config.has_section(self.trops_env):
+                print(
+                    f"The '{ self.trops_env }' environment does not exists on { self.trops_conf }")
+
+        config[self.trops_env] = {'git_dir': f'$TROPS_DIR/{ self.trops_env }.git',
+                                  'sudo': 'False',
+                                  'work_tree': f'{ self.trops_work_tree }'}
+        with open(self.trops_conf, mode='w') as configfile:
+            config.write(configfile)
 
     def show(self):
 
