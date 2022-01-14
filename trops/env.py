@@ -8,37 +8,33 @@ from trops.utils import real_path
 
 class TropsEnv:
 
-    def __init__(self):
+    def __init__(self, args, other_args):
         # NOTE: The args.handler cannot pass args to the class,
         # so I use self._setup_vars() instead.
-        pass
-
-    def _setup_initial_trops_dir(self, args):
-
-        if args.dir:
+        try:
             self.trops_dir = real_path(args.dir) + '/trops'
-        elif 'TROPS_DIR' in os.environ:
-            self.trops_dir = os.path.expandvars('$TROPS_DIR') + '/trops'
-        else:
-            self.trops_dir = os.path.expandvars('$HOME') + '/.trops'
-
-    def _read_env_trops_dir(self):
-
-        if 'TROPS_DIR' in os.environ:
+        except AttributeError:
             self.trops_dir = os.path.expandvars('$TROPS_DIR')
-        else:
+        except:
             print('TROPS_ENV does not exists')
             exit(1)
 
-    def _setup_vars(self, args):
+        try:
+            self.trops_work_tree = args.work_tree
+        except AttributeError:
+            pass
+        try:
+            self.trops_env = args.env
+            self.trops_bash_rcfile = self.trops_dir + \
+                f'/bash_{ self.trops_env }rc'
+            self.trops_zsh_rcfile = self.trops_dir + \
+                f'/zsh_{ self.trops_env }rc'
+            self.trops_git_dir = self.trops_dir + f'/{ self.trops_env }.git'
+        except AttributeError:
+            pass
 
         self.trops_conf = self.trops_dir + '/trops.cfg'
         self.trops_log_dir = self.trops_dir + '/log'
-        self.trops_work_tree = args.work_tree
-        self.trops_env = args.env
-        self.trops_bash_rcfile = self.trops_dir + f'/bash_{ self.trops_env }rc'
-        self.trops_zsh_rcfile = self.trops_dir + f'/zsh_{ self.trops_env }rc'
-        self.trops_git_dir = self.trops_dir + f'/{ self.trops_env }.git'
 
     def _setup_dirs(self):
 
@@ -143,19 +139,16 @@ class TropsEnv:
             cmd = git_cmd + ['--work-tree=/', 'checkout', '-b', 'trops']
             subprocess.call(cmd)
 
-    def env_init(self, args, other_args):
+    def env_init(self):
 
-        self._setup_initial_trops_dir(args)
-        self._setup_vars(args)
         self._setup_dirs()
         self._setup_rcfiles()
         self._setup_trops_conf()
         self._setup_bare_git_repo()
         print(f'trops_dir = { self.trops_dir }')
 
-    def show(self, args, other_args):
+    def show(self):
 
-        self._read_env_trops_dir()
         self.trops_conf = self.trops_dir + '/trops.cfg'
 
         print('ENV')

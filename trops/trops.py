@@ -72,10 +72,13 @@ class Trops:
     def env_init(self, args, other_args):
         """Setup trops project"""
 
-        # TODO: Pass env to Class instead to the env_init
-        # and set vars in TropsEnv.__init__()
-        trenv = TropsEnv()
-        trenv.env_init(args, other_args)
+        trenv = TropsEnv(args, other_args)
+        trenv.env_init()
+
+    def env_show(self, args, other_args):
+
+        trenv = TropsEnv(args, other_args)
+        trenv.show()
 
     def env_update(self, args, other_args):
 
@@ -379,8 +382,6 @@ class Trops:
     def main(self):
         """Get subcommand and arguments and pass them to the hander"""
 
-        trops_env = TropsEnv()
-
         parser = argparse.ArgumentParser(
             description='Trops - Tracking Operations')
         subparsers = parser.add_subparsers()
@@ -389,12 +390,12 @@ class Trops:
         env_subparsers = parser_env.add_subparsers()
         perser_env_show = env_subparsers.add_parser(
             'show', help='show the current environment')
-        perser_env_show.set_defaults(handler=trops_env.show)
+        perser_env_show.set_defaults(handler=self.env_show)
         # trops env init <dir>
         parser_env_init = env_subparsers.add_parser(
             'init', help='initialize trops environment')
         parser_env_init.add_argument(
-            'dir', help='trops directory', nargs='?', default='$HOME/.trops')
+            'dir', help='trops directory')
         parser_env_init.add_argument(
             '-w', '--work-tree', default='/', help='Set work-tree')
         parser_env_init.add_argument(
@@ -417,7 +418,7 @@ class Trops:
         parser_git.add_argument('-s', '--sudo', help="Use sudo",
                                 action='store_true')
         parser_git.set_defaults(handler=self.git)
-        # trops log <ignore_fields> <return_code> <command>
+        # trops capture-cmd <ignore_fields> <return_code> <command>
         parser_capture_cmd = subparsers.add_parser(
             'capture-cmd', help='Capture command line strings', add_help=False)
         parser_capture_cmd.add_argument('ignore_fields', type=int,
@@ -425,7 +426,7 @@ class Trops:
         parser_capture_cmd.add_argument('return_code', type=int,
                                         default=0, help='set return code')
         parser_capture_cmd.set_defaults(handler=self.capture_cmd)
-        # trops show-log
+        # trops log
         parser_log = subparsers.add_parser('log', help='show log')
         parser_log.add_argument(
             '-t', '--tail', type=int, help='set number of lines to show')
