@@ -267,9 +267,15 @@ class Trops:
                     subprocess.call(cmd)
 
     def touch(self, args, other_args):
+
+        for file_path in args.paths:
+
+            self._touch_file(file_path)
+
+    def _touch_file(self, file_path):
         """Add a file or directory in the git repo"""
 
-        file_path = real_path(args.path)
+        file_path = real_path(file_path)
 
         # Check if the path exists
         if not os.path.exists(file_path):
@@ -424,7 +430,7 @@ class Trops:
         # trops touch
         parser_touch = subparsers.add_parser(
             'touch', help="add/update file in the git repo")
-        parser_touch.add_argument('path', help='path of file')
+        parser_touch.add_argument('paths', nargs='+', help='path of file')
         parser_touch.set_defaults(handler=self.touch)
         # trops bye
         parser_bye = subparsers.add_parser(
