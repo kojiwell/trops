@@ -91,6 +91,7 @@ class TropsEnv:
             if config.has_section(self.trops_env):
                 print(
                     f"The '{ self.trops_env }' environment already exists on { self.trops_conf }")
+                exit(1)
 
         config[self.trops_env] = {'git_dir': f'$TROPS_DIR/{ self.trops_env }.git',
                                   'sudo': 'False',
@@ -153,6 +154,7 @@ class TropsEnv:
             if not config.has_section(self.trops_env):
                 print(
                     f"The '{ self.trops_env }' environment does not exists on { self.trops_conf }")
+                exit(1)
 
         config[self.trops_env] = {'git_dir': f'$TROPS_DIR/{ self.trops_env }.git',
                                   'sudo': 'False',

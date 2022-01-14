@@ -60,10 +60,10 @@ class Trops:
             except KeyError:
                 pass
 
-        username = getuser()
-        hostname = gethostname()
+        self.username = getuser()
+        self.hostname = gethostname()
 
-        logging.basicConfig(format=f'%(asctime)s {username}@{hostname} %(levelname)s  %(message)s',
+        logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s  %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S',
                             filename=self.trops_dir + '/log/trops.log',
                             level=logging.DEBUG)
@@ -82,7 +82,6 @@ class Trops:
 
     def env_update(self, args, other_args):
 
-        print(args)
         trenv = TropsEnv(args, other_args)
         trenv.update()
 
@@ -96,7 +95,7 @@ class Trops:
         """\
         log executed command
         NOTE: You need to set PROMPT_COMMAND in bash as shown below:
-        PROMPT_COMMAND='trops log $(history 1)'"""
+        PROMPT_COMMAND='trops capture-cmd <ignore> $(history 1)'"""
 
         # TODO: Rename fuction something else (maybe capture-cls) because it
         # is confused with trops show-log.
@@ -152,7 +151,8 @@ class Trops:
             pkg_list = result.stdout.decode('utf-8').splitlines()
             pkg_list.sort()
 
-            pkg_list_file = self.trops_dir + '/rpm_pkg_list'
+            pkg_list_file = self.trops_dir + \
+                f'/log/rpm_pkg_list.{ self.hostname }'
             f = open(pkg_list_file, 'w')
             f.write('\n'.join(pkg_list))
             f.close()
@@ -175,7 +175,8 @@ class Trops:
 
         if 'apt' in executed_cmd and ('upgrade' in executed_cmd
                                       or 'install' in executed_cmd
-                                      or 'remove' in executed_cmd):
+                                      or 'remove' in executed_cmd
+                                      or 'autoremove' in executed_cmd):
             self._update_pkg_list(' '.join(executed_cmd))
         # TODO: Add log trops git show hex
 
@@ -346,7 +347,7 @@ class Trops:
     def _update_pkg_list(self, args):
 
         # Update the pkg_List
-        pkg_list_file = self.trops_dir + '/pkg_list'
+        pkg_list_file = self.trops_dir + f'/log/apt_pkg_list_{ self.hostname }'
         f = open(pkg_list_file, 'w')
         cmd = ['apt', 'list', '--installed']
         if self.sudo:
@@ -379,9 +380,9 @@ class Trops:
         parser_env_init.add_argument(
             'dir', help='trops directory')
         parser_env_init.add_argument(
-            '-w', '--work-tree', default='/', help='Set work-tree')
+            '-w', '--work-tree', default='/', help='Set work-tree (default: %(default)s)')
         parser_env_init.add_argument(
-            '-e', '--env', default='default', help='Set environment name')
+            '-e', '--env', default='default', help='Set environment name (default: %(default)s)')
         parser_env_init.set_defaults(handler=self.env_init)
         # trops env update <dir>
         parser_env_update = env_subparsers.add_parser(
@@ -438,6 +439,7 @@ class Trops:
         # Pass args and other args to the hander
         args, other_args = parser.parse_known_args()
         if hasattr(args, 'handler'):
+            tropsenv = TropsEnv(args, other_args)
             args.handler(args, other_args)
         else:
             parser.print_help()
