@@ -11,27 +11,26 @@ class TropsEnv:
     def __init__(self, args, other_args):
         # NOTE: The args.handler cannot pass args to the class,
         # so I use self._setup_vars() instead.
-        try:
+
+        if hasattr(args, 'dir'):
             self.trops_dir = real_path(args.dir) + '/trops'
-        except AttributeError:
+        elif 'TROPS_DIR' in os.environ:
             self.trops_dir = os.path.expandvars('$TROPS_DIR')
-        except:
+        else:
             print('TROPS_ENV does not exists')
             exit(1)
 
-        try:
+        if hasattr(args, 'work_tree'):
             self.trops_work_tree = args.work_tree
-        except AttributeError:
-            pass
-        try:
+
+        if hasattr(args, 'env'):
             self.trops_env = args.env
             self.trops_bash_rcfile = self.trops_dir + \
                 f'/bash_{ self.trops_env }rc'
             self.trops_zsh_rcfile = self.trops_dir + \
                 f'/zsh_{ self.trops_env }rc'
             self.trops_git_dir = self.trops_dir + f'/{ self.trops_env }.git'
-        except AttributeError:
-            pass
+
         self.trops_conf = self.trops_dir + '/trops.cfg'
         self.trops_log_dir = self.trops_dir + '/log'
 

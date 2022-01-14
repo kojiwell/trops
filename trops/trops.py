@@ -445,7 +445,6 @@ class Trops:
         # Pass args and other args to the hander
         args, other_args = parser.parse_known_args()
         if hasattr(args, 'handler'):
-            tropsenv = TropsEnv(args, other_args)
             args.handler(args, other_args)
         else:
             parser.print_help()
