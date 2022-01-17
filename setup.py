@@ -8,7 +8,7 @@ def read(fname):
 
 setup(
     name="trops",
-    version="0.1.9",
+    version="0.1.10",
     author="Koji Tanaka",
     author_email="kojiwelly@gmail.com",
     description=("Track operations"),
