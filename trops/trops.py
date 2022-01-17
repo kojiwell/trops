@@ -12,7 +12,8 @@ from getpass import getuser
 from socket import gethostname
 
 from trops.utils import real_path, random_name
-from trops.env import TropsEnv
+from trops.env import env_init, env_show, env_update, env_list
+from trops.file import file_list, file_put
 
 
 class Trops:
@@ -20,18 +21,18 @@ class Trops:
 
     def __init__(self):
 
-        self.config = ConfigParser()
         # Set trops_dir
         if 'TROPS_DIR' in os.environ:
             self.trops_dir = os.path.expandvars('$TROPS_DIR')
         else:
             self.trops_dir = os.path.expandvars('$HOME/.trops')
         # Set trops_env
-        if 'TROPS_ENV' in os.environ:
-            self.trops_env = os.environ['TROPS_ENV']
+        if os.getenv('TROPS_ENV'):
+            self.trops_env = os.getenv('TROPS_ENV')
         else:
             self.trops_env = 'default'
 
+        self.config = ConfigParser()
         self.conf_file = self.trops_dir + '/trops.cfg'
         if os.path.isfile(self.conf_file):
             self.config.read(self.conf_file)
@@ -47,11 +48,10 @@ class Trops:
             except KeyError:
                 print('work_tree does not exist in your configuration file')
                 exit(1)
-            try:
-                self.git_cmd = ['git', '--git-dir=' + self.git_dir,
-                                '--work-tree=' + self.work_tree]
-            except KeyError:
-                pass
+
+            self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                            '--work-tree=' + self.work_tree]
+
             try:
                 self.sudo = distutils.util.strtobool(
                     self.config[self.trops_env]['sudo'])
@@ -62,28 +62,13 @@ class Trops:
 
         self.username = getuser()
         self.hostname = gethostname()
+        self.trops_logfile = self.trops_dir + '/log/trops.log'
 
         logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s  %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S',
-                            filename=self.trops_dir + '/log/trops.log',
+                            filename=self.trops_logfile,
                             level=logging.DEBUG)
         self.logger = logging.getLogger()
-
-    def env_init(self, args, other_args):
-        """Setup trops project"""
-
-        trenv = TropsEnv(args, other_args)
-        trenv.initialize()
-
-    def env_show(self, args, other_args):
-
-        trenv = TropsEnv(args, other_args)
-        trenv.show()
-
-    def env_update(self, args, other_args):
-
-        trenv = TropsEnv(args, other_args)
-        trenv.update()
 
     def git(self, args, other_args):
         """Git wrapper command"""
@@ -95,10 +80,7 @@ class Trops:
         """\
         log executed command
         NOTE: You need to set PROMPT_COMMAND in bash as shown below:
-        PROMPT_COMMAND='trops capture-cmd <ignore> $(history 1)'"""
-
-        # TODO: Rename fuction something else (maybe capture-cls) because it
-        # is confused with trops show-log.
+        PROMPT_COMMAND='trops capture-cmd <ignore_field> <return code> $(history 1)'"""
 
         rc = args.return_code
 
@@ -134,8 +116,6 @@ class Trops:
         self._yum_log(executed_cmd)
         self._apt_log(executed_cmd)
         self._update_files(executed_cmd)
-        # TODO: Catch chmod and chown and log owner and permission
-        # TODO: Show username and hostname in the log
 
     def _yum_log(self, executed_cmd):
 
@@ -179,6 +159,24 @@ class Trops:
                                       or 'autoremove' in executed_cmd):
             self._update_pkg_list(' '.join(executed_cmd))
         # TODO: Add log trops git show hex
+
+    def _update_pkg_list(self, args):
+
+        # Update the pkg_List
+        pkg_list_file = self.trops_dir + f'/log/apt_pkg_list_{ self.hostname }'
+        f = open(pkg_list_file, 'w')
+        cmd = ['apt', 'list', '--installed']
+        if self.sudo:
+            cmd.insert(0, 'sudo')
+        pkg_list = subprocess.check_output(cmd).decode('utf-8')
+        f.write(pkg_list)
+        f.close()
+        # Commit the change if needed
+        cmd = self.git_cmd + ['add', pkg_list_file]
+        subprocess.call(cmd)
+        cmd = self.git_cmd + ['commit', '-m',
+                              f'Update { pkg_list_file }', pkg_list_file]
+        subprocess.call(cmd)
 
     def _update_files(self, executed_cmd):
         """Add a file or directory in the git repo"""
@@ -356,24 +354,6 @@ class Trops:
         self.logger.info(
             f"trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  # BYE")
 
-    def _update_pkg_list(self, args):
-
-        # Update the pkg_List
-        pkg_list_file = self.trops_dir + f'/log/apt_pkg_list_{ self.hostname }'
-        f = open(pkg_list_file, 'w')
-        cmd = ['apt', 'list', '--installed']
-        if self.sudo:
-            cmd.insert(0, 'sudo')
-        pkg_list = subprocess.check_output(cmd).decode('utf-8')
-        f.write(pkg_list)
-        f.close()
-        # Commit the change if needed
-        cmd = self.git_cmd + ['add', pkg_list_file]
-        subprocess.call(cmd)
-        cmd = self.git_cmd + ['commit', '-m',
-                              f'Update { pkg_list_file }', pkg_list_file]
-        subprocess.call(cmd)
-
     def main(self):
         """Get subcommand and arguments and pass them to the hander"""
 
@@ -383,9 +363,14 @@ class Trops:
         # trops env
         parser_env = subparsers.add_parser('env', help='initialize trops')
         env_subparsers = parser_env.add_subparsers()
+        # trops env show
         perser_env_show = env_subparsers.add_parser(
             'show', help='show the current environment')
-        perser_env_show.set_defaults(handler=self.env_show)
+        perser_env_show.set_defaults(handler=env_show)
+        # trops env list
+        perser_env_list = env_subparsers.add_parser(
+            'list', help='show the current environment')
+        perser_env_list.set_defaults(handler=env_list)
         # trops env init <dir>
         parser_env_init = env_subparsers.add_parser(
             'init', help='initialize trops environment')
@@ -395,7 +380,7 @@ class Trops:
             '-w', '--work-tree', default='/', help='Set work-tree (default: %(default)s)')
         parser_env_init.add_argument(
             '-e', '--env', default='default', help='Set environment name (default: %(default)s)')
-        parser_env_init.set_defaults(handler=self.env_init)
+        parser_env_init.set_defaults(handler=env_init)
         # trops env update <dir>
         parser_env_update = env_subparsers.add_parser(
             'update', help='update trops environment')
@@ -405,7 +390,25 @@ class Trops:
             '-g', '--git-dir', help='git-dir')
         parser_env_update.add_argument(
             '-e', '--env', default='default', help='Set environment name')
-        parser_env_update.set_defaults(handler=self.env_update)
+        parser_env_update.set_defaults(handler=env_update)
+        # trops file
+        parser_file = subparsers.add_parser(
+            'file', help='track file operations')
+        parser_file.add_argument(
+            '-e', '--env', help='Set environment name')
+        file_subparsers = parser_file.add_subparsers()
+        # trops file list
+        parser_file_list = file_subparsers.add_parser(
+            'list', help='list files')
+        parser_file_list.set_defaults(handler=file_list)
+        # trops file put
+        parser_file_put = file_subparsers.add_parser(
+            'put', help='put file')
+        parser_file_put.add_argument(
+            'path', help='file/dir path')
+        parser_file_put.add_argument(
+            'dest', help='dest path where you put the file/dir')
+        parser_file_put.set_defaults(handler=file_put)
         # trops git <file/dir>
         parser_git = subparsers.add_parser('git', help='git wrapper')
         parser_git.add_argument('-s', '--sudo', help="Use sudo",
@@ -432,6 +435,8 @@ class Trops:
         parser_ll = subparsers.add_parser('ll', help="list files")
         parser_ll.add_argument(
             'dir', help='directory path', nargs='?', default=os.getcwd())
+        parser_ll.add_argument(
+            '-e', '--env', default='default', help='Set environment name')
         parser_ll.set_defaults(handler=self.ll)
         # trops touch
         parser_touch = subparsers.add_parser(

@@ -163,6 +163,19 @@ class TropsEnv:
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
 
+    def list(self):
+
+        self.trops_conf = self.trops_dir + '/trops.cfg'
+        config = ConfigParser()
+        config.read(self.trops_conf)
+        current_env = os.getenv('TROPS_ENV')
+
+        for envname in config.sections():
+            if envname == current_env:
+                print(f'- { envname }*')
+            else:
+                print(f'- { envname}')
+
     def show(self):
 
         self.trops_conf = self.trops_dir + '/trops.cfg'
@@ -186,3 +199,28 @@ class TropsEnv:
         print('Git')
         print(f"  git-dir = { config.get(trops_env, 'git_dir') }")
         print(f"  work-tree = { config.get(trops_env, 'work_tree') }")
+
+
+def env_init(args, other_args):
+    """Setup trops project"""
+
+    trenv = TropsEnv(args, other_args)
+    trenv.initialize()
+
+
+def env_show(args, other_args):
+
+    trenv = TropsEnv(args, other_args)
+    trenv.show()
+
+
+def env_update(args, other_args):
+
+    trenv = TropsEnv(args, other_args)
+    trenv.update()
+
+
+def env_list(args, other_args):
+
+    trenv = TropsEnv(args, other_args)
+    trenv.list()
