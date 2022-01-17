@@ -312,13 +312,13 @@ class Trops:
             self.logger.info(
                 f"trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  # { log_note } O={ owner },G={ group },M={ mode }")
 
-    def bye(self, args, other_args):
+    def drop(self, args, other_args):
 
         for file_path in args.paths:
 
             self._bye_file(file_path)
 
-    def _bye_file(self, file_path):
+    def _drop_file(self, file_path):
         """Remove a file from the git repo"""
 
         file_path = real_path(file_path)
@@ -361,15 +361,16 @@ class Trops:
             description='Trops - Tracking Operations')
         subparsers = parser.add_subparsers()
         # trops env
-        parser_env = subparsers.add_parser('env', help='initialize trops')
+        parser_env = subparsers.add_parser(
+            'env', help='initialize trops environment')
         env_subparsers = parser_env.add_subparsers()
         # trops env show
         perser_env_show = env_subparsers.add_parser(
-            'show', help='show the current environment')
+            'show', help='show current environment')
         perser_env_show.set_defaults(handler=env_show)
         # trops env list
         perser_env_list = env_subparsers.add_parser(
-            'list', help='show the current environment')
+            'list', help='show list of environment')
         perser_env_list.set_defaults(handler=env_list)
         # trops env init <dir>
         parser_env_init = env_subparsers.add_parser(
@@ -438,16 +439,16 @@ class Trops:
         parser_ll.add_argument(
             '-e', '--env', default='default', help='Set environment name')
         parser_ll.set_defaults(handler=self.ll)
-        # trops touch
+        # trops touch <path>
         parser_touch = subparsers.add_parser(
             'touch', help="add/update file in the git repo")
         parser_touch.add_argument('paths', nargs='+', help='path of file')
         parser_touch.set_defaults(handler=self.touch)
-        # trops bye
-        parser_bye = subparsers.add_parser(
-            'bye', help="remove file from the git repo")
-        parser_bye.add_argument('paths', nargs='+', help='path of file')
-        parser_bye.set_defaults(handler=self.bye)
+        # trops drop <path>
+        parser_drop = subparsers.add_parser(
+            'drop', help="remove file from the git repo")
+        parser_drop.add_argument('paths', nargs='+', help='path of file')
+        parser_drop.set_defaults(handler=self.drop)
         # trops random-name
         parser_random_name = subparsers.add_parser(
             'random-name', help='generate random name')
