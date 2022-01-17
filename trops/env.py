@@ -224,3 +224,39 @@ def env_list(args, other_args):
 
     trenv = TropsEnv(args, other_args)
     trenv.list()
+
+
+def add_env_subparsers(subparsers):
+
+    # trops env
+    parser_env = subparsers.add_parser(
+        'env', help='initialize trops environment')
+    env_subparsers = parser_env.add_subparsers()
+    # trops env show
+    perser_env_show = env_subparsers.add_parser(
+        'show', help='show current environment')
+    perser_env_show.set_defaults(handler=env_show)
+    # trops env list
+    perser_env_list = env_subparsers.add_parser(
+        'list', help='show list of environment')
+    perser_env_list.set_defaults(handler=env_list)
+    # trops env init <dir>
+    parser_env_init = env_subparsers.add_parser(
+        'init', help='initialize trops environment')
+    parser_env_init.add_argument(
+        'dir', help='trops directory')
+    parser_env_init.add_argument(
+        '-w', '--work-tree', default='/', help='Set work-tree (default: %(default)s)')
+    parser_env_init.add_argument(
+        '-e', '--env', default='default', help='Set environment name (default: %(default)s)')
+    parser_env_init.set_defaults(handler=env_init)
+    # trops env update <dir>
+    parser_env_update = env_subparsers.add_parser(
+        'update', help='update trops environment')
+    parser_env_update.add_argument(
+        '-w', '--work-tree', help='work-tree')
+    parser_env_update.add_argument(
+        '-g', '--git-dir', help='git-dir')
+    parser_env_update.add_argument(
+        '-e', '--env', default='default', help='Set environment name')
+    parser_env_update.set_defaults(handler=env_update)

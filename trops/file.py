@@ -84,3 +84,25 @@ def file_put(args, other_args):
 
     tf = TropsFile(args, other_args)
     tf.put()
+
+
+def add_file_subparsers(subparsers):
+
+    # trops file
+    parser_file = subparsers.add_parser(
+        'file', help='track file operations')
+    parser_file.add_argument(
+        '-e', '--env', help='Set environment name')
+    file_subparsers = parser_file.add_subparsers()
+    # trops file list
+    parser_file_list = file_subparsers.add_parser(
+        'list', help='list files')
+    parser_file_list.set_defaults(handler=file_list)
+    # trops file put
+    parser_file_put = file_subparsers.add_parser(
+        'put', help='put file')
+    parser_file_put.add_argument(
+        'path', help='file/dir path')
+    parser_file_put.add_argument(
+        'dest', help='dest path where you put the file/dir')
+    parser_file_put.set_defaults(handler=file_put)
