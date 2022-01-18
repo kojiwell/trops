@@ -314,7 +314,7 @@ class Trops:
 
         for file_path in args.paths:
 
-            self._bye_file(file_path)
+            self._drop_file(file_path)
 
     def _drop_file(self, file_path):
         """Remove a file from the git repo"""
