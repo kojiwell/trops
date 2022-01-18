@@ -21,10 +21,9 @@ class Trops:
     def __init__(self):
 
         # Set trops_dir
-        if 'TROPS_DIR' in os.environ:
+        if os.getenv('TROPS_DIR'):
             self.trops_dir = os.path.expandvars('$TROPS_DIR')
-        else:
-            self.trops_dir = os.path.expandvars('$HOME/.trops')
+
         # Set trops_env
         if os.getenv('TROPS_ENV'):
             self.trops_env = os.getenv('TROPS_ENV')
