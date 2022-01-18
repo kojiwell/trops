@@ -4,9 +4,8 @@ import subprocess
 import argparse
 import logging
 import distutils.util
-from configparser import ConfigParser, NoSectionError, NoOptionError
+from configparser import ConfigParser
 from textwrap import dedent
-from datetime import datetime
 from pathlib import Path
 from getpass import getuser
 from socket import gethostname
