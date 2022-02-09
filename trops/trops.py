@@ -14,6 +14,7 @@ from trops.utils import real_path, random_name
 from trops.env import add_env_subparsers
 from trops.file import add_file_subparsers
 from trops.capcmd import capture_cmd_subparsers
+from trops.koumyo import koumyo_subparsers
 
 
 class Trops:
@@ -363,6 +364,8 @@ class Trops:
         add_env_subparsers(subparsers)
         # Add trops file subparsers and arguments
         add_file_subparsers(subparsers)
+        # Add trops koumyo arguments
+        koumyo_subparsers(subparsers)
         # trops git <file/dir>
         parser_git = subparsers.add_parser('git', help='git wrapper')
         parser_git.add_argument('-s', '--sudo', help="Use sudo",
