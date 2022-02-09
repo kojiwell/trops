@@ -13,6 +13,7 @@ from socket import gethostname
 from trops.utils import real_path, random_name
 from trops.env import add_env_subparsers
 from trops.file import add_file_subparsers
+from trops.capcmd import capture_cmd_subparsers
 
 
 class Trops:
@@ -375,6 +376,8 @@ class Trops:
         parser_capture_cmd.add_argument('return_code', type=int,
                                         default=0, help='set return code')
         parser_capture_cmd.set_defaults(handler=self.capture_cmd)
+        # trops capture-cmd <epoch_time> <return_code> <command>
+        capture_cmd_subparsers(subparsers)
         # trops log
         parser_log = subparsers.add_parser('log', help='show log')
         parser_log.add_argument(
