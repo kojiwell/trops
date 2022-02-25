@@ -64,7 +64,7 @@ class Trops:
         self.hostname = gethostname()
         self.trops_logfile = self.trops_dir + '/log/trops.log'
 
-        logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s  %(message)s',
+        logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S',
                             filename=self.trops_logfile,
                             level=logging.DEBUG)
@@ -105,8 +105,8 @@ class Trops:
         if executed_cmd[0] in ignored_cmds:
             exit(0)
 
-        message = ' '.join(executed_cmd) + \
-            f"  # PWD={ os.environ['PWD'] }, EXIT={ rc }"
+        message = 'CM ' + ' '.join(executed_cmd) + \
+            f"  #> PWD={ os.environ['PWD'] }, EXIT={ rc }"
         if 'TROPS_SID' in os.environ:
             message = message + ', TROPS_SID=' + os.environ['TROPS_SID']
         if rc == 0:
@@ -230,7 +230,7 @@ class Trops:
                             owner = Path(ii_path).owner()
                             group = Path(ii_path).group()
                             self.logger.info(
-                                f"trops git show { output[0] }:{ real_path(ii_path).lstrip('/')}  # { log_note }, O={ owner },G={ group },M={ mode }")
+                                f"FL trops git show { output[0] }:{ real_path(ii_path).lstrip('/')}  #> { log_note }, O={ owner },G={ group },M={ mode }")
                     else:
                         print('No update')
 
