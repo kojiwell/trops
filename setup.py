@@ -19,6 +19,9 @@ setup(
     packages=['trops'],
     long_description=read('README.md'),
     python_requires='>=3.8',
+    install_requires=[
+        "tabulate >= 0.8.9"
+    ],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
