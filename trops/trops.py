@@ -25,6 +25,8 @@ class Trops:
         # Set trops_dir
         if os.getenv('TROPS_DIR'):
             self.trops_dir = os.path.expandvars('$TROPS_DIR')
+        else:
+            self.trops_dir = False
 
         # Set trops_env
         if os.getenv('TROPS_ENV'):
@@ -33,42 +35,43 @@ class Trops:
             self.trops_env = 'default'
 
         self.config = ConfigParser()
-        self.conf_file = self.trops_dir + '/trops.cfg'
-        if os.path.isfile(self.conf_file):
-            self.config.read(self.conf_file)
-            try:
-                self.git_dir = os.path.expandvars(
-                    self.config[self.trops_env]['git_dir'])
-            except KeyError:
-                print('git_dir does not exist in your configuration file')
-                exit(1)
-            try:
-                self.work_tree = os.path.expandvars(
-                    self.config[self.trops_env]['work_tree'])
-            except KeyError:
-                print('work_tree does not exist in your configuration file')
-                exit(1)
+        if self.trops_dir:
+            self.conf_file = self.trops_dir + '/trops.cfg'
+            if os.path.isfile(self.conf_file):
+                self.config.read(self.conf_file)
+                try:
+                    self.git_dir = os.path.expandvars(
+                        self.config[self.trops_env]['git_dir'])
+                except KeyError:
+                    print('git_dir does not exist in your configuration file')
+                    exit(1)
+                try:
+                    self.work_tree = os.path.expandvars(
+                        self.config[self.trops_env]['work_tree'])
+                except KeyError:
+                    print('work_tree does not exist in your configuration file')
+                    exit(1)
 
-            self.git_cmd = ['git', '--git-dir=' + self.git_dir,
-                            '--work-tree=' + self.work_tree]
+                self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                                '--work-tree=' + self.work_tree]
 
-            try:
-                self.sudo = distutils.util.strtobool(
-                    self.config[self.trops_env]['sudo'])
-                if self.sudo:
-                    self.git_cmd = ['sudo'] + self.git_cmd
-            except KeyError:
-                pass
+                try:
+                    self.sudo = distutils.util.strtobool(
+                        self.config[self.trops_env]['sudo'])
+                    if self.sudo:
+                        self.git_cmd = ['sudo'] + self.git_cmd
+                except KeyError:
+                    pass
 
-        self.username = getuser()
-        self.hostname = gethostname()
-        self.trops_logfile = self.trops_dir + '/log/trops.log'
+            self.username = getuser()
+            self.hostname = gethostname()
+            self.trops_logfile = self.trops_dir + '/log/trops.log'
 
-        logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
-                            datefmt='%Y-%m-%d %H:%M:%S',
-                            filename=self.trops_logfile,
-                            level=logging.DEBUG)
-        self.logger = logging.getLogger()
+            logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
+                                datefmt='%Y-%m-%d %H:%M:%S',
+                                filename=self.trops_logfile,
+                                level=logging.DEBUG)
+            self.logger = logging.getLogger()
 
     def git(self, args, other_args):
         """Git wrapper command"""
@@ -310,7 +313,7 @@ class Trops:
             owner = Path(file_path).owner()
             group = Path(file_path).group()
             self.logger.info(
-                f"trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  # { log_note } O={ owner },G={ group },M={ mode }")
+                f"FL trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  #> { log_note } O={ owner },G={ group },M={ mode }")
 
     def drop(self, args, other_args):
 
@@ -352,7 +355,7 @@ class Trops:
         output = subprocess.check_output(
             cmd).decode("utf-8").split()
         self.logger.info(
-            f"trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  # BYE")
+            f"FL trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  #> BYE")
 
     def main(self):
         """Get subcommand and arguments and pass them to the hander"""
