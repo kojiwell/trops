@@ -25,7 +25,7 @@ class TropsKoumyo:
                 formatted_log.append(
                     ' '.join(splitted_log[cmd_start_idx:cmd_end_idx]))
                 formatted_log = formatted_log + splitted_log[cmd_end_idx:]
-                formatted_log.remove('CM')
+                # formatted_log.remove('CM')
                 formatted_log.remove('#>')
                 for i, n in enumerate(formatted_log):
                     if 'PWD=' in n:
@@ -35,9 +35,22 @@ class TropsKoumyo:
                     elif 'TROPS_SID=' in n:
                         formatted_log[i] = n.replace('TROPS_SID=', '')
                 formatted_logs.append(formatted_log)
-        log_headers = ['Date', 'Time', 'user@host',
-                       'Log Lvl', 'command', 'PWD', 'EXIT', 'TROPS_ID']
-        print(tabulate(formatted_logs, headers=log_headers))
+            elif 'FL' in splitted_log:
+                cmd_start_idx = splitted_log.index('FL') + 1
+                cmd_end_idx = splitted_log.index('#>')
+                formatted_log = splitted_log[:cmd_start_idx]
+                formatted_log.append(
+                    ' '.join(splitted_log[cmd_start_idx:cmd_end_idx]))
+                formatted_log = formatted_log + splitted_log[cmd_end_idx:]
+                # formatted_log.remove('FL')
+                formatted_log.remove('#>')
+                formatted_log.pop(6)
+                formatted_log.append('-')
+                formatted_log.append('-')
+                formatted_logs.append(formatted_log)
+        headers = ['Date', 'Time', 'User',
+                   'Level', 'Type', 'Command', 'Directory / Owner,Group,Mode', 'EXIT', 'TROPS_ID']
+        print(tabulate(formatted_logs, headers))
 
     def run(self):
 
