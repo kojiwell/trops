@@ -38,7 +38,7 @@ class TropsEnv:
 
         # Create trops_dir
         try:
-            os.mkdir(self.trops_dir)
+            os.makedirs(self.trops_dir, exist_ok=True)
         except FileExistsError:
             print(f"{ self.trops_dir } already exists")
 
