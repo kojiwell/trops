@@ -8,3 +8,4 @@ services:
       - USER=root
     volumes:
       - $PWD/../../:/trops
+      - $PWD/tenvs:/tenvs
