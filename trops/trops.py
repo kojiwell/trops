@@ -65,6 +65,7 @@ class Trops:
 
             self.username = getuser()
             self.hostname = gethostname()
+            os.makedirs(self.trops_dir + '/log', exist_ok=True)
             self.trops_logfile = self.trops_dir + '/log/trops.log'
 
             logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
