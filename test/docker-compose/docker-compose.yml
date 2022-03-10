@@ -2,6 +2,7 @@ version: "3.9"
 services:
   testbox:
     build: .
+    hostname: testbox
     stdin_open: true
     tty: true
     environment:
