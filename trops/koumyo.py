@@ -9,7 +9,9 @@ class TropsKoumyo:
 
         input = sys.stdin.read()
         self.logs = input.splitlines()
-        self.markdown = args.markdown
+        self.md_true = args.markdown
+        if hasattr(args, 'only') and args.only != None:
+            self.only_list = args.only.split(',')
 
     def _format(self):
 
@@ -33,8 +35,13 @@ class TropsKoumyo:
                     elif 'EXIT=' in n:
                         formatted_log[i] = n.replace('EXIT=', '').rstrip(',')
                     elif 'TROPS_SID=' in n:
-                        formatted_log[i] = n.replace('TROPS_SID=', '')
-                formatted_logs.append(formatted_log)
+                        formatted_log[i] = n.replace(
+                            'TROPS_SID=', '').rstrip(',')
+                    elif 'TROPS_ENV=' in n:
+                        formatted_log[i] = n.replace(
+                            'TROPS_ENV=', '').rstrip(',')
+                while len(formatted_log) < 10:
+                    formatted_log.append('-')
             elif 'FL' in splitted_log:
                 cmd_start_idx = splitted_log.index('FL') + 1
                 cmd_end_idx = splitted_log.index('#>')
@@ -45,11 +52,24 @@ class TropsKoumyo:
                 # formatted_log.remove('FL')
                 formatted_log.remove('#>')
                 formatted_log.pop(6)
-                formatted_log.append('-')
-                formatted_log.append('-')
+                while len(formatted_log) < 10:
+                    formatted_log.append('-')
+            headers = ['date', 'time', 'user',
+                       'level', 'type', 'command', 'directory', 'excode', 'id', 'env']
+            # if --only is added, pick the only chosen elements
+            if hasattr(self, 'only_list'):
+                i = []
+                selected_log = []
+                selected_headers = []
+                for item in self.only_list:
+                    i.append(headers.index(item))
+                for index in i:
+                    selected_log.append(formatted_log[index])
+                    selected_headers.append(headers[index])
+                headers = selected_headers
+                formatted_logs.append(selected_log)
+            else:
                 formatted_logs.append(formatted_log)
-        headers = ['Date', 'Time', 'User',
-                   'Level', 'Type', 'Command', 'Directory / Owner,Group,Mode', 'EXIT', 'TROPS_ID']
         print(tabulate(formatted_logs, headers))
 
     def run(self):
@@ -67,7 +87,9 @@ def koumyo_subparsers(subparsers):
 
     # trops koumyo
     parser_koumyo = subparsers.add_parser(
-        'km', help='(KM)Kou-Myo can make log be easier to read')
+        'km', help='(KM)Kou-Myo can make log be easy to read')
     parser_koumyo.add_argument(
         '-m', '--markdown', action='store_true', help='Markdown format')
+    parser_koumyo.add_argument(
+        '-o', '--only', help='List of items(e.g. --only=command,directory')
     parser_koumyo.set_defaults(handler=run)
