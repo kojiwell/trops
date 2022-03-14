@@ -113,6 +113,8 @@ class Trops:
             f"  #> PWD={ os.environ['PWD'] }, EXIT={ rc }"
         if 'TROPS_SID' in os.environ:
             message = message + ', TROPS_SID=' + os.environ['TROPS_SID']
+        if 'TROPS_ENV' in os.environ:
+            message = message + ', TROPS_ENV=' + os.environ['TROPS_ENV']
         if rc == 0:
             self.logger.info(message)
         else:
