@@ -55,8 +55,8 @@ class TropsEnv:
             with open(self.trops_bash_rcfile, mode='w') as rcfile:
                 lines = f"""\
                     export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
-                    export TROPS_SID=$(trops random-name)
                     export TROPS_ENV={ self.trops_env }
+                    export TROPS_SID=$(trops random-name)
 
                     PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
 
@@ -70,8 +70,8 @@ class TropsEnv:
             with open(self.trops_zsh_rcfile, mode='w') as rcfile:
                 lines = f"""\
                     export TROPS_DIR=$(dirname $(realpath ${{(%):-%N}}))
-                    export TROPS_SID=$(trops random-name)
                     export TROPS_ENV={ self.trops_env }
+                    export TROPS_SID=$(trops random-name)
 
                     precmd() {{
                         trops capture-cmd 1 $? $(history|tail -1)
