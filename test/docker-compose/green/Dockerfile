@@ -5,8 +5,4 @@ RUN apt update && \
 
 ADD root/.bashrc /root/.bashrc
 
-#RUN useradd -m ktanaka -s /usr/bin/bash
-#ADD home/ktanaka/.bashrc /home/ktanaka/.bashrc
-#RUN chown ktanaka:ktanaka /home/ktanaka/.bashrc
-
 WORKDIR /root
