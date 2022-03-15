@@ -77,6 +77,15 @@ class Trops:
     def git(self, args, other_args):
         """Git wrapper command"""
 
+        if hasattr(args, 'env') and args.env:
+            self.trops_env = args.env
+            self.git_dir = os.path.expandvars(
+                self.config[self.trops_env]['git_dir'])
+            self.work_tree = os.path.expandvars(
+                self.config[self.trops_env]['work_tree'])
+            self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                            '--work-tree=' + self.work_tree]
+
         cmd = self.git_cmd + other_args
         subprocess.call(cmd)
 
@@ -161,6 +170,7 @@ class Trops:
 
         if 'apt' in executed_cmd and ('upgrade' in executed_cmd
                                       or 'install' in executed_cmd
+                                      or 'update' in executed_cmd
                                       or 'remove' in executed_cmd
                                       or 'autoremove' in executed_cmd):
             self._update_pkg_list(' '.join(executed_cmd))
@@ -177,12 +187,36 @@ class Trops:
         pkg_list = subprocess.check_output(cmd).decode('utf-8')
         f.write(pkg_list)
         f.close()
-        # Commit the change if needed
+        cmd = self.git_cmd + ['ls-files', pkg_list_file]
+        result = subprocess.run(cmd, capture_output=True)
+        if result.stdout.decode("utf-8"):
+            git_msg = f"Update { pkg_list_file }"
+            log_note = 'UPDATE'
+        else:
+            git_msg = f"Add { pkg_list_file }"
+            log_note = 'ADD'
         cmd = self.git_cmd + ['add', pkg_list_file]
         subprocess.call(cmd)
         cmd = self.git_cmd + ['commit', '-m',
-                              f'Update { pkg_list_file }', pkg_list_file]
-        subprocess.call(cmd)
+                              git_msg, pkg_list_file]
+        # Commit the change if needed
+        result = subprocess.run(cmd, capture_output=True)
+        # If there's an update, log it in the log file
+        if result.returncode == 0:
+            msg = result.stdout.decode('utf-8').splitlines()[0]
+            print(msg)
+            cmd = self.git_cmd + \
+                ['log', '--oneline', '-1', pkg_list_file]
+            output = subprocess.check_output(
+                cmd).decode("utf-8").split()
+            if pkg_list_file in output:
+                mode = oct(os.stat(pkg_list_file).st_mode)[-4:]
+                owner = Path(pkg_list_file).owner()
+                group = Path(pkg_list_file).group()
+                self.logger.info(
+                    f"FL trops git show { output[0] }:{ real_path(pkg_list_file).lstrip('/')}  #> { log_note }, O={ owner },G={ group },M={ mode }")
+        else:
+            print('No update')
 
     def _update_files(self, executed_cmd):
         """Add a file or directory in the git repo"""
@@ -376,6 +410,7 @@ class Trops:
         parser_git = subparsers.add_parser('git', help='git wrapper')
         parser_git.add_argument('-s', '--sudo', help="Use sudo",
                                 action='store_true')
+        parser_git.add_argument('-e', '--env', help="Set env")
         parser_git.set_defaults(handler=self.git)
         # trops capture-cmd <ignore_fields> <return_code> <command>
         parser_capture_cmd = subparsers.add_parser(
