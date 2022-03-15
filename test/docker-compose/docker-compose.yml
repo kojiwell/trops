@@ -1,8 +1,18 @@
 version: "3.9"
 services:
-  testbox:
-    build: .
-    hostname: testbox
+  blue:
+    build: blue
+    hostname: blue
+    stdin_open: true
+    tty: true
+    environment:
+      - USER=root
+    volumes:
+      - $PWD/../../:/trops
+      - $PWD/tenvs:/tenvs
+  green:
+    build: green
+    hostname: green
     stdin_open: true
     tty: true
     environment:

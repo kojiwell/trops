@@ -97,6 +97,7 @@ fi
 #if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
 #    . /etc/bash_completion
 #fi
+PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;33m\]\w\[\033[00m\]\$ '
 
 if ! which trops > /dev/null
 then
@@ -104,8 +105,9 @@ then
     python3 setup.py develop
 fi
 
-if [ -f /tenvs/trops/bash_defaultrc ]
+if [ -f /tenvs/trops/bash_greenrc ]
 then
-    . /tenvs/trops/bash_defaultrc
+    . /tenvs/trops/bash_greenrc
 fi
+
 
