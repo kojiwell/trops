@@ -59,8 +59,6 @@ class TropsEnv:
                     export TROPS_SID=$(trops random-name)
 
                     PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
-
-                    alias trgit="trops git"
                     """
                 rcfile.write(dedent(lines))
         # TODO: TROPS_ENV should be optional, which is not needed by default
@@ -76,8 +74,6 @@ class TropsEnv:
                     precmd() {{
                         trops capture-cmd 1 $? $(history|tail -1)
                     }}
-
-                    alias trgit="trops git"
                     """
                 rcfile.write(dedent(lines))
         # TODO: TROPS_ENV should be optional, which is not needed by default
