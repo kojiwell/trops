@@ -101,13 +101,13 @@ PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[0
 
 if ! which trops > /dev/null
 then
-    cd /opt/trops
+    cd /usr/local/src/trops
     python3 setup.py develop
 fi
 
-if [ -f /tenvs/trops/bash_greenrc ]
+if [ -f /opt/shared/trops/bash_greenrc ]
 then
-    . /tenvs/trops/bash_greenrc
+    . /opt/shared/trops/bash_greenrc
 fi
 
 

@@ -8,8 +8,8 @@ services:
     environment:
       - USER=root
     volumes:
-      - $PWD/../../:/opt/trops
-      - $PWD/tenvs:/tenvs
+      - $PWD/../../:/usr/local/src/trops
+      - $PWD/shared:/opt/shared
   green:
     build: green
     hostname: green
@@ -18,5 +18,5 @@ services:
     environment:
       - USER=root
     volumes:
-      - $PWD/../../:/opt/trops
-      - $PWD/tenvs:/tenvs
+      - $PWD/../../:/usr/local/src/trops
+      - $PWD/shared:/opt/shared
