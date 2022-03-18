@@ -15,6 +15,7 @@ from trops.env import add_env_subparsers
 from trops.file import add_file_subparsers
 from trops.capcmd import capture_cmd_subparsers
 from trops.koumyo import koumyo_subparsers
+from trops.release import __version__
 
 
 class Trops:
@@ -400,6 +401,8 @@ class Trops:
         parser = argparse.ArgumentParser(
             description='Trops - Tracking Operations')
         subparsers = parser.add_subparsers()
+        parser.add_argument('-v', '--version',
+                            help="Print version", action='store_true')
         # Add trops env subparsers and arguments
         add_env_subparsers(subparsers)
         # Add trops file subparsers and arguments
@@ -455,6 +458,9 @@ class Trops:
 
         # Pass args and other args to the hander
         args, other_args = parser.parse_known_args()
+        if args.version:
+            print('trops', __version__)
+            exit(0)
         if hasattr(args, 'handler'):
             args.handler(args, other_args)
         else:
