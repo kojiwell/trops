@@ -264,7 +264,7 @@ def add_env_subparsers(subparsers):
     parser_env_update = env_subparsers.add_parser(
         'update', help='update trops environment')
     parser_env_update.add_argument(
-        '-w', '--work-tree', help='work-tree')
+        '-w', '--work-tree', default='/', help='work-tree')
     parser_env_update.add_argument(
         '-g', '--git-dir', help='git-dir')
     parser_env_update.add_argument(
