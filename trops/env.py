@@ -10,8 +10,6 @@ from trops.utils import real_path
 class TropsEnv:
 
     def __init__(self, args, other_args):
-        # NOTE: The args.handler cannot pass args to the class,
-        # so I use self._setup_vars() instead.
 
         if hasattr(args, 'dir'):
             self.trops_dir = real_path(args.dir) + '/trops'
@@ -258,6 +256,8 @@ def add_env_subparsers(subparsers):
         '-w', '--work-tree', help='work-tree')
     parser_env_update.add_argument(
         '-g', '--git-dir', help='git-dir')
+    parser_env_update.add_argument(
+        '--git-remote', help='Remote git repository')
     parser_env_update.add_argument(
         '-e', '--env', default='default', help='Set environment name')
     parser_env_update.set_defaults(handler=env_update)
