@@ -2,6 +2,7 @@ import os
 import subprocess
 from configparser import ConfigParser
 from textwrap import dedent
+from socket import gethostname
 
 from trops.utils import real_path
 
@@ -24,7 +25,11 @@ class TropsEnv:
             self.trops_work_tree = args.work_tree
 
         if hasattr(args, 'env'):
-            self.trops_env = args.env
+            if args.env:
+                self.trops_env = args.env
+            else:
+                self.trops_env = gethostname().split('.')[0]
+
             self.trops_bash_rcfile = self.trops_dir + \
                 f'/bash_{ self.trops_env }rc'
             self.trops_zsh_rcfile = self.trops_dir + \
@@ -244,7 +249,7 @@ def add_env_subparsers(subparsers):
     parser_env_init.add_argument(
         '-w', '--work-tree', default='/', help='Set work-tree (default: %(default)s)')
     parser_env_init.add_argument(
-        '-e', '--env', default='default', help='Set environment name (default: %(default)s)')
+        '-e', '--env', help='Set environment name (default: %(default)s)')
     parser_env_init.set_defaults(handler=env_init)
     # trops env update <dir>
     parser_env_update = env_subparsers.add_parser(

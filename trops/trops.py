@@ -64,7 +64,7 @@ class Trops:
                     pass
 
             self.username = getuser()
-            self.hostname = gethostname()
+            self.hostname = gethostname().split('.')[0]
             os.makedirs(self.trops_dir + '/log', exist_ok=True)
             self.trops_logfile = self.trops_dir + '/log/trops.log'
 
