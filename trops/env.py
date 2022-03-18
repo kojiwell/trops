@@ -205,8 +205,12 @@ class TropsEnv:
         config = ConfigParser()
         config.read(self.trops_conf)
         print('Git')
-        print(f"  git-dir = { config.get(trops_env, 'git_dir') }")
-        print(f"  work-tree = { config.get(trops_env, 'work_tree') }")
+        if config.has_option(trops_env, 'git_dir'):
+            print(f"  git-dir = { config.get(trops_env, 'git_dir') }")
+        if config.has_option(trops_env, 'work_tree'):
+            print(f"  work-tree = { config.get(trops_env, 'work_tree') }")
+        if config.has_option(trops_env, 'git_remote'):
+            print(f"  git_remote = { config.get(trops_env, 'git_remote') }")
 
 
 def env_init(args, other_args):
