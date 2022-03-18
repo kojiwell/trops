@@ -22,6 +22,11 @@ class TropsEnv:
         if hasattr(args, 'work_tree'):
             self.trops_work_tree = args.work_tree
 
+        if hasattr(args, 'git_remote'):
+            self.trops_git_remote = args.git_remote
+        else:
+            self.trops_git_remote = None
+
         if hasattr(args, 'env'):
             if args.env:
                 self.trops_env = args.env
@@ -94,6 +99,8 @@ class TropsEnv:
         config[self.trops_env] = {'git_dir': f'$TROPS_DIR/{ self.trops_env }.git',
                                   'sudo': 'False',
                                   'work_tree': f'{ self.trops_work_tree }'}
+        if self.trops_git_remote:
+            config[self.trops_env]['git_remote'] = self.trops_git_remote
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
 
@@ -159,6 +166,8 @@ class TropsEnv:
         config[self.trops_env] = {'git_dir': f'$TROPS_DIR/{ self.trops_env }.git',
                                   'sudo': 'False',
                                   'work_tree': f'{ self.trops_work_tree }'}
+        if self.trops_git_remote:
+            config[self.trops_env]['git_remote'] = self.trops_git_remote
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
 
@@ -248,6 +257,8 @@ def add_env_subparsers(subparsers):
         '-w', '--work-tree', default='/', help='Set work-tree (default: %(default)s)')
     parser_env_init.add_argument(
         '-e', '--env', help='Set environment name (default: %(default)s)')
+    parser_env_init.add_argument(
+        '--git-remote', help='Remote git repository')
     parser_env_init.set_defaults(handler=env_init)
     # trops env update <dir>
     parser_env_update = env_subparsers.add_parser(
@@ -259,5 +270,5 @@ def add_env_subparsers(subparsers):
     parser_env_update.add_argument(
         '--git-remote', help='Remote git repository')
     parser_env_update.add_argument(
-        '-e', '--env', default='default', help='Set environment name')
+        '-e', '--env', help='Set environment name')
     parser_env_update.set_defaults(handler=env_update)
