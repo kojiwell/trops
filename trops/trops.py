@@ -78,6 +78,15 @@ class Trops:
     def git(self, args, other_args):
         """Git wrapper command"""
 
+        if hasattr(args, 'dev') and args.dev:
+            pass
+        else:
+            msg = """\
+                trops git is only available in development mode
+                Add --dev option like trops --dev git ..."""
+            print(dedent(msg))
+            exit(1)
+
         if hasattr(args, 'env') and args.env:
             self.trops_env = args.env
             self.git_dir = os.path.expandvars(
@@ -88,6 +97,21 @@ class Trops:
                             '--work-tree=' + self.work_tree]
 
         cmd = self.git_cmd + other_args
+        subprocess.call(cmd)
+
+    def show(self, args, other_args):
+        """trops show hash[:path]"""
+
+        if hasattr(args, 'env') and args.env:
+            self.trops_env = args.env
+            self.git_dir = os.path.expandvars(
+                self.config[self.trops_env]['git_dir'])
+            self.work_tree = os.path.expandvars(
+                self.config[self.trops_env]['work_tree'])
+            self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                            '--work-tree=' + self.work_tree]
+
+        cmd = self.git_cmd + ['show', args.commit]
         subprocess.call(cmd)
 
     def capture_cmd(self, args, other_args):
@@ -215,7 +239,7 @@ class Trops:
                 owner = Path(pkg_list_file).owner()
                 group = Path(pkg_list_file).group()
                 self.logger.info(
-                    f"FL trops git show { output[0] }:{ real_path(pkg_list_file).lstrip('/')}  #> { log_note }, O={ owner },G={ group },M={ mode }")
+                    f"FL trops show { output[0] }:{ real_path(pkg_list_file).lstrip('/')}  #> { log_note }, O={ owner },G={ group },M={ mode }")
         else:
             print('No update')
 
@@ -271,7 +295,7 @@ class Trops:
                             owner = Path(ii_path).owner()
                             group = Path(ii_path).group()
                             self.logger.info(
-                                f"FL trops git show { output[0] }:{ real_path(ii_path).lstrip('/')}  #> { log_note }, O={ owner },G={ group },M={ mode }")
+                                f"FL trops show { output[0] }:{ real_path(ii_path).lstrip('/')}  #> { log_note }, O={ owner },G={ group },M={ mode }")
                     else:
                         print('No update')
 
@@ -351,7 +375,7 @@ class Trops:
             owner = Path(file_path).owner()
             group = Path(file_path).group()
             self.logger.info(
-                f"FL trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  #> { log_note } O={ owner },G={ group },M={ mode }")
+                f"FL trops show { output[0] }:{ real_path(file_path).lstrip('/')}  #> { log_note } O={ owner },G={ group },M={ mode }")
 
     def drop(self, args, other_args):
 
@@ -393,7 +417,7 @@ class Trops:
         output = subprocess.check_output(
             cmd).decode("utf-8").split()
         self.logger.info(
-            f"FL trops git show { output[0] }:{ real_path(file_path).lstrip('/')}  #> BYE")
+            f"FL trops show { output[0] }:{ real_path(file_path).lstrip('/')}  #> BYE")
 
     def main(self):
         """Get subcommand and arguments and pass them to the hander"""
@@ -403,6 +427,8 @@ class Trops:
         subparsers = parser.add_subparsers()
         parser.add_argument('-v', '--version',
                             help="Print version", action='store_true')
+        parser.add_argument('--dev',
+                            help="Development mode", action='store_true')
         # Add trops env subparsers and arguments
         add_env_subparsers(subparsers)
         # Add trops file subparsers and arguments
@@ -415,6 +441,11 @@ class Trops:
                                 action='store_true')
         parser_git.add_argument('-e', '--env', help="Set env")
         parser_git.set_defaults(handler=self.git)
+        # trops show commit[:path]
+        parser_show = subparsers.add_parser(
+            'show', help='trops show commit[:path]')
+        parser_show.add_argument('commit', help='Set commit[:path]')
+        parser_show.set_defaults(handler=self.show)
         # trops capture-cmd <ignore_fields> <return_code> <command>
         parser_capture_cmd = subparsers.add_parser(
             'capture-cmd', help='Capture command line strings', add_help=False)
