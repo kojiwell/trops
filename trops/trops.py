@@ -13,6 +13,7 @@ from socket import gethostname
 from trops.utils import real_path, random_name
 from trops.env import add_env_subparsers
 from trops.file import add_file_subparsers
+from trops.repo import add_repo_subparsers
 from trops.capcmd import capture_cmd_subparsers
 from trops.koumyo import koumyo_subparsers
 from trops.release import __version__
@@ -140,6 +141,8 @@ class Trops:
             executed_cmd.pop(0)
 
         ignored_cmds = ['trops', 'ls', 'top', 'cat']
+        if args.dev and args.dev == True:
+            ignored_cmds.remove('trops')
         if executed_cmd[0] in ignored_cmds:
             exit(0)
 
@@ -435,6 +438,8 @@ class Trops:
         add_file_subparsers(subparsers)
         # Add trops koumyo arguments
         koumyo_subparsers(subparsers)
+        # Add trops repo arguments
+        add_repo_subparsers(subparsers)
         # trops git <file/dir>
         parser_git = subparsers.add_parser('git', help='git wrapper')
         parser_git.add_argument('-s', '--sudo', help="Use sudo",
@@ -444,6 +449,7 @@ class Trops:
         # trops show commit[:path]
         parser_show = subparsers.add_parser(
             'show', help='trops show commit[:path]')
+        parser_show.add_argument('-e', '--env', help="Set env")
         parser_show.add_argument('commit', help='Set commit[:path]')
         parser_show.set_defaults(handler=self.show)
         # trops capture-cmd <ignore_fields> <return_code> <command>
