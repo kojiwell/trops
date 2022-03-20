@@ -129,4 +129,5 @@ dmypy.json
 .pyre/
 
 # test
-test/docker-compose/shared/trops
+test/docker-compose/shared
+test/docker-compose/local
