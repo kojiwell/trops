@@ -76,21 +76,6 @@ class TropsFile:
         cmd = self.git_cmd + ['checkout', self.path]
         subprocess.call(cmd)
 
-    def push(self):
-
-        git_conf = ConfigParser()
-        git_conf.read(self.git_dir + '/config')
-        if not git_conf.has_option('remote "origin"', 'url'):
-            cmd = self.git_cmd + ['remote', 'add', 'origin', self.git_remote]
-            subprocess.call(cmd)
-        if not git_conf.has_option(f'branch "trops_{ self.trops_env }"', 'remote'):
-            cmd = self.git_cmd + \
-                ['push', '--set-upstream', 'origin',
-                    f'trops_{ self.trops_env }']
-        else:
-            cmd = self.git_cmd + ['push']
-        subprocess.call(cmd)
-
 
 def file_list(args, other_args):
 
@@ -102,12 +87,6 @@ def file_put(args, other_args):
 
     tf = TropsFile(args, other_args)
     tf.put()
-
-
-def file_push(args, other_args):
-
-    tf = TropsFile(args, other_args)
-    tf.push()
 
 
 def add_file_subparsers(subparsers):
@@ -130,7 +109,3 @@ def add_file_subparsers(subparsers):
     parser_file_put.add_argument(
         'dest', help='dest path where you put the file/dir')
     parser_file_put.set_defaults(handler=file_put)
-    # trops file push
-    parser_file_push = file_subparsers.add_parser(
-        'push', help='push to remote repository')
-    parser_file_push.set_defaults(handler=file_push)
