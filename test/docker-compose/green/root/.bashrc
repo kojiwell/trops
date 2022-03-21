@@ -105,9 +105,7 @@ then
     python3 setup.py develop
 fi
 
-if [ -f /opt/shared/trops/bash_greenrc ]
+if [ -f /opt/local/trops/bash_greenrc ]
 then
-    . /opt/shared/trops/bash_greenrc
+    . /opt/local/trops/bash_greenrc
 fi
-
-

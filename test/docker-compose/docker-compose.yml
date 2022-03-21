@@ -19,4 +19,6 @@ services:
       - USER=root
     volumes:
       - $PWD/../../:/usr/local/src/trops
-      - $PWD/shared:/opt/shared
+      - $PWD/local:/opt/local
+      - /root/.ssh/test_trops:/root/.ssh/id_rsa
+      - /root/.ssh/test_trops.pub:/root/.ssh/id_rsa.pub
