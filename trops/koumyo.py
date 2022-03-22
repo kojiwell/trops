@@ -1,15 +1,24 @@
 import sys
+
+from textwrap import dedent
 from tabulate import tabulate
-# TODO: Use [python-tabulate](https://pypi.org/project/tabulate/)
 
 
 class TropsKoumyo:
 
     def __init__(self, args, other_args):
 
-        input = sys.stdin.read()
+        try:
+            input = sys.stdin.read()
+        except KeyboardInterrupt:
+            msg = '''\
+
+                Usage example of trops km:
+                    > trops log | trops km
+                    > trops log | trops km --only=user,command,directory'''
+            print(dedent(msg))
+            exit(1)
         self.logs = input.splitlines()
-        self.md_true = args.markdown
         if hasattr(args, 'only') and args.only != None:
             self.only_list = args.only.split(',')
 
@@ -55,7 +64,7 @@ class TropsKoumyo:
                 while len(formatted_log) < 10:
                     formatted_log.append('-')
             headers = ['date', 'time', 'user',
-                       'level', 'type', 'command', 'directory', 'excode', 'id', 'env']
+                       'level', 'type', 'command', 'directory', 'exit', 'id', 'env']
             # if --only is added, pick the only chosen elements
             if hasattr(self, 'only_list'):
                 i = []
@@ -87,9 +96,8 @@ def koumyo_subparsers(subparsers):
 
     # trops koumyo
     parser_koumyo = subparsers.add_parser(
-        'km', help='(KM)Kou-Myo can make log be easy to read')
+        'km', help='(KM)Kou-Myo sheds light on trops log')
     parser_koumyo.add_argument(
-        '-m', '--markdown', action='store_true', help='Markdown format')
-    parser_koumyo.add_argument(
-        '-o', '--only', help='List of items(e.g. --only=command,directory')
+        '-o', '--only', help='List of items (e.g. --only=command,directory')
     parser_koumyo.set_defaults(handler=run)
+    # TODO: Add output
