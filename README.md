@@ -1,4 +1,6 @@
 # Trops - Track Operations
+[![PyPI Package](https://img.shields.io/pypi/v/trops)](https://pypi.org/project/trops/)
+[![Repository License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
 
 Trops is a simple command-line tool to track Linux system operations.
 
