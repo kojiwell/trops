@@ -24,6 +24,10 @@ class Trops:
 
     def __init__(self):
 
+        # Set username and hostname
+        self.username = getuser()
+        self.hostname = gethostname().split('.')[0]
+
         # Set trops_dir
         if os.getenv('TROPS_DIR'):
             self.trops_dir = os.path.expandvars('$TROPS_DIR')
@@ -34,7 +38,7 @@ class Trops:
         if os.getenv('TROPS_ENV'):
             self.trops_env = os.getenv('TROPS_ENV')
         else:
-            self.trops_env = 'default'
+            self.trops_env = self.hostname
 
         self.config = ConfigParser()
         if self.trops_dir:
@@ -65,8 +69,6 @@ class Trops:
                 except KeyError:
                     pass
 
-            self.username = getuser()
-            self.hostname = gethostname().split('.')[0]
             os.makedirs(self.trops_dir + '/log', exist_ok=True)
             self.trops_logfile = self.trops_dir + '/log/trops.log'
 
@@ -453,6 +455,7 @@ class Trops:
         parser_show.add_argument('commit', help='Set commit[:path]')
         parser_show.set_defaults(handler=self.show)
         # trops capture-cmd <ignore_fields> <return_code> <command>
+        # TODO: Move capture-cmd out from trops.py to capcmd.py
         parser_capture_cmd = subparsers.add_parser(
             'capture-cmd', help='Capture command line strings', add_help=False)
         parser_capture_cmd.add_argument('ignore_fields', type=int,
@@ -502,6 +505,8 @@ class Trops:
             args.handler(args, other_args)
         else:
             parser.print_help()
+        # TODO: The other_args are only needed for trops git. Clean them
+        #       where they're not needed
 
 
 def main():
