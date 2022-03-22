@@ -19,7 +19,7 @@ CentOS
 
     pip3 install trops
 
-## Setup
+## Quickstart
 
 Set up a trops project directory
 
