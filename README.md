@@ -40,3 +40,13 @@ TBD
 ## Inspiration
 
 - [The best way to store your dotfiles: A bare Git repository](https://www.atlassian.com/git/tutorials/dotfiles)
+
+## Contributing
+
+If you have a problem, please [create an issue](https://github.com/kojiwell/trops/issues/new) or a pull request.
+
+1. Fork it ( https://github.com/kojiwell/trops/fork )
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create a new Pull Request
