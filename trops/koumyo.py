@@ -18,6 +18,7 @@ class TropsKoumyo:
                     > trops log | trops km --only=user,command,directory'''
             print(dedent(msg))
             exit(1)
+
         self.logs = input.splitlines()
         if hasattr(args, 'only') and args.only != None:
             self.only_list = args.only.split(',')
@@ -100,4 +101,5 @@ def koumyo_subparsers(subparsers):
     parser_koumyo.add_argument(
         '-o', '--only', help='List of items (e.g. --only=command,directory')
     parser_koumyo.set_defaults(handler=run)
-    # TODO: Add output
+    # TODO: Add --output option to save the output in as a file
+    # TODO: Add option to print it as markdown table
