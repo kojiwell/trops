@@ -276,3 +276,4 @@ def add_env_subparsers(subparsers):
     parser_env_update.add_argument(
         '-e', '--env', help='Set environment name')
     parser_env_update.set_defaults(handler=env_update)
+    # TODO: Add trops deactivate
