@@ -33,10 +33,8 @@ class TropsEnv:
             else:
                 self.trops_env = gethostname().split('.')[0]
 
-            self.trops_bash_rcfile = self.trops_dir + \
-                f'/bash_{ self.trops_env }rc'
-            self.trops_zsh_rcfile = self.trops_dir + \
-                f'/zsh_{ self.trops_env }rc'
+            self.trops_rcfile = self.trops_dir + \
+                f'/{ self.trops_env }rc'
             self.trops_git_dir = self.trops_dir + f'/{ self.trops_env }.git'
 
         self.trops_conf = self.trops_dir + '/trops.cfg'
@@ -58,30 +56,47 @@ class TropsEnv:
 
     def _setup_rcfiles(self):
 
-        # Create bash rcfile
-        if not os.path.isfile(self.trops_bash_rcfile):
-            with open(self.trops_bash_rcfile, mode='w') as rcfile:
+        # Create trops rcfile
+        if not os.path.isfile(self.trops_rcfile):
+            with open(self.trops_rcfile, mode='w') as rcfile:
                 lines = f"""\
-                    export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
-                    export TROPS_ENV={ self.trops_env }
-                    export TROPS_SID=$(trops random-name)
+                    if ps -p $$|grep zsh > /dev/null; then
+                        export TROPS_DIR=$(dirname $(realpath ${{(%):-%N}}))
+                        export TROPS_ENV={ self.trops_env }
+                        export TROPS_SID=$(trops random-name)
 
-                    PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
-                    """
-                rcfile.write(dedent(lines))
-        # TODO: TROPS_ENV should be optional, which is not needed by default
+                        on-trops() {{
+                            export TROPS_SID=$(trops random-name)
+                            export PROMPT_BK=$PROMPT
+                            export PROMPT="[trops]$PROMPT"
+                            precmd() {{
+                                trops capture-cmd 1 $? $(history|tail -1)
+                            }}
+                        }}
 
-        # Create zsh rcfile
-        if not os.path.isfile(self.trops_zsh_rcfile):
-            with open(self.trops_zsh_rcfile, mode='w') as rcfile:
-                lines = f"""\
-                    export TROPS_DIR=$(dirname $(realpath ${{(%):-%N}}))
-                    export TROPS_ENV={ self.trops_env }
-                    export TROPS_SID=$(trops random-name)
+                        off-trops() {{
+                            export PROMPT=$PROMPT_BK
+                            unset -f precmd
+                        }}
+                    fi
 
-                    precmd() {{
-                        trops capture-cmd 1 $? $(history|tail -1)
-                    }}
+                    if ps -p $$|grep bash > /dev/null; then
+                        export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
+                        export TROPS_ENV={ self.trops_env }
+                        export TROPS_SID=$(trops random-name)
+                    
+                        on-trops() {{
+                            export TROPS_SID=$(trops random-name)
+                            export PS1_BK=$PS1
+                            export PS1="[trops]$PS1"
+                            PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
+                        }}
+
+                        off-trops() {{
+                            export PS1=$PS1_BK
+                            unset PROMPT_COMMAND
+                        }}
+                    fi
                     """
                 rcfile.write(dedent(lines))
         # TODO: TROPS_ENV should be optional, which is not needed by default
