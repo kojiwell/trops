@@ -1,12 +1,12 @@
 import os
-from setuptools import setup
+import setuptools
 
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-setup(
+setuptools.setup(
     name="trops",
     version="0.1.17",
     author="Koji Tanaka",
@@ -16,7 +16,8 @@ setup(
     license="MIT",
     keywords="linux system administration",
     url="http://github.com/kojiwell/trops",
-    packages=['trops'],
+    package_dir={"": "src"},
+    packages=setuptools.find_packages(where="src"),
     long_description=read('README.md'),
     python_requires='>=3.8',
     install_requires=[
