@@ -6,20 +6,34 @@ Trops is a simple command-line tool to track Linux system operations.
 
 ## Preriquisites
 
-- Python-3.8 or higher
-- Git 2.X
+- OS: Linux
+- Shell: Bash or Zsh
+- Python: 3.8 or higher
+- Git: 2.X
+
+## Installation
 
 Ubuntu
 
     apt install python3 python3-pip git
+    pip3 install trops
 
 CentOS
 
-    TBD
+CentOS's default Git and Python3 versions might be older than the preriquisites, but you can use Miniconda as shown below.
 
-## Installation
+Miniconda
 
-    pip3 install trops
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    chmod +x Miniconda3-latest-Linux-x86_64.sh
+    ./Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda3
+    $HOME//miniconda3/bin/conda install git
+    $HOME/miniconda3/bin/pip install trops
+    mkdir $HOME/bin
+    cd $HOME/bin
+    ln -s ../miniconda3/bin/git git
+    ln -s ../miniconda3/bin/trops trops
+    export PATH=$HOME/bin:$PATH # Add this line to your .bashrc
 
 ## Quickstart
 
