@@ -81,15 +81,6 @@ class Trops:
     def git(self, args, other_args):
         """Git wrapper command"""
 
-        if hasattr(args, 'dev') and args.dev:
-            pass
-        else:
-            msg = """\
-                trops git is only available in development mode
-                Add --dev option like trops --dev git ..."""
-            print(dedent(msg))
-            exit(1)
-
         if hasattr(args, 'env') and args.env:
             self.trops_env = args.env
             self.git_dir = os.path.expandvars(
