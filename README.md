@@ -27,17 +27,21 @@ Set up a trops project directory
 
     trops env init <dir>
 
-Set up the trops environment
+Activate trops
 
-    # bash
-    . <dir>/trops/bash_<hostname>rc
+    . <dir>/trops/<hostname>rc
     
-    # zsh
-    . <dir>/trops/zsh_<hostname>rc
+Turn on/off background tracking
 
-## Usage
+    # Turn on
+    on-trops
 
-TBD
+    # Turn off
+    off-trops
+
+If you turn it on, every command will be logged. You can check it by trops log command
+
+    trops log
 
 ## Inspiration
 
