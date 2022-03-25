@@ -1,10 +1,10 @@
-# Trops - Track Operations
+# Trops
 [![PyPI Package](https://img.shields.io/pypi/v/trops)](https://pypi.org/project/trops/)
 [![Repository License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
 
-Trops is a simple command-line tool to track Linux system operations.
+Trops is a command-line tool for tracking Linux system operations in an easy-to-use workflow. It helps you interactively develop Ansible roles, Dockerfile, and etc.
 
-## Preriquisites
+## Prerequisites
 
 - OS: Linux
 - Shell: Bash or Zsh
@@ -20,7 +20,7 @@ Ubuntu
 
 CentOS
 
-CentOS's default Git and Python3 versions might be older than the preriquisites, but you can use Miniconda as shown below.
+CentOS's default Git and Python3 versions might be older than the prerequisites, but you can use Miniconda as shown below.
 
 Miniconda
 
@@ -58,6 +58,8 @@ If you turn it on, every command will be logged. You can check it by trops log c
     trops log
 
 ## Inspiration
+
+Trops is inspired by the idea on this link.
 
 - [The best way to store your dotfiles: A bare Git repository](https://www.atlassian.com/git/tutorials/dotfiles)
 
