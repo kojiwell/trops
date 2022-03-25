@@ -67,16 +67,26 @@ class TropsEnv:
 
                         on-trops() {{
                             export TROPS_SID=$(trops random-name)
-                            export PROMPT_BK=$PROMPT
+                            export BK_PROMPT=$PROMPT
                             export PROMPT="[trops]$PROMPT"
+                            # Pure prompt https://github.com/sindresorhus/pure
+                            if [ -z ${{PURE_PROMPT_SYMBOL+x}} ]; then
+                                export BK_PURE_PROMPT_SYMBOL="❯"
+                                export PURE_PROMPT_SYMBOL="[trops]❯"
+                            else
+                                export BK_PURE_PROMPT_SYMBOL=$PURE_PROMPT_SYMBOL
+                                export PURE_PROMPT_SYMBOL="[trops]$PURE_PROMPT_SYMBOL"
+                            fi
                             precmd() {{
                                 trops capture-cmd 1 $? $(history|tail -1)
                             }}
                         }}
 
                         off-trops() {{
-                            export PROMPT=$PROMPT_BK
+                            export PROMPT=$BK_PROMPT
+                            export PURE_PROMPT_SYMBOL=$BK_PURE_PROMPT_SYMBOL
                             unset -f precmd
+                            unset BK_PROMPT BK_PURE_PROMPT_SYMBOL
                         }}
                     fi
 
@@ -87,14 +97,15 @@ class TropsEnv:
                     
                         on-trops() {{
                             export TROPS_SID=$(trops random-name)
-                            export PS1_BK=$PS1
+                            export BK_PS1=$PS1
                             export PS1="[trops]$PS1"
                             PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
                         }}
 
                         off-trops() {{
-                            export PS1=$PS1_BK
+                            export PS1=$BK_PS1
                             unset PROMPT_COMMAND
+                            unset BK_PS1
                         }}
                     fi
                     """
