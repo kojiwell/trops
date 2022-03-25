@@ -99,13 +99,11 @@ fi
 #fi
 PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;33m\]\w\[\033[00m\]\$ '
 
-if ! which trops > /dev/null
-then
+if ! which trops > /dev/null; then
     cd /usr/local/src/trops
     python3 setup.py develop
 fi
 
-if [ -f /opt/local/trops/bash_greenrc ]
-then
-    . /opt/local/trops/bash_greenrc
+if [ -f /opt/local/trops/greenrc ]; then
+    . /opt/local/trops/greenrc
 fi

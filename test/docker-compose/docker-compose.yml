@@ -10,6 +10,8 @@ services:
     volumes:
       - $PWD/../../:/usr/local/src/trops
       - $PWD/shared:/opt/shared
+      - /root/.ssh/test_trops:/root/.ssh/id_rsa
+      - /root/.ssh/test_trops.pub:/root/.ssh/id_rsa.pub
   green:
     build: green
     hostname: green

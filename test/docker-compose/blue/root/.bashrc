@@ -100,15 +100,11 @@ fi
 
 PS1='${debian_chroot:+($debian_chroot)}\[\033[01;34m\]\u@\h\[\033[00m\]:\[\033[01;33m\]\w\[\033[00m\]\$ '
 
-if ! which trops > /dev/null
-then
+if ! which trops > /dev/null; then
     cd /usr/local/src/trops
     python3 setup.py develop
 fi
 
-if [ -f /opt/shared/trops/bash_bluerc ]
-then
-    . /opt/shared/trops/bash_bluerc
+if [ -f /opt/shared/trops/bluerc ]; then
+    . /opt/shared/trops/bluerc
 fi
-
-
