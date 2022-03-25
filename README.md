@@ -2,7 +2,7 @@
 [![PyPI Package](https://img.shields.io/pypi/v/trops)](https://pypi.org/project/trops/)
 [![Repository License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
 
-Trops is a simple command-line tool to track Linux system operations for interactive development of Ansible roles, Dockerfile, and etc. 
+Trops is a command-line tool for tracking Linux system operations in an easy-to-use workflow. It helps you interactively develop Ansible roles, Dockerfile, and etc.
 
 ## Prerequisites
 
