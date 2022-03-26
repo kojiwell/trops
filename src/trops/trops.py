@@ -235,7 +235,7 @@ class Trops:
                 owner = Path(pkg_list_file).owner()
                 group = Path(pkg_list_file).group()
                 self.logger.info(
-                    f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(pkg_list_file).lstrip('/')}  #> { log_note }, O={ owner },G={ group },M={ mode }")
+                    f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(pkg_list_file).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }")
         else:
             print('No update')
 
@@ -291,7 +291,7 @@ class Trops:
                             owner = Path(ii_path).owner()
                             group = Path(ii_path).group()
                             self.logger.info(
-                                f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(ii_path).lstrip('/')}  #> { log_note }, O={ owner },G={ group },M={ mode }")
+                                f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(ii_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }")
                     else:
                         print('No update')
 
@@ -371,7 +371,7 @@ class Trops:
             owner = Path(file_path).owner()
             group = Path(file_path).group()
             self.logger.info(
-                f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(file_path).lstrip('/')}  #> { log_note } O={ owner },G={ group },M={ mode }")
+                f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(file_path).lstrip(self.work_tree)}  #> { log_note } O={ owner },G={ group },M={ mode }")
 
     def drop(self, args, other_args):
 
