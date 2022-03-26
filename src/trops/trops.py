@@ -350,14 +350,18 @@ class Trops:
 
         # Check if the path is in the git repo
         cmd = self.git_cmd + ['ls-files', file_path]
-        output = subprocess.check_output(cmd).decode("utf-8")
+        result = subprocess.run(cmd, capture_output=True)
+        if result.returncode != 0:
+            print(result.stderr.decode('utf-8'))
+            exit(result.returncode)
+        output = result.stdout.decode('utf-8')
         # Set the message based on the output
         if output:
             git_msg = f"Update { file_path }"
             log_note = "UPDATE"
         else:
-            git_msg = f"Add { file_path }"
             log_note = "ADD"
+            git_msg = f"Add { file_path }"
         # Add and commit
         cmd = self.git_cmd + ['add', file_path]
         subprocess.call(cmd)
