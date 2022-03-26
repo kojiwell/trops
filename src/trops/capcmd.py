@@ -3,10 +3,10 @@ import subprocess
 import distutils.util
 import logging
 
-from time import time
 from configparser import ConfigParser
 from getpass import getuser
 from socket import gethostname
+from pathlib import Path
 
 from trops.utils import real_path
 
