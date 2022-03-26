@@ -108,193 +108,6 @@ class Trops:
         cmd = self.git_cmd + ['show', args.commit]
         subprocess.call(cmd)
 
-    def capture_cmd(self, args, other_args):
-        """\
-        log executed command
-        NOTE: You need to set PROMPT_COMMAND in bash as shown below:
-        PROMPT_COMMAND='trops capture-cmd <ignore_field> <return code> $(history 1)'"""
-
-        rc = args.return_code
-
-        executed_cmd = other_args
-        # Create trops_dir/tmp directory
-        tmp_dir = self.trops_dir + '/tmp'
-        if not os.path.isdir(tmp_dir):
-            os.mkdir(tmp_dir)
-        # Compare the executed_cmd if last_cmd exists
-        last_cmd = tmp_dir + '/last_cmd'
-        if os.path.isfile(last_cmd):
-            with open(last_cmd, mode='r') as f:
-                if ' '.join(executed_cmd) in f.read():
-                    exit(0)
-        with open(last_cmd, mode='w') as f:
-            f.write(' '.join(executed_cmd))
-
-        for n in range(args.ignore_fields):
-            executed_cmd.pop(0)
-
-        ignored_cmds = ['trops', 'ls', 'top', 'cat']
-        if args.dev and args.dev == True:
-            ignored_cmds.remove('trops')
-        if executed_cmd[0] in ignored_cmds:
-            exit(0)
-
-        message = 'CM ' + ' '.join(executed_cmd) + \
-            f"  #> PWD={ os.environ['PWD'] }, EXIT={ rc }"
-        if 'TROPS_SID' in os.environ:
-            message = message + ', TROPS_SID=' + os.environ['TROPS_SID']
-        if 'TROPS_ENV' in os.environ:
-            message = message + ', TROPS_ENV=' + os.environ['TROPS_ENV']
-        if rc == 0:
-            self.logger.info(message)
-        else:
-            self.logger.warning(message)
-        self._yum_log(executed_cmd)
-        self._apt_log(executed_cmd)
-        self._update_files(executed_cmd)
-
-    def _yum_log(self, executed_cmd):
-
-        # Check if sudo is used
-        if 'sudo' == executed_cmd[0]:
-            executed_cmd.pop(0)
-
-        if executed_cmd[0] in ['yum', 'dnf'] and ('install' in executed_cmd
-                                                  or 'update' in executed_cmd
-                                                  or 'remove' in executed_cmd):
-            cmd = ['rpm', '-qa']
-            result = subprocess.run(cmd, capture_output=True)
-            pkg_list = result.stdout.decode('utf-8').splitlines()
-            pkg_list.sort()
-
-            pkg_list_file = self.trops_dir + \
-                f'/log/rpm_pkg_list.{ self.hostname }'
-            f = open(pkg_list_file, 'w')
-            f.write('\n'.join(pkg_list))
-            f.close()
-
-            # Check if the path is in the git repo
-            cmd = self.git_cmd + ['ls-files', pkg_list_file]
-            output = subprocess.check_output(cmd).decode("utf-8")
-            # Set the message based on the output
-            if output:
-                git_msg = f"Update { pkg_list_file }"
-            else:
-                git_msg = f"Add { pkg_list_file }"
-            # Add and commit
-            cmd = self.git_cmd + ['add', pkg_list_file]
-            subprocess.call(cmd)
-            cmd = self.git_cmd + ['commit', '-m', git_msg, pkg_list_file]
-            subprocess.call(cmd)
-
-    def _apt_log(self, executed_cmd):
-
-        if 'apt' in executed_cmd and ('upgrade' in executed_cmd
-                                      or 'install' in executed_cmd
-                                      or 'update' in executed_cmd
-                                      or 'remove' in executed_cmd
-                                      or 'autoremove' in executed_cmd):
-            self._update_pkg_list(' '.join(executed_cmd))
-        # TODO: Add log trops git show hex
-
-    def _update_pkg_list(self, args):
-
-        # Update the pkg_List
-        pkg_list_file = self.trops_dir + f'/log/apt_pkg_list_{ self.hostname }'
-        f = open(pkg_list_file, 'w')
-        cmd = ['apt', 'list', '--installed']
-        if self.sudo:
-            cmd.insert(0, 'sudo')
-        pkg_list = subprocess.check_output(cmd).decode('utf-8')
-        f.write(pkg_list)
-        f.close()
-        cmd = self.git_cmd + ['ls-files', pkg_list_file]
-        result = subprocess.run(cmd, capture_output=True)
-        if result.stdout.decode("utf-8"):
-            git_msg = f"Update { pkg_list_file }"
-            log_note = 'UPDATE'
-        else:
-            git_msg = f"Add { pkg_list_file }"
-            log_note = 'ADD'
-        cmd = self.git_cmd + ['add', pkg_list_file]
-        subprocess.call(cmd)
-        cmd = self.git_cmd + ['commit', '-m',
-                              git_msg, pkg_list_file]
-        # Commit the change if needed
-        result = subprocess.run(cmd, capture_output=True)
-        # If there's an update, log it in the log file
-        if result.returncode == 0:
-            msg = result.stdout.decode('utf-8').splitlines()[0]
-            print(msg)
-            cmd = self.git_cmd + \
-                ['log', '--oneline', '-1', pkg_list_file]
-            output = subprocess.check_output(
-                cmd).decode("utf-8").split()
-            if pkg_list_file in output:
-                mode = oct(os.stat(pkg_list_file).st_mode)[-4:]
-                owner = Path(pkg_list_file).owner()
-                group = Path(pkg_list_file).group()
-                self.logger.info(
-                    f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(pkg_list_file).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }")
-        else:
-            print('No update')
-
-    def _update_files(self, executed_cmd):
-        """Add a file or directory in the git repo"""
-
-        # Remove sudo from executed_cmd
-        if 'sudo' == executed_cmd[0]:
-            executed_cmd.pop(0)
-        # TODO: Pop Sudo options such as -u and -E
-
-        # Check if editor is launched
-        editors = ['vim', 'vi', 'emacs', 'nano']
-        if executed_cmd[0] in editors:
-            # Add the edited file in trops git
-            for ii in executed_cmd[1:]:
-                ii_path = real_path(ii)
-                if os.path.isfile(ii_path):
-                    # Ignore the file if it is under a git repository
-                    ii_parent_dir = os.path.dirname(ii_path)
-                    os.chdir(ii_parent_dir)
-                    cmd = ['git', 'rev-parse', '--is-inside-work-tree']
-                    result = subprocess.run(cmd, capture_output=True)
-                    if result.returncode == 0:
-                        self.logger.info(
-                            f"TROPS IGNORE { ii_path } -- The file is under a git repository")
-                        exit(0)
-                    # Check if the path is in the git repo
-                    cmd = self.git_cmd + ['ls-files', ii_path]
-                    result = subprocess.run(cmd, capture_output=True)
-                    # Set the message based on the output
-                    if result.stdout.decode("utf-8"):
-                        git_msg = f"Update { ii_path }"
-                        log_note = 'UPDATE'
-                    else:
-                        git_msg = f"Add { ii_path }"
-                        log_note = 'ADD'
-                    # Add the file and commit
-                    cmd = self.git_cmd + ['add', ii_path]
-                    result = subprocess.run(cmd, capture_output=True)
-                    cmd = self.git_cmd + ['commit', '-m', git_msg, ii_path]
-                    result = subprocess.run(cmd, capture_output=True)
-                    # If there's an update, log it in the log file
-                    if result.returncode == 0:
-                        msg = result.stdout.decode('utf-8').splitlines()[0]
-                        print(msg)
-                        cmd = self.git_cmd + \
-                            ['log', '--oneline', '-1', ii_path]
-                        output = subprocess.check_output(
-                            cmd).decode("utf-8").split()
-                        if ii_path in output:
-                            mode = oct(os.stat(ii_path).st_mode)[-4:]
-                            owner = Path(ii_path).owner()
-                            group = Path(ii_path).group()
-                            self.logger.info(
-                                f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(ii_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }")
-                    else:
-                        print('No update')
-
     def log(self, args, other_args):
 
         log_file = self.trops_dir + '/log/trops.log'
@@ -310,7 +123,7 @@ class Trops:
         try:
             subprocess.call(cmd)
         except KeyboardInterrupt:
-            print('\nClosing trops show...')
+            print('\nClosing trops log...')
 
     def ll(self, args, other_args):
         """Shows the list of git-tracked files"""
@@ -450,15 +263,6 @@ class Trops:
         parser_show.add_argument('commit', help='Set commit[:path]')
         parser_show.set_defaults(handler=self.show)
         # trops capture-cmd <ignore_fields> <return_code> <command>
-        # TODO: Move capture-cmd out from trops.py to capcmd.py
-        parser_capture_cmd = subparsers.add_parser(
-            'capture-cmd', help='Capture command line strings', add_help=False)
-        parser_capture_cmd.add_argument('ignore_fields', type=int,
-                                        default=1, help='set number of fields to ingore')
-        parser_capture_cmd.add_argument('return_code', type=int,
-                                        default=0, help='set return code')
-        parser_capture_cmd.set_defaults(handler=self.capture_cmd)
-        # trops capture-cmd <epoch_time> <return_code> <command>
         capture_cmd_subparsers(subparsers)
         # trops log
         parser_log = subparsers.add_parser('log', help='show log')
