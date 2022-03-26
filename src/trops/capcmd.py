@@ -15,64 +15,74 @@ class TropsCapCmd:
 
     def __init__(self, args, other_args):
 
-        self.return_code = args.return_code
-        self.executed_cmd = other_args
+        # Set username and hostname
+        self.username = getuser()
+        self.hostname = gethostname().split('.')[0]
 
+        # Set trops_dir
         if os.getenv('TROPS_DIR'):
-            self.trops_dir = os.getenv('TROPS_DIR')
-            self.trops_conf = self.trops_dir + '/trops.cfg'
-            self.trops_log_dir = self.trops_dir + '/log'
+            self.trops_dir = os.path.expandvars('$TROPS_DIR')
         else:
-            print('TROPS_DIR is not set')
-            exit(1)
+            self.trops_dir = False
 
-        if hasattr(args, 'env') and args.env:
-            self.trops_env = args.env
-        elif os.getenv('TROPS_ENV'):
+        # return_code
+        self.return_code = args.return_code
+        self.ignore_fields = args.ignore_fields
+        self.other_args = other_args
+
+        # Set trops_env
+        if os.getenv('TROPS_ENV'):
             self.trops_env = os.getenv('TROPS_ENV')
         else:
-            print('TROPS_ENV is not set')
+            self.trops_env = self.hostname
 
         self.config = ConfigParser()
-        if os.path.isfile(self.trops_conf):
-            self.config.read(self.trops_conf)
+        if self.trops_dir:
+            self.conf_file = self.trops_dir + '/trops.cfg'
+            if os.path.isfile(self.conf_file):
+                self.config.read(self.conf_file)
+                try:
+                    self.git_dir = os.path.expandvars(
+                        self.config[self.trops_env]['git_dir'])
+                except KeyError:
+                    print('git_dir does not exist in your configuration file')
+                    exit(1)
+                try:
+                    self.work_tree = os.path.expandvars(
+                        self.config[self.trops_env]['work_tree'])
+                except KeyError:
+                    print('work_tree does not exist in your configuration file')
+                    exit(1)
 
-            try:
-                self.git_dir = os.path.expandvars(
-                    self.config[self.trops_env]['git_dir'])
-            except KeyError:
-                print('git_dir does not exist in your configuration file')
-                exit(1)
-            try:
-                self.work_tree = os.path.expandvars(
-                    self.config[self.trops_env]['work_tree'])
-            except KeyError:
-                print('work_tree does not exist in your configuration file')
-                exit(1)
+                self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                                '--work-tree=' + self.work_tree]
 
-            sudo_true = distutils.util.strtobool(
-                self.config[self.trops_env]['sudo'])
-            if sudo_true:
-                self.git_cmd = ['sudo'] + self.git_cmd
+                try:
+                    self.sudo = distutils.util.strtobool(
+                        self.config[self.trops_env]['sudo'])
+                    if self.sudo:
+                        self.git_cmd = ['sudo'] + self.git_cmd
+                except KeyError:
+                    pass
 
-        self.username = getuser()
-        self.hostname = gethostname()
-        self.trops_logfile = self.trops_dir + '/log/trops.log'
+            os.makedirs(self.trops_dir + '/log', exist_ok=True)
+            self.trops_logfile = self.trops_dir + '/log/trops.log'
 
-        logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s  %(message)s',
-                            datefmt='%Y-%m-%d %H:%M:%S',
-                            filename=self.trops_logfile,
-                            level=logging.DEBUG)
-        self.logger = logging.getLogger()
+            logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
+                                datefmt='%Y-%m-%d %H:%M:%S',
+                                filename=self.trops_logfile,
+                                level=logging.DEBUG)
+            self.logger = logging.getLogger()
 
     def capture_cmd(self):
         """\
         log executed command
         NOTE: You need to set PROMPT_COMMAND in bash as shown below:
-        PROMPT_COMMAND='trops capture-cmd $? !!'"""
+        PROMPT_COMMAND='trops capture-cmd <ignore_field> <return code> $(history 1)'"""
 
         rc = self.return_code
-        ec = self.executed_cmd
+
+        executed_cmd = self.other_args
         # Create trops_dir/tmp directory
         tmp_dir = self.trops_dir + '/tmp'
         if not os.path.isdir(tmp_dir):
@@ -81,27 +91,31 @@ class TropsCapCmd:
         last_cmd = tmp_dir + '/last_cmd'
         if os.path.isfile(last_cmd):
             with open(last_cmd, mode='r') as f:
-                if ' '.join(ec) in f.read():
+                if ' '.join(executed_cmd) in f.read():
                     exit(0)
-        # Update last_cmd
         with open(last_cmd, mode='w') as f:
-            f.write(str(time()) + ' ' + ' '.join(ec))
+            f.write(' '.join(executed_cmd))
+
+        for n in range(self.ignore_fields):
+            executed_cmd.pop(0)
 
         ignored_cmds = ['trops', 'ls', 'top', 'cat']
-        if ec[0] in ignored_cmds:
+        if executed_cmd[0] in ignored_cmds:
             exit(0)
 
-        message = ' '.join(ec) + \
-            f"  # PWD={ os.environ['PWD'] }, EXIT={ rc }"
+        message = 'CM ' + ' '.join(executed_cmd) + \
+            f"  #> PWD={ os.environ['PWD'] }, EXIT={ rc }"
         if 'TROPS_SID' in os.environ:
             message = message + ', TROPS_SID=' + os.environ['TROPS_SID']
+        if 'TROPS_ENV' in os.environ:
+            message = message + ', TROPS_ENV=' + os.environ['TROPS_ENV']
         if rc == 0:
             self.logger.info(message)
         else:
             self.logger.warning(message)
-        # self._yum_log(executed_cmd)
-        # self._apt_log(executed_cmd)
-        # self._update_files(executed_cmd)
+        self._yum_log(executed_cmd)
+        self._apt_log(executed_cmd)
+        self._update_files(executed_cmd)
 
     def _yum_log(self, executed_cmd):
 
@@ -141,6 +155,7 @@ class TropsCapCmd:
 
         if 'apt' in executed_cmd and ('upgrade' in executed_cmd
                                       or 'install' in executed_cmd
+                                      or 'update' in executed_cmd
                                       or 'remove' in executed_cmd
                                       or 'autoremove' in executed_cmd):
             self._update_pkg_list(' '.join(executed_cmd))
@@ -157,12 +172,36 @@ class TropsCapCmd:
         pkg_list = subprocess.check_output(cmd).decode('utf-8')
         f.write(pkg_list)
         f.close()
-        # Commit the change if needed
+        cmd = self.git_cmd + ['ls-files', pkg_list_file]
+        result = subprocess.run(cmd, capture_output=True)
+        if result.stdout.decode("utf-8"):
+            git_msg = f"Update { pkg_list_file }"
+            log_note = 'UPDATE'
+        else:
+            git_msg = f"Add { pkg_list_file }"
+            log_note = 'ADD'
         cmd = self.git_cmd + ['add', pkg_list_file]
         subprocess.call(cmd)
         cmd = self.git_cmd + ['commit', '-m',
-                              f'Update { pkg_list_file }', pkg_list_file]
-        subprocess.call(cmd)
+                              git_msg, pkg_list_file]
+        # Commit the change if needed
+        result = subprocess.run(cmd, capture_output=True)
+        # If there's an update, log it in the log file
+        if result.returncode == 0:
+            msg = result.stdout.decode('utf-8').splitlines()[0]
+            print(msg)
+            cmd = self.git_cmd + \
+                ['log', '--oneline', '-1', pkg_list_file]
+            output = subprocess.check_output(
+                cmd).decode("utf-8").split()
+            if pkg_list_file in output:
+                mode = oct(os.stat(pkg_list_file).st_mode)[-4:]
+                owner = Path(pkg_list_file).owner()
+                group = Path(pkg_list_file).group()
+                self.logger.info(
+                    f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(pkg_list_file).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }")
+        else:
+            print('No update')
 
     def _update_files(self, executed_cmd):
         """Add a file or directory in the git repo"""
@@ -216,7 +255,7 @@ class TropsCapCmd:
                             owner = Path(ii_path).owner()
                             group = Path(ii_path).group()
                             self.logger.info(
-                                f"trops git show { output[0] }:{ real_path(ii_path).lstrip('/')}  # { log_note }, O={ owner },G={ group },M={ mode }")
+                                f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(ii_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }")
                     else:
                         print('No update')
 
@@ -230,7 +269,9 @@ def capture_cmd(args, other_args):
 def capture_cmd_subparsers(subparsers):
 
     parser_capture_cmd = subparsers.add_parser(
-        'capture-cmd2', help='Capture command line strings', add_help=False)
+        'capture-cmd', help='Capture command line strings', add_help=False)
+    parser_capture_cmd.add_argument(
+        'ignore_fields', type=int, help='number of fields to ignore')
     parser_capture_cmd.add_argument(
         'return_code', type=int, help='return code')
     parser_capture_cmd.set_defaults(handler=capture_cmd)
