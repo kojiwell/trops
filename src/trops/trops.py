@@ -360,8 +360,8 @@ class Trops:
             git_msg = f"Update { file_path }"
             log_note = "UPDATE"
         else:
-            log_note = "ADD"
             git_msg = f"Add { file_path }"
+            log_note = "ADD"
         # Add and commit
         cmd = self.git_cmd + ['add', file_path]
         subprocess.call(cmd)
