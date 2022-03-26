@@ -235,7 +235,7 @@ class Trops:
                 owner = Path(pkg_list_file).owner()
                 group = Path(pkg_list_file).group()
                 self.logger.info(
-                    f"FL trops show { output[0] }:{ real_path(pkg_list_file).lstrip('/')}  #> { log_note }, O={ owner },G={ group },M={ mode }")
+                    f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(pkg_list_file).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }")
         else:
             print('No update')
 
@@ -291,7 +291,7 @@ class Trops:
                             owner = Path(ii_path).owner()
                             group = Path(ii_path).group()
                             self.logger.info(
-                                f"FL trops show { output[0] }:{ real_path(ii_path).lstrip('/')}  #> { log_note }, O={ owner },G={ group },M={ mode }")
+                                f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(ii_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }")
                     else:
                         print('No update')
 
@@ -310,7 +310,7 @@ class Trops:
         try:
             subprocess.call(cmd)
         except KeyboardInterrupt:
-            print('\nClosing trops show-log...')
+            print('\nClosing trops show...')
 
     def ll(self, args, other_args):
         """Shows the list of git-tracked files"""
@@ -350,7 +350,11 @@ class Trops:
 
         # Check if the path is in the git repo
         cmd = self.git_cmd + ['ls-files', file_path]
-        output = subprocess.check_output(cmd).decode("utf-8")
+        result = subprocess.run(cmd, capture_output=True)
+        if result.returncode != 0:
+            print(result.stderr.decode('utf-8'))
+            exit(result.returncode)
+        output = result.stdout.decode('utf-8')
         # Set the message based on the output
         if output:
             git_msg = f"Update { file_path }"
@@ -371,7 +375,7 @@ class Trops:
             owner = Path(file_path).owner()
             group = Path(file_path).group()
             self.logger.info(
-                f"FL trops show { output[0] }:{ real_path(file_path).lstrip('/')}  #> { log_note } O={ owner },G={ group },M={ mode }")
+                f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(file_path).lstrip(self.work_tree)}  #> { log_note } O={ owner },G={ group },M={ mode }")
 
     def drop(self, args, other_args):
 
@@ -413,7 +417,7 @@ class Trops:
         output = subprocess.check_output(
             cmd).decode("utf-8").split()
         self.logger.info(
-            f"FL trops show { output[0] }:{ real_path(file_path).lstrip('/')}  #> BYE")
+            f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(file_path).lstrip('/')}  #> BYE")
 
     def main(self):
         """Get subcommand and arguments and pass them to the hander"""
