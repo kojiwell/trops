@@ -12,13 +12,13 @@ setuptools.setup(
     author="Koji Tanaka",
     author_email="kojiwelly@gmail.com",
     description=("Track operations"),
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     license="MIT",
     keywords="linux system administration",
     url="http://github.com/kojiwell/trops",
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
-    long_description=read('README.md'),
+    long_description=read('README.rst'),
     python_requires='>=3.8',
     install_requires=[
         "tabulate >= 0.8.9"
