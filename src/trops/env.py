@@ -67,15 +67,18 @@ class TropsEnv:
 
                         on-trops() {{
                             export TROPS_SID=$(trops random-name)
-                            export BK_PROMPT=$PROMPT
-                            export PROMPT="[trops]$PROMPT"
+                            if [[ ! $PROMPT =~ "[trops]" ]]; then
+                                export PROMPT="[trops]$PROMPT"
+                            fi
                             # Pure prompt https://github.com/sindresorhus/pure
                             if [ -z ${{PURE_PROMPT_SYMBOL+x}} ]; then
-                                export BK_PURE_PROMPT_SYMBOL="❯"
-                                export PURE_PROMPT_SYMBOL="[trops]❯"
+                                if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
+                                    export PURE_PROMPT_SYMBOL="[trops]❯"
+                                fi
                             else
-                                export BK_PURE_PROMPT_SYMBOL=$PURE_PROMPT_SYMBOL
-                                export PURE_PROMPT_SYMBOL="[trops]$PURE_PROMPT_SYMBOL"
+                                if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
+                                    export PURE_PROMPT_SYMBOL="[trops]$PURE_PROMPT_SYMBOL"
+                                fi
                             fi
                             precmd() {{
                                 trops capture-cmd 1 $? $(history|tail -1)
@@ -83,10 +86,10 @@ class TropsEnv:
                         }}
 
                         off-trops() {{
-                            export PROMPT=$BK_PROMPT
-                            export PURE_PROMPT_SYMBOL=$BK_PURE_PROMPT_SYMBOL
-                            unset -f precmd
-                            unset BK_PROMPT BK_PURE_PROMPT_SYMBOL
+                            export PROMPT=${{PROMPT//\[trops\]}}
+                            export PURE_PROMPT_SYMBOL=${{PURE_PROMPT_SYMBOL//\[trops\]}}
+                            if LC_ALL=C type precmd > /dev/null
+                            LC_ALL=C type precmd >/dev/null && unset -f precmd
                         }}
                     fi
 
@@ -97,15 +100,15 @@ class TropsEnv:
                     
                         on-trops() {{
                             export TROPS_SID=$(trops random-name)
-                            export BK_PS1=$PS1
-                            export PS1="[trops]$PS1"
+                            if [[ ! $PS1 =~ "[trops]" ]]; then
+                                export PS1="[trops]$PS1"
+                            fi
                             PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
                         }}
 
                         off-trops() {{
-                            export PS1=$BK_PS1
+                            export PS1=${{PS1//\[trops\]}}
                             unset PROMPT_COMMAND
-                            unset BK_PS1
                         }}
                     fi
                     """

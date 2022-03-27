@@ -80,7 +80,7 @@ class TropsKoumyo:
                 formatted_logs.append(selected_log)
             else:
                 formatted_logs.append(formatted_log)
-        print(tabulate(formatted_logs, headers))
+        print(tabulate(formatted_logs, headers, tablefmt="github"))
 
     def run(self):
 

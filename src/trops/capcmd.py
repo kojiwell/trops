@@ -3,10 +3,10 @@ import subprocess
 import distutils.util
 import logging
 
-from time import time
 from configparser import ConfigParser
 from getpass import getuser
 from socket import gethostname
+from pathlib import Path
 
 from trops.utils import real_path
 
@@ -24,6 +24,12 @@ class TropsCapCmd:
             self.trops_dir = os.path.expandvars('$TROPS_DIR')
         else:
             self.trops_dir = False
+
+        # Set trops_dir
+        if os.getenv('TROPS_TAGS'):
+            self.trops_tags = os.path.expandvars('$TROPS_TAGS')
+        else:
+            self.trops_tags = False
 
         # return_code
         self.return_code = args.return_code
@@ -145,6 +151,8 @@ class TropsCapCmd:
                 git_msg = f"Update { pkg_list_file }"
             else:
                 git_msg = f"Add { pkg_list_file }"
+            if self.trops_tags:
+                git_msg = f"{ git_msg } ({ self.trops_tags })"
             # Add and commit
             cmd = self.git_cmd + ['add', pkg_list_file]
             subprocess.call(cmd)
@@ -180,6 +188,8 @@ class TropsCapCmd:
         else:
             git_msg = f"Add { pkg_list_file }"
             log_note = 'ADD'
+        if self.trops_tags:
+            git_msg = f"{ git_msg } ({ self.trops_tags })"
         cmd = self.git_cmd + ['add', pkg_list_file]
         subprocess.call(cmd)
         cmd = self.git_cmd + ['commit', '-m',
@@ -198,8 +208,8 @@ class TropsCapCmd:
                 mode = oct(os.stat(pkg_list_file).st_mode)[-4:]
                 owner = Path(pkg_list_file).owner()
                 group = Path(pkg_list_file).group()
-                self.logger.info(
-                    f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(pkg_list_file).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }")
+                message = f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(pkg_list_file).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }"
+                self.logger.info()
         else:
             print('No update')
 
@@ -225,7 +235,7 @@ class TropsCapCmd:
                     result = subprocess.run(cmd, capture_output=True)
                     if result.returncode == 0:
                         self.logger.info(
-                            f"TROPS IGNORE { ii_path } -- The file is under a git repository")
+                            f"FL Trops ignores { ii_path } -- The file is under a git repository")
                         exit(0)
                     # Check if the path is in the git repo
                     cmd = self.git_cmd + ['ls-files', ii_path]
@@ -237,6 +247,8 @@ class TropsCapCmd:
                     else:
                         git_msg = f"Add { ii_path }"
                         log_note = 'ADD'
+                    if self.trops_tags:
+                        git_msg = f"{ git_msg } ({ self.trops_tags })"
                     # Add the file and commit
                     cmd = self.git_cmd + ['add', ii_path]
                     result = subprocess.run(cmd, capture_output=True)
