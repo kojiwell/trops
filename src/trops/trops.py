@@ -34,6 +34,11 @@ class Trops:
         else:
             self.trops_dir = False
 
+        if os.getenv('TROPS_TAGS'):
+            self.trops_tags = os.path.expandvars('$TROPS_TAGS')
+        else:
+            self.trops_tags = False
+
         # Set trops_env
         if os.getenv('TROPS_ENV'):
             self.trops_env = os.getenv('TROPS_ENV')
@@ -175,6 +180,8 @@ class Trops:
         else:
             git_msg = f"Add { file_path }"
             log_note = "ADD"
+        if self.trops_tags:
+            git_msg = f"{ git_msg } ({ self.trops_tags })"
         # Add and commit
         cmd = self.git_cmd + ['add', file_path]
         subprocess.call(cmd)
