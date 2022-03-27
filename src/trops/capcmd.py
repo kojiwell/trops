@@ -77,6 +77,12 @@ class TropsCapCmd:
                 except KeyError:
                     pass
 
+                if 'ignore_cmds' in self.config[self.trops_env]:
+                    self.ignore_cmds = self.config[self.trops_env]['ignore_cmds'].split(
+                        ',')
+                else:
+                    self.ignore_cmds = False
+
             os.makedirs(self.trops_dir + '/log', exist_ok=True)
             self.trops_logfile = self.trops_dir + '/log/trops.log'
 
@@ -111,8 +117,7 @@ class TropsCapCmd:
         for n in range(self.ignore_fields):
             executed_cmd.pop(0)
 
-        ignored_cmds = ['trops', 'ls', 'top', 'cat']
-        if executed_cmd[0] in ignored_cmds:
+        if self.ignore_cmds and executed_cmd[0] in self.ignore_cmds:
             exit(0)
 
         message = 'CM ' + ' '.join(executed_cmd) + \
