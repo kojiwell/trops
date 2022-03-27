@@ -34,6 +34,12 @@ class Trops:
         else:
             self.trops_dir = False
 
+        # Set trops_sid
+        if os.getenv('TROPS_SID'):
+            self.trops_sid = os.path.expandvars('$TROPS_SID')
+        else:
+            self.trops_sid = False
+
         if os.getenv('TROPS_TAGS'):
             self.trops_tags = os.path.expandvars('$TROPS_TAGS')
         else:
@@ -191,11 +197,17 @@ class Trops:
         output = subprocess.check_output(
             cmd).decode("utf-8").split()
         if file_path in output:
+            env = self.trops_env
+            commit = output[0]
+            path = real_path(file_path).lstrip(self.work_tree)
             mode = oct(os.stat(file_path).st_mode)[-4:]
             owner = Path(file_path).owner()
             group = Path(file_path).group()
-            self.logger.info(
-                f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(file_path).lstrip(self.work_tree)}  #> { log_note } O={ owner },G={ group },M={ mode }")
+            message = f"FL trops show -e { env } { commit }:{ path }  #> { log_note } O={ owner },G={ group },M={ mode }"
+            if self.trops_sid:
+                message = message + f" TROPS_SID={ self.trops_sid }"
+            message = message + f" TROPS_ENV={ env }"
+            self.logger.info(message)
 
     def drop(self, args, other_args):
 
@@ -236,8 +248,11 @@ class Trops:
         cmd = self.git_cmd + ['log', '--oneline', '-1', file_path]
         output = subprocess.check_output(
             cmd).decode("utf-8").split()
-        self.logger.info(
-            f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(file_path).lstrip('/')}  #> BYE")
+        message = f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(file_path).lstrip('/')}  #> BYE BYE"
+        if self.trops_sid:
+            message = message + f" TROPS_SID={ self.trops_sid }"
+        message = message + f" TROPS_ENV={ self.trops_env }"
+        self.logger.info(message)
 
     def main(self):
         """Get subcommand and arguments and pass them to the hander"""

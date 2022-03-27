@@ -25,11 +25,17 @@ class TropsCapCmd:
         else:
             self.trops_dir = False
 
-        # Set trops_dir
+        # Set trops_tags
         if os.getenv('TROPS_TAGS'):
             self.trops_tags = os.path.expandvars('$TROPS_TAGS')
         else:
             self.trops_tags = False
+
+        # Set trops_sid
+        if os.getenv('TROPS_SID'):
+            self.trops_sid = os.path.expandvars('$TROPS_SID')
+        else:
+            self.trops_sid = False
 
         # return_code
         self.return_code = args.return_code
@@ -208,8 +214,11 @@ class TropsCapCmd:
                 mode = oct(os.stat(pkg_list_file).st_mode)[-4:]
                 owner = Path(pkg_list_file).owner()
                 group = Path(pkg_list_file).group()
-                message = f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(pkg_list_file).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }"
-                self.logger.info()
+                message = f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(pkg_list_file).lstrip(self.work_tree)}  #> { log_note } O={ owner },G={ group },M={ mode }"
+                if self.trops_sid:
+                    message = f"{ message } TROPS_SID={ self.trops_sid }"
+                message = f"{ message } TROPS_ENV={ self.trops_env }"
+                self.logger.info(message)
         else:
             print('No update')
 
@@ -266,8 +275,11 @@ class TropsCapCmd:
                             mode = oct(os.stat(ii_path).st_mode)[-4:]
                             owner = Path(ii_path).owner()
                             group = Path(ii_path).group()
-                            self.logger.info(
-                                f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(ii_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }")
+                            message = f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(ii_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }"
+                            if self.trops_sid:
+                                message = f"{ message } TROPS_SID={ self.trops_sid }"
+                            message = f"{ message } TROPS_ENV={ self.trops_env }"
+                            self.logger.info(message)
                     else:
                         print('No update')
 

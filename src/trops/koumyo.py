@@ -62,6 +62,14 @@ class TropsKoumyo:
                 # formatted_log.remove('FL')
                 formatted_log.remove('#>')
                 formatted_log.pop(6)
+                formatted_log.insert(7, '-')
+                for i, n in enumerate(formatted_log):
+                    if 'TROPS_SID=' in n:
+                        formatted_log[i] = n.replace(
+                            'TROPS_SID=', '').rstrip(',')
+                    elif 'TROPS_ENV=' in n:
+                        formatted_log[i] = n.replace(
+                            'TROPS_ENV=', '').rstrip(',')
                 while len(formatted_log) < 10:
                     formatted_log.append('-')
             headers = ['date', 'time', 'user',
