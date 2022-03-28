@@ -1,6 +1,9 @@
 from subprocess import Popen, PIPE
 import os
 import random
+import hashlib
+
+from datetime import datetime
 
 from trops.namesgenerator import get_random_name
 
@@ -33,6 +36,12 @@ def random_word(args, other_args):
     except FileNotFoundError:
         cmd = ['shuf', '-i', '1-100000', '-n', '1']
         subprocess.call(cmd)
+
+
+def generate_sid(args, other_args):
+
+    now = datetime.now().isoformat()
+    print(hashlib.sha256(bytes(now, 'utf-8')).hexdigest()[0:7])
 
 
 def random_name(args, other_args):

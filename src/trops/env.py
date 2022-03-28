@@ -63,10 +63,10 @@ class TropsEnv:
                     if ps -p $$|grep zsh > /dev/null; then
                         export TROPS_DIR=$(dirname $(realpath ${{(%):-%N}}))
                         export TROPS_ENV={ self.trops_env }
-                        export TROPS_SID=$(trops random-name)
+                        export TROPS_SID=$(trops gensid)
 
                         on-trops() {{
-                            export TROPS_SID=$(trops random-name)
+                            export TROPS_SID=$(trops gensid)
                             if [[ ! $PROMPT =~ "[trops]" ]]; then
                                 export PROMPT="[trops]$PROMPT"
                             fi
@@ -95,10 +95,10 @@ class TropsEnv:
                     if ps -p $$|grep bash > /dev/null; then
                         export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
                         export TROPS_ENV={ self.trops_env }
-                        export TROPS_SID=$(trops random-name)
+                        export TROPS_SID=$(trops gensid)
                     
                         on-trops() {{
-                            export TROPS_SID=$(trops random-name)
+                            export TROPS_SID=$(trops gensid)
                             if [[ ! $PS1 =~ "[trops]" ]]; then
                                 export PS1="[trops]$PS1"
                             fi

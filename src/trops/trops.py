@@ -11,7 +11,7 @@ from pathlib import Path
 from getpass import getuser
 from socket import gethostname
 
-from trops.utils import real_path, random_name
+from trops.utils import real_path, random_name, generate_sid
 from trops.env import add_env_subparsers
 from trops.file import add_file_subparsers
 from trops.repo import add_repo_subparsers
@@ -334,6 +334,10 @@ class Trops:
         parser_random_name = subparsers.add_parser(
             'random-name', help='generate random name')
         parser_random_name.set_defaults(handler=random_name)
+        # trops gensid
+        parser_gensid = subparsers.add_parser(
+            'gensid', help='generate sid')
+        parser_gensid.set_defaults(handler=generate_sid)
 
         # Pass args and other args to the hander
         args, other_args = parser.parse_known_args()
