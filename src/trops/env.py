@@ -88,8 +88,9 @@ class TropsEnv:
                         off-trops() {{
                             export PROMPT=${{PROMPT//\[trops\]}}
                             export PURE_PROMPT_SYMBOL=${{PURE_PROMPT_SYMBOL//\[trops\]}}
-                            if LC_ALL=C type precmd > /dev/null
-                            LC_ALL=C type precmd >/dev/null && unset -f precmd
+                            if LC_ALL=C type precmd > /dev/null; then
+                                LC_ALL=C type precmd >/dev/null && unset -f precmd
+                            fi
                         }}
                     fi
 
@@ -111,6 +112,8 @@ class TropsEnv:
                             unset PROMPT_COMMAND
                         }}
                     fi
+
+                    on-trops
                     """
                 rcfile.write(dedent(lines))
         # TODO: TROPS_ENV should be optional, which is not needed by default
