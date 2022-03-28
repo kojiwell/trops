@@ -22,7 +22,7 @@ copyright = '2022, Koji Tanaka'
 author = 'Koji Tanaka'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.18'
+release = '0.1.19'
 
 
 # -- General configuration ---------------------------------------------------
@@ -48,6 +48,16 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # a list of builtin themes.
 #
 html_theme = 'alabaster'
+
+html_theme_options = {
+    "github_user": "kojiwell",
+    "github_repo": "trops",
+    "github_button": True,
+    "travis_button": False,
+    "extra_nav_links": {
+        "View on github": "https://github.com/kojiwell/trops",
+    },
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
