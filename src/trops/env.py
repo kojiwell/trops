@@ -88,9 +88,7 @@ class TropsEnv:
                         off-trops() {{
                             export PROMPT=${{PROMPT//\[trops\]}}
                             export PURE_PROMPT_SYMBOL=${{PURE_PROMPT_SYMBOL//\[trops\]}}
-                            if LC_ALL=C type precmd > /dev/null; then
-                                LC_ALL=C type precmd >/dev/null && unset -f precmd
-                            fi
+                            LC_ALL=C type precmd >/dev/null && unset -f precmd
                         }}
                     fi
 
