@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import time
 import argparse
 import logging
 import distutils.util
@@ -119,22 +120,39 @@ class Trops:
         cmd = self.git_cmd + ['show', args.commit]
         subprocess.call(cmd)
 
+    def _follow(self, file):
+
+        file.seek(0, os.SEEK_END)
+        while True:
+            line = file.readline()
+            if not line:
+                time.sleep(0.1)
+                continue
+            yield line
+
     def log(self, args, other_args):
 
         log_file = self.trops_dir + '/log/trops.log'
+        numlines = 15
+        if args.tail and args.tail != None:
+            numlines = args.tail
 
-        if args.follow:
-            cmd = ['tail', '-f', log_file]
-        elif args.tail:
-            cmd = ['tail', f'-{ args.tail }', log_file]
-        elif args.all:
-            cmd = ['cat', log_file]
+        if args.all:
+            with open(log_file) as ff:
+                for line in ff.readlines():
+                    print(line, end='')
         else:
-            cmd = ['tail', '-15', log_file]
-        try:
-            subprocess.call(cmd)
-        except KeyboardInterrupt:
-            print('\nClosing trops log...')
+            with open(log_file) as ff:
+                for line in ff.readlines()[-numlines:]:
+                    print(line, end='')
+        if args.follow:
+            ff = open(log_file, "r")
+            try:
+                lines = self._follow(ff)
+                for line in lines:
+                    print(line, end='')
+            except KeyboardInterrupt:
+                print('\nClosing trops log...')
 
     def ll(self, args, other_args):
         """Shows the list of git-tracked files"""
