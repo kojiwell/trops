@@ -183,28 +183,21 @@ class TropsCapCmd:
     def _update_pkg_list(self, args):
 
         # Update the pkg_List
-        pkg_list_file = self.trops_dir + f'/log/apt_pkg_list_{ self.hostname }'
-        f = open(pkg_list_file, 'w')
-        cmd = ['apt', 'list', '--installed']
-        if self.sudo:
-            cmd.insert(0, 'sudo')
-        pkg_list = subprocess.check_output(cmd).decode('utf-8')
-        f.write(pkg_list)
-        f.close()
-        cmd = self.git_cmd + ['ls-files', pkg_list_file]
+        apt_log_file = '/var/log/apt/history.log'
+        cmd = self.git_cmd + ['ls-files', apt_log_file]
         result = subprocess.run(cmd, capture_output=True)
         if result.stdout.decode("utf-8"):
-            git_msg = f"Update { pkg_list_file }"
+            git_msg = f"Update { apt_log_file }"
             log_note = 'UPDATE'
         else:
-            git_msg = f"Add { pkg_list_file }"
+            git_msg = f"Add { apt_log_file }"
             log_note = 'ADD'
         if self.trops_tags:
             git_msg = f"{ git_msg } ({ self.trops_tags })"
-        cmd = self.git_cmd + ['add', pkg_list_file]
+        cmd = self.git_cmd + ['add', apt_log_file]
         subprocess.call(cmd)
         cmd = self.git_cmd + ['commit', '-m',
-                              git_msg, pkg_list_file]
+                              git_msg, apt_log_file]
         # Commit the change if needed
         result = subprocess.run(cmd, capture_output=True)
         # If there's an update, log it in the log file
@@ -212,14 +205,14 @@ class TropsCapCmd:
             msg = result.stdout.decode('utf-8').splitlines()[0]
             print(msg)
             cmd = self.git_cmd + \
-                ['log', '--oneline', '-1', pkg_list_file]
+                ['log', '--oneline', '-1', apt_log_file]
             output = subprocess.check_output(
                 cmd).decode("utf-8").split()
-            if pkg_list_file in output:
-                mode = oct(os.stat(pkg_list_file).st_mode)[-4:]
-                owner = Path(pkg_list_file).owner()
-                group = Path(pkg_list_file).group()
-                message = f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(pkg_list_file).lstrip(self.work_tree)}  #> { log_note } O={ owner },G={ group },M={ mode }"
+            if apt_log_file in output:
+                mode = oct(os.stat(apt_log_file).st_mode)[-4:]
+                owner = Path(apt_log_file).owner()
+                group = Path(apt_log_file).group()
+                message = f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(apt_log_file).lstrip(self.work_tree)}  #> { log_note } O={ owner },G={ group },M={ mode }"
                 if self.trops_sid:
                     message = f"{ message } TROPS_SID={ self.trops_sid }"
                 message = f"{ message } TROPS_ENV={ self.trops_env }"
