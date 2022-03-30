@@ -272,6 +272,21 @@ class Trops:
         message = message + f" TROPS_ENV={ self.trops_env }"
         self.logger.info(message)
 
+    def check(self, args, other_args):
+        """Git wrapper command"""
+
+        if hasattr(args, 'env') and args.env:
+            self.trops_env = args.env
+            self.git_dir = os.path.expandvars(
+                self.config[self.trops_env]['git_dir'])
+            self.work_tree = os.path.expandvars(
+                self.config[self.trops_env]['work_tree'])
+            self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                            '--work-tree=' + self.work_tree]
+
+        cmd = self.git_cmd + ['status']
+        subprocess.call(cmd)
+
     def main(self):
         """Get subcommand and arguments and pass them to the hander"""
 
@@ -338,6 +353,12 @@ class Trops:
         parser_gensid = subparsers.add_parser(
             'gensid', help='generate sid')
         parser_gensid.set_defaults(handler=generate_sid)
+        # trops check
+        parser_check = subparsers.add_parser('check', help='Check status')
+        parser_check.add_argument('-s', '--sudo', help="Use sudo",
+                                  action='store_true')
+        parser_check.add_argument('-e', '--env', help="Set env")
+        parser_check.set_defaults(handler=self.check)
 
         # Pass args and other args to the hander
         args, other_args = parser.parse_known_args()
