@@ -57,9 +57,9 @@ Activate trops::
 
     export TROPS_ROOT="/path/to/<dir>/trops"
     # for Bash
-    eval $(trops init bash)
+    eval "$(trops init bash)"
     # for Zsh
-    eval $(trops init zsh)
+    eval "$(trops init zsh)"
 
 Turn on/off background tracking::
 
