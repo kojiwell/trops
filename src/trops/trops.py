@@ -17,6 +17,7 @@ from trops.file import add_file_subparsers
 from trops.repo import add_repo_subparsers
 from trops.capcmd import capture_cmd_subparsers
 from trops.koumyo import koumyo_subparsers
+from trops.init import add_init_subparsers
 from trops.release import __version__
 
 
@@ -297,6 +298,8 @@ class Trops:
                             help="Print version", action='store_true')
         parser.add_argument('--dev',
                             help="Development mode", action='store_true')
+        # Add trops init subparsers and arguments
+        add_init_subparsers(subparsers)
         # Add trops env subparsers and arguments
         add_env_subparsers(subparsers)
         # Add trops file subparsers and arguments

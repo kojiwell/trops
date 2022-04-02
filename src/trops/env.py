@@ -35,6 +35,10 @@ class TropsEnv:
 
             self.trops_rcfile = self.trops_dir + \
                 f'/{ self.trops_env }rc'
+            self.trops_bash_file = self.trops_dir + \
+                f'/activate_{ self.trops_env }.bash'
+            self.trops_zsh_file = self.trops_dir + \
+                f'/activate_{ self.trops_env }.zsh'
             self.trops_git_dir = self.trops_dir + f'/{ self.trops_env }.git'
 
         self.trops_conf = self.trops_dir + '/trops.cfg'
@@ -114,7 +118,64 @@ class TropsEnv:
                     on-trops
                     """
                 rcfile.write(dedent(lines))
-        # TODO: TROPS_ENV should be optional, which is not needed by default
+        # Create trops bash file
+        if not os.path.isfile(self.trops_bash_file):
+            with open(self.trops_bash_file, mode='w') as bash_file:
+                lines = f"""\
+                    export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
+                    export TROPS_ENV={ self.trops_env }
+                    export TROPS_SID=$(trops gensid)
+                
+                    on-trops() {{
+                        export TROPS_SID=$(trops gensid)
+                        if [[ ! $PS1 =~ "[trops]" ]]; then
+                            export PS1="[trops]$PS1"
+                        fi
+                        PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
+                    }}
+
+                    off-trops() {{
+                        export PS1=${{PS1//\[trops\]}}
+                        unset PROMPT_COMMAND
+                    }}
+                    """
+                bash_file.write(dedent(lines))
+
+        # Create trops bash file
+        if not os.path.isfile(self.trops_zsh_file):
+            with open(self.trops_zsh_file, mode='w') as zsh_file:
+                lines = f"""\
+                    export TROPS_DIR=$(dirname $(realpath ${{(%):-%N}}))
+                    export TROPS_ENV={ self.trops_env }
+                    export TROPS_SID=$(trops gensid)
+
+                    on-trops() {{
+                        export TROPS_SID=$(trops gensid)
+                        if [[ ! $PROMPT =~ "[trops]" ]]; then
+                            export PROMPT="[trops]$PROMPT"
+                        fi
+                        # Pure prompt https://github.com/sindresorhus/pure
+                        if [ -z ${{PURE_PROMPT_SYMBOL+x}} ]; then
+                            if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
+                                export PURE_PROMPT_SYMBOL="[trops]❯"
+                            fi
+                        else
+                            if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
+                                export PURE_PROMPT_SYMBOL="[trops]$PURE_PROMPT_SYMBOL"
+                            fi
+                        fi
+                        precmd() {{
+                            trops capture-cmd 1 $? $(history|tail -1)
+                        }}
+                    }}
+
+                    off-trops() {{
+                        export PROMPT=${{PROMPT//\[trops\]}}
+                        export PURE_PROMPT_SYMBOL=${{PURE_PROMPT_SYMBOL//\[trops\]}}
+                        LC_ALL=C type precmd >/dev/null && unset -f precmd
+                    }}
+                    """
+                zsh_file.write(dedent(lines))
 
     def _setup_trops_conf(self):
 
@@ -125,6 +186,10 @@ class TropsEnv:
                 print(
                     f"The '{ self.trops_env }' environment already exists on { self.trops_conf }")
                 exit(1)
+
+        if not config.has_section('default_vars'):
+            config.add_section('default_vars')
+        config['default_vars']['environment'] = self.trops_env
 
         config[self.trops_env] = {'git_dir': f'$TROPS_DIR/{ self.trops_env }.git',
                                   'sudo': 'False',
