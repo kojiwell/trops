@@ -104,6 +104,7 @@ if ! which trops > /dev/null; then
     python3 setup.py develop
 fi
 
-if [ -f /opt/local/trops/greenrc ]; then
-    . /opt/local/trops/greenrc
+export TROPS_ROOT="/opt/shared/trops"
+if [ -d $TROPS_ROOT ]; then
+    eval "$(trops init bash)"
 fi
