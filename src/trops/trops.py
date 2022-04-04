@@ -17,6 +17,7 @@ from trops.file import add_file_subparsers
 from trops.repo import add_repo_subparsers
 from trops.capcmd import capture_cmd_subparsers
 from trops.koumyo import koumyo_subparsers
+from trops.init import add_init_subparsers
 from trops.release import __version__
 
 
@@ -57,29 +58,31 @@ class Trops:
             self.conf_file = self.trops_dir + '/trops.cfg'
             if os.path.isfile(self.conf_file):
                 self.config.read(self.conf_file)
-                try:
-                    self.git_dir = os.path.expandvars(
-                        self.config[self.trops_env]['git_dir'])
-                except KeyError:
-                    print('git_dir does not exist in your configuration file')
-                    exit(1)
-                try:
-                    self.work_tree = os.path.expandvars(
-                        self.config[self.trops_env]['work_tree'])
-                except KeyError:
-                    print('work_tree does not exist in your configuration file')
-                    exit(1)
 
-                self.git_cmd = ['git', '--git-dir=' + self.git_dir,
-                                '--work-tree=' + self.work_tree]
+                if self.config.has_section(self.trops_env):
+                    try:
+                        self.git_dir = os.path.expandvars(
+                            self.config[self.trops_env]['git_dir'])
+                    except KeyError:
+                        print('git_dir does not exist in your configuration file')
+                        exit(1)
+                    try:
+                        self.work_tree = os.path.expandvars(
+                            self.config[self.trops_env]['work_tree'])
+                    except KeyError:
+                        print('work_tree does not exist in your configuration file')
+                        exit(1)
 
-                try:
-                    self.sudo = distutils.util.strtobool(
-                        self.config[self.trops_env]['sudo'])
-                    if self.sudo:
-                        self.git_cmd = ['sudo'] + self.git_cmd
-                except KeyError:
-                    pass
+                    self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                                    '--work-tree=' + self.work_tree]
+
+                    try:
+                        self.sudo = distutils.util.strtobool(
+                            self.config[self.trops_env]['sudo'])
+                        if self.sudo:
+                            self.git_cmd = ['sudo'] + self.git_cmd
+                    except KeyError:
+                        pass
 
             os.makedirs(self.trops_dir + '/log', exist_ok=True)
             self.trops_logfile = self.trops_dir + '/log/trops.log'
@@ -272,6 +275,21 @@ class Trops:
         message = message + f" TROPS_ENV={ self.trops_env }"
         self.logger.info(message)
 
+    def check(self, args, other_args):
+        """Git wrapper command"""
+
+        if hasattr(args, 'env') and args.env:
+            self.trops_env = args.env
+            self.git_dir = os.path.expandvars(
+                self.config[self.trops_env]['git_dir'])
+            self.work_tree = os.path.expandvars(
+                self.config[self.trops_env]['work_tree'])
+            self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                            '--work-tree=' + self.work_tree]
+
+        cmd = self.git_cmd + ['status']
+        subprocess.call(cmd)
+
     def main(self):
         """Get subcommand and arguments and pass them to the hander"""
 
@@ -282,6 +300,8 @@ class Trops:
                             help="Print version", action='store_true')
         parser.add_argument('--dev',
                             help="Development mode", action='store_true')
+        # Add trops init subparsers and arguments
+        add_init_subparsers(subparsers)
         # Add trops env subparsers and arguments
         add_env_subparsers(subparsers)
         # Add trops file subparsers and arguments
@@ -338,6 +358,12 @@ class Trops:
         parser_gensid = subparsers.add_parser(
             'gensid', help='generate sid')
         parser_gensid.set_defaults(handler=generate_sid)
+        # trops check
+        parser_check = subparsers.add_parser('check', help='Check status')
+        parser_check.add_argument('-s', '--sudo', help="Use sudo",
+                                  action='store_true')
+        parser_check.add_argument('-e', '--env', help="Set env")
+        parser_check.set_defaults(handler=self.check)
 
         # Pass args and other args to the hander
         args, other_args = parser.parse_known_args()

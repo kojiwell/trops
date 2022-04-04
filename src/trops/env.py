@@ -16,7 +16,7 @@ class TropsEnv:
         elif 'TROPS_DIR' in os.environ:
             self.trops_dir = os.path.expandvars('$TROPS_DIR')
         else:
-            print('TROPS_ENV does not exists')
+            print('TROPS_DIR does not exists')
             exit(1)
 
         if hasattr(args, 'work_tree'):
@@ -28,14 +28,16 @@ class TropsEnv:
             self.trops_git_remote = None
 
         if hasattr(args, 'env'):
-            if args.env:
-                self.trops_env = args.env
-            else:
-                self.trops_env = gethostname().split('.')[0]
+            self.trops_env = args.env
+        elif os.getenv('TROPS_ENV'):
+            self.trops_env = os.getenv('TROPS_ENV')
+        else:
+            self.trops_env = gethostname().split('.')[0]
 
-            self.trops_rcfile = self.trops_dir + \
-                f'/{ self.trops_env }rc'
-            self.trops_git_dir = self.trops_dir + f'/{ self.trops_env }.git'
+        self.trops_rcfile = self.trops_dir + \
+            f'/activate_{ self.trops_env }'
+        self.trops_git_dir = self.trops_dir + \
+            f'/repo/{ self.trops_env }.git'
 
         self.trops_conf = self.trops_dir + '/trops.cfg'
         self.trops_log_dir = self.trops_dir + '/log'
@@ -53,6 +55,13 @@ class TropsEnv:
             os.mkdir(self.trops_log_dir)
         except FileExistsError:
             print(f'{ self.trops_log_dir} already exists')
+
+        # Create trops_dir/repo
+        repo_dir = f"{self.trops_dir}/repo"
+        try:
+            os.mkdir(repo_dir)
+        except FileExistsError:
+            print(f'{ repo_dir } already exists')
 
     def _setup_rcfiles(self):
 
@@ -114,7 +123,6 @@ class TropsEnv:
                     on-trops
                     """
                 rcfile.write(dedent(lines))
-        # TODO: TROPS_ENV should be optional, which is not needed by default
 
     def _setup_trops_conf(self):
 
@@ -126,7 +134,7 @@ class TropsEnv:
                     f"The '{ self.trops_env }' environment already exists on { self.trops_conf }")
                 exit(1)
 
-        config[self.trops_env] = {'git_dir': f'$TROPS_DIR/{ self.trops_env }.git',
+        config[self.trops_env] = {'git_dir': f'{ self.trops_git_dir }',
                                   'sudo': 'False',
                                   'work_tree': f'{ self.trops_work_tree }'}
         if self.trops_git_remote:
@@ -176,7 +184,7 @@ class TropsEnv:
                              'checkout', '-b', new_branch_name]
             subprocess.call(cmd)
 
-    def initialize(self):
+    def create(self):
 
         self._setup_dirs()
         self._setup_rcfiles()
@@ -206,10 +214,12 @@ class TropsEnv:
         self.trops_conf = self.trops_dir + '/trops.cfg'
         config = ConfigParser()
         config.read(self.trops_conf)
-        current_env = os.getenv('TROPS_ENV')
+        current_env = self.trops_env
 
         for envname in config.sections():
-            if envname == current_env:
+            if envname == 'active':
+                pass
+            elif envname == current_env:
                 print(f'- { envname }*')
             else:
                 print(f'- { envname}')
@@ -243,11 +253,11 @@ class TropsEnv:
             print(f"  git_remote = { config.get(trops_env, 'git_remote') }")
 
 
-def env_init(args, other_args):
+def env_create(args, other_args):
     """Setup trops project"""
 
     trenv = TropsEnv(args, other_args)
-    trenv.initialize()
+    trenv.create()
 
 
 def env_show(args, other_args):
@@ -283,18 +293,16 @@ def add_env_subparsers(subparsers):
         'list', help='show list of environment')
     perser_env_list.set_defaults(handler=env_list)
     # trops env init <dir>
-    parser_env_init = env_subparsers.add_parser(
-        'init', help='initialize trops environment')
-    parser_env_init.add_argument(
-        'dir', help='trops directory')
-    parser_env_init.add_argument(
+    parser_env_create = env_subparsers.add_parser(
+        'create', help='create trops environment')
+    parser_env_create.add_argument(
         '-w', '--work-tree', default='/', help='Set work-tree (default: %(default)s)')
-    parser_env_init.add_argument(
-        '-e', '--env', help='Set environment name (default: %(default)s)')
-    parser_env_init.add_argument(
+    parser_env_create.add_argument(
+        'env', help='Set environment name (default: %(default)s)')
+    parser_env_create.add_argument(
         '--git-remote', help='Remote git repository')
-    parser_env_init.set_defaults(handler=env_init)
-    # trops env update <dir>
+    parser_env_create.set_defaults(handler=env_create)
+    # trops env update
     parser_env_update = env_subparsers.add_parser(
         'update', help='update trops environment')
     parser_env_update.add_argument(
