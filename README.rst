@@ -55,19 +55,23 @@ Set up a trops project directory::
 
 Activate trops::
 
-    export TROPS_ROOT="/path/to/<dir>/trops"
+    export TROPS_DIR="/path/to/your/trops"
     # for Bash
     eval "$(trops init bash)"
     # for Zsh
     eval "$(trops init zsh)"
 
+Create a trops environment(e.g. myenv)::
+
+    trops env create myenv
+
 Turn on/off background tracking::
 
     # Turn on
-    on-trops
+    ontrops myenv
 
     # Turn off
-    off-trops
+    offtrops
 
 If you turn it on, every command will be logged. You can check it by trops log command::
 
