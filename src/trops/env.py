@@ -4,7 +4,7 @@ from shutil import rmtree
 from configparser import ConfigParser
 from socket import gethostname
 
-from trops.utils import real_path
+from trops.utils import real_path, yes_or_no
 
 
 class TropsEnv:
@@ -74,7 +74,7 @@ class TropsEnv:
                     f"The '{ self.trops_env }' environment already exists on { self.trops_conf }")
                 exit(1)
 
-        config[self.trops_env] = {'git_dir': f'{ self.trops_git_dir }',
+        config[self.trops_env] = {'git_dir': f'$TROPS_DIR/repo/{ self.trops_env }.git',
                                   'sudo': 'False',
                                   'work_tree': f'{ self.trops_work_tree}'}
         if self.trops_git_remote:
@@ -136,11 +136,12 @@ class TropsEnv:
         if os.path.isfile(self.trops_conf):
             config.read(self.trops_conf)
             if config.has_section(self.trops_env):
-                config.remove_section(self.trops_env)
-                print(
-                    f"Deleting { self.trops_env } from { self.trops_conf }..")
-        with open(self.trops_conf, mode='w') as configfile:
-            config.write(configfile)
+                if yes_or_no(f"Really want to remove { self.trops_env } from { self.trops_conf }?"):
+                    config.remove_section(self.trops_env)
+                    print(
+                        f"Deleting { self.trops_env } from { self.trops_conf }..")
+                    with open(self.trops_conf, mode='w') as configfile:
+                        config.write(configfile)
 
         # Check if the self.trops_git_dir ends with .git
         dirname = os.path.basename(self.trops_git_dir)
@@ -162,8 +163,9 @@ class TropsEnv:
 
         # then delete it
         if really_ok1 and really_ok2:
-            print(f"Deleting { self.trops_git_dir }..")
-            rmtree(self.trops_git_dir)
+            if yes_or_no(f"Really want to delete { self.trops_git_dir }?"):
+                rmtree(self.trops_git_dir)
+                print(f"Deleting { self.trops_git_dir }..")
 
     def update(self):
 
