@@ -100,7 +100,6 @@ class TropsRepo:
                         f'--work-tree={pull_work_tree}']
 
         os.chdir(pull_work_tree)
-        print()
         cmd = self.git_cmd + ['pull']
         subprocess.call(cmd)
 
