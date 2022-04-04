@@ -15,53 +15,47 @@ class TropsInit:
             print("# usage: trops init [bash/zsh]")
             exit(1)
 
-        if os.getenv('TROPS_ROOT'):
-            self.trops_root = real_path(os.getenv('TROPS_ROOT'))
+        if os.getenv('TROPS_DIR'):
+            self.trops_dir = real_path(os.getenv('TROPS_DIR'))
         else:
-            self.trops_root = real_path('$HOME/.trops')
+            self.trops_dir = real_path('$HOME/.trops')
 
-        self.trops_conf = self.trops_root + '/trops.cfg'
-        self.trops_log_dir = self.trops_root + '/log'
+        self.trops_conf = self.trops_dir + '/trops.cfg'
+        self.trops_log_dir = self.trops_dir + '/log'
 
         self.config = ConfigParser()
         if os.path.isfile(self.trops_conf):
             self.config.read(self.trops_conf)
 
-            try:
-                self.trops_env = self.config['default_vars']['environment']
-            except KeyError:
-                print(
-                    '# Set environment in the [default_vars] of your trops.cfg')
-                exit(1)
-
     def _init_zsh(self):
 
         zsh_lines = f"""\
-            export TROPS_DIR={ self.trops_root }
-            export TROPS_ENV={ self.trops_env }
-            export TROPS_SID=$(trops gensid)
-
-            on-trops() {{
+            ontrops() {{
                 export TROPS_SID=$(trops gensid)
-                if [[ ! $PROMPT =~ "[trops]" ]]; then
-                    export PROMPT="[trops]$PROMPT"
-                fi
-                # Pure prompt https://github.com/sindresorhus/pure
-                if [ -z ${{PURE_PROMPT_SYMBOL+x}} ]; then
-                    if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
-                        export PURE_PROMPT_SYMBOL="[trops]❯"
-                    fi
+                if [ "$#" -ne 1 ]; then
+                    echo "# upsage: on-trops <env>"
                 else
-                    if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
-                        export PURE_PROMPT_SYMBOL="[trops]$PURE_PROMPT_SYMBOL"
+                    export TROPS_ENV=$1
+                    if [[ ! $PROMPT =~ "[trops]" ]]; then
+                        export PROMPT="[trops]$PROMPT"
                     fi
+                    # Pure prompt https://github.com/sindresorhus/pure
+                    if [ -z ${{PURE_PROMPT_SYMBOL+x}} ]; then
+                        if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
+                            export PURE_PROMPT_SYMBOL="[trops]❯"
+                        fi
+                    else
+                        if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
+                            export PURE_PROMPT_SYMBOL="[trops]$PURE_PROMPT_SYMBOL"
+                        fi
+                    fi
+                    precmd() {{
+                        trops capture-cmd 1 $? $(history|tail -1)
+                    }}
                 fi
-                precmd() {{
-                    trops capture-cmd 1 $? $(history|tail -1)
-                }}
             }}
 
-            off-trops() {{
+            offtrops() {{
                 export PROMPT=${{PROMPT//\[trops\]}}
                 export PURE_PROMPT_SYMBOL=${{PURE_PROMPT_SYMBOL//\[trops\]}}
                 LC_ALL=C type precmd >/dev/null && unset -f precmd
@@ -73,17 +67,21 @@ class TropsInit:
     def _init_bash(self):
 
         bash_lines = f"""\
-            on-trops() {{
-                export TROPS_DIR={ self.trops_root }
-                export TROPS_ENV={ self.trops_env }
-                export TROPS_SID=$(trops gensid)
-                if [[ ! $PS1 =~ "[trops]" ]]; then
-                    export PS1="[trops]$PS1"
+            ontrops() {{
+                export TROPS_DIR={ self.trops_dir }
+                if [ "$#" -ne 1 ]; then
+                    echo "# upsage: on-trops <env>"
+                else
+                    export TROPS_ENV=$1
+                    export TROPS_SID=$(trops gensid)
+                    if [[ ! $PS1 =~ "[trops]" ]]; then
+                        export PS1="[trops]$PS1"
+                    fi
+                    PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
                 fi
-                PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
             }}
 
-            off-trops() {{
+            offtrops() {{
                 export PS1=${{PS1//\[trops\]}}
                 unset PROMPT_COMMAND
             }}

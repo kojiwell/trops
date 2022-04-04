@@ -58,29 +58,31 @@ class Trops:
             self.conf_file = self.trops_dir + '/trops.cfg'
             if os.path.isfile(self.conf_file):
                 self.config.read(self.conf_file)
-                try:
-                    self.git_dir = os.path.expandvars(
-                        self.config[self.trops_env]['git_dir'])
-                except KeyError:
-                    print('git_dir does not exist in your configuration file')
-                    exit(1)
-                try:
-                    self.work_tree = os.path.expandvars(
-                        self.config[self.trops_env]['work_tree'])
-                except KeyError:
-                    print('work_tree does not exist in your configuration file')
-                    exit(1)
 
-                self.git_cmd = ['git', '--git-dir=' + self.git_dir,
-                                '--work-tree=' + self.work_tree]
+                if self.config.has_section(self.trops_env):
+                    try:
+                        self.git_dir = os.path.expandvars(
+                            self.config[self.trops_env]['git_dir'])
+                    except KeyError:
+                        print('git_dir does not exist in your configuration file')
+                        exit(1)
+                    try:
+                        self.work_tree = os.path.expandvars(
+                            self.config[self.trops_env]['work_tree'])
+                    except KeyError:
+                        print('work_tree does not exist in your configuration file')
+                        exit(1)
 
-                try:
-                    self.sudo = distutils.util.strtobool(
-                        self.config[self.trops_env]['sudo'])
-                    if self.sudo:
-                        self.git_cmd = ['sudo'] + self.git_cmd
-                except KeyError:
-                    pass
+                    self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                                    '--work-tree=' + self.work_tree]
+
+                    try:
+                        self.sudo = distutils.util.strtobool(
+                            self.config[self.trops_env]['sudo'])
+                        if self.sudo:
+                            self.git_cmd = ['sudo'] + self.git_cmd
+                    except KeyError:
+                        pass
 
             os.makedirs(self.trops_dir + '/log', exist_ok=True)
             self.trops_logfile = self.trops_dir + '/log/trops.log'
