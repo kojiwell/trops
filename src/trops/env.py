@@ -27,15 +27,18 @@ class TropsEnv:
         else:
             self.trops_git_remote = None
 
-        if hasattr(args, 'env'):
+        if hasattr(args, 'env') and args.env:
             self.trops_env = args.env
         elif os.getenv('TROPS_ENV'):
             self.trops_env = os.getenv('TROPS_ENV')
         else:
             self.trops_env = gethostname().split('.')[0]
 
-        self.trops_git_dir = self.trops_dir + \
-            f'/repo/{ self.trops_env }.git'
+        if hasattr(args, 'git_dir') and args.git_dir:
+            self.trops_git_dir = args.git_dir
+        else:
+            self.trops_git_dir = self.trops_dir + \
+                f'/repo/{ self.trops_env }.git'
 
         self.trops_conf = self.trops_dir + '/trops.cfg'
         self.trops_log_dir = self.trops_dir + '/log'
@@ -73,7 +76,7 @@ class TropsEnv:
 
         config[self.trops_env] = {'git_dir': f'{ self.trops_git_dir }',
                                   'sudo': 'False',
-                                  'work_tree': f'{ self.trops_work_tree }'}
+                                  'work_tree': f'{ self.trops_work_tree}'}
         if self.trops_git_remote:
             config[self.trops_env]['git_remote'] = self.trops_git_remote
         with open(self.trops_conf, mode='w') as configfile:
@@ -172,9 +175,9 @@ class TropsEnv:
                     f"The '{ self.trops_env }' environment does not exists on { self.trops_conf }")
                 exit(1)
 
-        config[self.trops_env] = {'git_dir': f'$TROPS_DIR/{ self.trops_env }.git',
-                                  'sudo': 'False',
-                                  'work_tree': f'{ self.trops_work_tree }'}
+        config[self.trops_env]['git_dir'] = self.trops_git_dir
+        config[self.trops_env]['sudo'] = 'False'
+        config[self.trops_env]['work_tree'] = self.trops_work_tree
         if self.trops_git_remote:
             config[self.trops_env]['git_remote'] = self.trops_git_remote
         with open(self.trops_conf, mode='w') as configfile:
