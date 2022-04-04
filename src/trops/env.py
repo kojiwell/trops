@@ -1,7 +1,6 @@
 import os
 import subprocess
 from configparser import ConfigParser
-from textwrap import dedent
 from socket import gethostname
 
 from trops.utils import real_path
@@ -34,8 +33,6 @@ class TropsEnv:
         else:
             self.trops_env = gethostname().split('.')[0]
 
-        self.trops_rcfile = self.trops_dir + \
-            f'/activate_{ self.trops_env }'
         self.trops_git_dir = self.trops_dir + \
             f'/repo/{ self.trops_env }.git'
 
@@ -62,67 +59,6 @@ class TropsEnv:
             os.mkdir(repo_dir)
         except FileExistsError:
             print(f'{ repo_dir } already exists')
-
-    def _setup_rcfiles(self):
-
-        # Create trops rcfile
-        if not os.path.isfile(self.trops_rcfile):
-            with open(self.trops_rcfile, mode='w') as rcfile:
-                lines = f"""\
-                    if ps -p $$|grep zsh > /dev/null; then
-                        export TROPS_DIR=$(dirname $(realpath ${{(%):-%N}}))
-                        export TROPS_ENV={ self.trops_env }
-                        export TROPS_SID=$(trops gensid)
-
-                        on-trops() {{
-                            export TROPS_SID=$(trops gensid)
-                            if [[ ! $PROMPT =~ "[trops]" ]]; then
-                                export PROMPT="[trops]$PROMPT"
-                            fi
-                            # Pure prompt https://github.com/sindresorhus/pure
-                            if [ -z ${{PURE_PROMPT_SYMBOL+x}} ]; then
-                                if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
-                                    export PURE_PROMPT_SYMBOL="[trops]❯"
-                                fi
-                            else
-                                if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
-                                    export PURE_PROMPT_SYMBOL="[trops]$PURE_PROMPT_SYMBOL"
-                                fi
-                            fi
-                            precmd() {{
-                                trops capture-cmd 1 $? $(history|tail -1)
-                            }}
-                        }}
-
-                        off-trops() {{
-                            export PROMPT=${{PROMPT//\[trops\]}}
-                            export PURE_PROMPT_SYMBOL=${{PURE_PROMPT_SYMBOL//\[trops\]}}
-                            LC_ALL=C type precmd >/dev/null && unset -f precmd
-                        }}
-                    fi
-
-                    if ps -p $$|grep bash > /dev/null; then
-                        export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
-                        export TROPS_ENV={ self.trops_env }
-                        export TROPS_SID=$(trops gensid)
-                    
-                        on-trops() {{
-                            export TROPS_SID=$(trops gensid)
-                            if [[ ! $PS1 =~ "[trops]" ]]; then
-                                export PS1="[trops]$PS1"
-                            fi
-                            PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
-                        }}
-
-                        off-trops() {{
-                            export PS1=${{PS1//\[trops\]}}
-                            unset PROMPT_COMMAND
-                        }}
-                    fi
-
-                    on-trops
-                    """
-                rcfile.write(dedent(lines))
 
     def _setup_trops_conf(self):
 
@@ -187,7 +123,6 @@ class TropsEnv:
     def create(self):
 
         self._setup_dirs()
-        self._setup_rcfiles()
         self._setup_trops_conf()
         self._setup_bare_git_repo()
 
