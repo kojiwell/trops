@@ -33,7 +33,8 @@ class Trops:
         if os.getenv('TROPS_DIR'):
             self.trops_dir = os.path.expandvars('$TROPS_DIR')
         else:
-            self.trops_dir = False
+            print("TROPS_DIR has not been set")
+            exit(1)
 
         # Set trops_sid
         if os.getenv('TROPS_SID'):
