@@ -49,13 +49,11 @@ Miniconda::
 Quickstart
 ==========
 
-Set up a trops project directory::
-
-    trops env init <dir>
-
 Activate trops::
 
     export TROPS_DIR="/path/to/your/trops"
+    test -d $TROPS_DIR || mkdir $TROPS_DIR
+
     # for Bash
     eval "$(trops init bash)"
     # for Zsh
