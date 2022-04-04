@@ -1,5 +1,6 @@
 import os
 import subprocess
+from shutil import rmtree
 from configparser import ConfigParser
 from socket import gethostname
 
@@ -126,6 +127,41 @@ class TropsEnv:
         self._setup_trops_conf()
         self._setup_bare_git_repo()
 
+    def delete(self):
+
+        config = ConfigParser()
+        if os.path.isfile(self.trops_conf):
+            config.read(self.trops_conf)
+            if config.has_section(self.trops_env):
+                config.remove_section(self.trops_env)
+                print(
+                    f"Deleting { self.trops_env } from { self.trops_conf }..")
+        with open(self.trops_conf, mode='w') as configfile:
+            config.write(configfile)
+
+        # Check if the self.trops_git_dir ends with .git
+        dirname = os.path.basename(self.trops_git_dir)
+        if dirname[-4:] == '.git':
+            really_ok1 = True
+        else:
+            really_ok1 = False
+
+        # Check if self.trops_git_dir/config
+        # has_option('status', 'showUntrackedFiles')
+        git_config_file = f"{ self.trops_git_dir }/config"
+        git_config = ConfigParser()
+        if os.path.isfile(git_config_file):
+            git_config.read(git_config_file)
+            if git_config.has_option('status', 'showUntrackedFiles'):
+                really_ok2 = True
+            else:
+                really_ok2 = False
+
+        # then delete it
+        if really_ok1 and really_ok2:
+            print(f"Deleting { self.trops_git_dir }..")
+            rmtree(self.trops_git_dir)
+
     def update(self):
 
         config = ConfigParser()
@@ -195,6 +231,13 @@ def env_create(args, other_args):
     trenv.create()
 
 
+def env_delete(args, other_args):
+    """Setup trops project"""
+
+    trenv = TropsEnv(args, other_args)
+    trenv.delete()
+
+
 def env_show(args, other_args):
 
     trenv = TropsEnv(args, other_args)
@@ -227,7 +270,7 @@ def add_env_subparsers(subparsers):
     perser_env_list = env_subparsers.add_parser(
         'list', help='show list of environment')
     perser_env_list.set_defaults(handler=env_list)
-    # trops env init <dir>
+    # trops env create <env>
     parser_env_create = env_subparsers.add_parser(
         'create', help='create trops environment')
     parser_env_create.add_argument(
@@ -237,6 +280,12 @@ def add_env_subparsers(subparsers):
     parser_env_create.add_argument(
         '--git-remote', help='Remote git repository')
     parser_env_create.set_defaults(handler=env_create)
+    # trops env delete <env>
+    parser_env_delete = env_subparsers.add_parser(
+        'delete', help='delete trops environment')
+    parser_env_delete.add_argument(
+        'env', help='Set environment name (default: %(default)s)')
+    parser_env_delete.set_defaults(handler=env_delete)
     # trops env update
     parser_env_update = env_subparsers.add_parser(
         'update', help='update trops environment')
