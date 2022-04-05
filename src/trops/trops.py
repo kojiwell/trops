@@ -298,8 +298,6 @@ class Trops:
         subparsers = parser.add_subparsers()
         parser.add_argument('-v', '--version',
                             help="Print version", action='store_true')
-        parser.add_argument('--dev',
-                            help="Development mode", action='store_true')
         # Add trops init subparsers and arguments
         add_init_subparsers(subparsers)
         # Add trops env subparsers and arguments
