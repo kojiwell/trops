@@ -105,7 +105,7 @@ if ! which trops > /dev/null; then
     python3 setup.py develop
 fi
 
-export TROPS_ROOT="/opt/shared/trops"
-if [ -d $TROPS_ROOT ]; then
+export TROPS_DIR="/opt/shared/trops"
+if [ -d $TROPS_DIR ]; then
     eval "$(trops init bash)"
 fi

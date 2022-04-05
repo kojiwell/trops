@@ -23,7 +23,8 @@ class TropsCapCmd:
         if os.getenv('TROPS_DIR'):
             self.trops_dir = os.path.expandvars('$TROPS_DIR')
         else:
-            self.trops_dir = False
+            print("TROPS_DIR is not set")
+            exit(1)
 
         # Set trops_tags
         if os.getenv('TROPS_TAGS'):
@@ -46,7 +47,8 @@ class TropsCapCmd:
         if os.getenv('TROPS_ENV'):
             self.trops_env = os.getenv('TROPS_ENV')
         else:
-            self.trops_env = self.hostname
+            print("TROPS_ENV is not set")
+            exit(1)
 
         self.config = ConfigParser()
         if self.trops_dir:
@@ -242,7 +244,7 @@ class TropsCapCmd:
                     result = subprocess.run(cmd, capture_output=True)
                     if result.returncode == 0:
                         self.logger.info(
-                            f"FL Trops ignores { ii_path } -- The file is under a git repository")
+                            f"FL { ii_path } is under a git repository #> PWD=*, EXIT=*, TROPS_SID={ self.trops_sid }, TROPS_ENV={ self.trops_env }")
                         exit(0)
                     # Check if the path is in the git repo
                     cmd = self.git_cmd + ['ls-files', ii_path]

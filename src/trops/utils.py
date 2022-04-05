@@ -5,8 +5,6 @@ import hashlib
 
 from datetime import datetime
 
-from trops.namesgenerator import get_random_name
-
 
 def real_path(path):
     """\
@@ -24,26 +22,16 @@ def real_path(path):
         return os.path.realpath(path)
 
 
-def random_word(args, other_args):
-
-    try:
-        with open('/usr/share/dict/words') as f:
-            word_list = f.read().split()
-        words = random.sample(word_list, args.number)
-        for i in range(len(words)):
-            words[i] = ''.join(e for e in words[i] if e.isalnum()).lower()
-        print('_'.join(words))
-    except FileNotFoundError:
-        cmd = ['shuf', '-i', '1-100000', '-n', '1']
-        subprocess.call(cmd)
-
-
 def generate_sid(args, other_args):
 
     now = datetime.now().isoformat()
     print(hashlib.sha256(bytes(now, 'utf-8')).hexdigest()[0:7])
 
 
-def random_name(args, other_args):
-
-    print(get_random_name())
+def yes_or_no(question):
+    while "the answer is invalid":
+        reply = str(input(question+' (y/n): ')).lower().strip()
+        if reply[0] == 'y':
+            return True
+        if reply[0] == 'n':
+            return False

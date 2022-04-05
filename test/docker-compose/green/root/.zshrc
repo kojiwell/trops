@@ -3,7 +3,6 @@ if ! which trops > /dev/null; then
     python3 setup.py develop
 fi
 
-export TROPS_ROOT="/opt/local/trops"
-if [ -d $TROPS_ROOT ]; then
-    eval "$(trops init bash)"
-fi
+export TROPS_DIR="/opt/local/trops"
+test -d $TROPS_DIR || mkdir $TROPS_DIR
+eval "$(trops init zsh)"

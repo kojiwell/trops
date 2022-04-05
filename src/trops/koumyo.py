@@ -8,6 +8,13 @@ class TropsKoumyo:
 
     def __init__(self, args, other_args):
 
+        if other_args:
+            msg = f"""\
+                Unsupported argments: { ', '.join(other_args)}
+                > trops km --help"""
+            print(dedent(msg))
+            exit(1)
+
         try:
             input = sys.stdin.read()
         except KeyboardInterrupt:

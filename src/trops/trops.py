@@ -1,5 +1,4 @@
 import os
-import sys
 import subprocess
 import time
 import argparse
@@ -11,7 +10,7 @@ from pathlib import Path
 from getpass import getuser
 from socket import gethostname
 
-from trops.utils import real_path, random_name, generate_sid
+from trops.utils import real_path, generate_sid
 from trops.env import add_env_subparsers
 from trops.file import add_file_subparsers
 from trops.repo import add_repo_subparsers
@@ -34,7 +33,8 @@ class Trops:
         if os.getenv('TROPS_DIR'):
             self.trops_dir = os.path.expandvars('$TROPS_DIR')
         else:
-            self.trops_dir = False
+            print("TROPS_DIR has not been set")
+            exit(1)
 
         # Set trops_sid
         if os.getenv('TROPS_SID'):
@@ -51,7 +51,7 @@ class Trops:
         if os.getenv('TROPS_ENV'):
             self.trops_env = os.getenv('TROPS_ENV')
         else:
-            self.trops_env = self.hostname
+            self.trops_env = False
 
         self.config = ConfigParser()
         if self.trops_dir:
@@ -298,8 +298,6 @@ class Trops:
         subparsers = parser.add_subparsers()
         parser.add_argument('-v', '--version',
                             help="Print version", action='store_true')
-        parser.add_argument('--dev',
-                            help="Development mode", action='store_true')
         # Add trops init subparsers and arguments
         add_init_subparsers(subparsers)
         # Add trops env subparsers and arguments
@@ -350,10 +348,6 @@ class Trops:
             'drop', help="remove file from the git repo")
         parser_drop.add_argument('paths', nargs='+', help='path of file')
         parser_drop.set_defaults(handler=self.drop)
-        # trops random-name
-        parser_random_name = subparsers.add_parser(
-            'random-name', help='generate random name')
-        parser_random_name.set_defaults(handler=random_name)
         # trops gensid
         parser_gensid = subparsers.add_parser(
             'gensid', help='generate sid')
@@ -374,8 +368,6 @@ class Trops:
             args.handler(args, other_args)
         else:
             parser.print_help()
-        # TODO: The other_args are only needed for trops git. Clean them
-        #       where they're not needed
 
 
 def main():

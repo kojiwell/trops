@@ -1,15 +1,22 @@
 import os
 import subprocess
+from shutil import rmtree
 from configparser import ConfigParser
-from textwrap import dedent
 from socket import gethostname
 
-from trops.utils import real_path
+from trops.utils import real_path, yes_or_no
 
 
 class TropsEnv:
 
     def __init__(self, args, other_args):
+
+        if other_args:
+            msg = f"""\
+                Unsupported argments: { ', '.join(other_args)}
+                > trops env <subcommand> --help"""
+            print(dedent(msg))
+            exit(1)
 
         if hasattr(args, 'dir'):
             self.trops_dir = real_path(args.dir) + '/trops'
@@ -27,17 +34,18 @@ class TropsEnv:
         else:
             self.trops_git_remote = None
 
-        if hasattr(args, 'env'):
+        if hasattr(args, 'env') and args.env:
             self.trops_env = args.env
         elif os.getenv('TROPS_ENV'):
             self.trops_env = os.getenv('TROPS_ENV')
         else:
             self.trops_env = gethostname().split('.')[0]
 
-        self.trops_rcfile = self.trops_dir + \
-            f'/activate_{ self.trops_env }'
-        self.trops_git_dir = self.trops_dir + \
-            f'/repo/{ self.trops_env }.git'
+        if hasattr(args, 'git_dir') and args.git_dir:
+            self.trops_git_dir = args.git_dir
+        else:
+            self.trops_git_dir = self.trops_dir + \
+                f'/repo/{ self.trops_env }.git'
 
         self.trops_conf = self.trops_dir + '/trops.cfg'
         self.trops_log_dir = self.trops_dir + '/log'
@@ -63,67 +71,6 @@ class TropsEnv:
         except FileExistsError:
             print(f'{ repo_dir } already exists')
 
-    def _setup_rcfiles(self):
-
-        # Create trops rcfile
-        if not os.path.isfile(self.trops_rcfile):
-            with open(self.trops_rcfile, mode='w') as rcfile:
-                lines = f"""\
-                    if ps -p $$|grep zsh > /dev/null; then
-                        export TROPS_DIR=$(dirname $(realpath ${{(%):-%N}}))
-                        export TROPS_ENV={ self.trops_env }
-                        export TROPS_SID=$(trops gensid)
-
-                        on-trops() {{
-                            export TROPS_SID=$(trops gensid)
-                            if [[ ! $PROMPT =~ "[trops]" ]]; then
-                                export PROMPT="[trops]$PROMPT"
-                            fi
-                            # Pure prompt https://github.com/sindresorhus/pure
-                            if [ -z ${{PURE_PROMPT_SYMBOL+x}} ]; then
-                                if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
-                                    export PURE_PROMPT_SYMBOL="[trops]❯"
-                                fi
-                            else
-                                if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
-                                    export PURE_PROMPT_SYMBOL="[trops]$PURE_PROMPT_SYMBOL"
-                                fi
-                            fi
-                            precmd() {{
-                                trops capture-cmd 1 $? $(history|tail -1)
-                            }}
-                        }}
-
-                        off-trops() {{
-                            export PROMPT=${{PROMPT//\[trops\]}}
-                            export PURE_PROMPT_SYMBOL=${{PURE_PROMPT_SYMBOL//\[trops\]}}
-                            LC_ALL=C type precmd >/dev/null && unset -f precmd
-                        }}
-                    fi
-
-                    if ps -p $$|grep bash > /dev/null; then
-                        export TROPS_DIR=$(dirname $(realpath $BASH_SOURCE))
-                        export TROPS_ENV={ self.trops_env }
-                        export TROPS_SID=$(trops gensid)
-                    
-                        on-trops() {{
-                            export TROPS_SID=$(trops gensid)
-                            if [[ ! $PS1 =~ "[trops]" ]]; then
-                                export PS1="[trops]$PS1"
-                            fi
-                            PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
-                        }}
-
-                        off-trops() {{
-                            export PS1=${{PS1//\[trops\]}}
-                            unset PROMPT_COMMAND
-                        }}
-                    fi
-
-                    on-trops
-                    """
-                rcfile.write(dedent(lines))
-
     def _setup_trops_conf(self):
 
         config = ConfigParser()
@@ -134,9 +81,9 @@ class TropsEnv:
                     f"The '{ self.trops_env }' environment already exists on { self.trops_conf }")
                 exit(1)
 
-        config[self.trops_env] = {'git_dir': f'{ self.trops_git_dir }',
+        config[self.trops_env] = {'git_dir': f'$TROPS_DIR/repo/{ self.trops_env }.git',
                                   'sudo': 'False',
-                                  'work_tree': f'{ self.trops_work_tree }'}
+                                  'work_tree': f'{ self.trops_work_tree}'}
         if self.trops_git_remote:
             config[self.trops_env]['git_remote'] = self.trops_git_remote
         with open(self.trops_conf, mode='w') as configfile:
@@ -187,9 +134,45 @@ class TropsEnv:
     def create(self):
 
         self._setup_dirs()
-        self._setup_rcfiles()
         self._setup_trops_conf()
         self._setup_bare_git_repo()
+
+    def delete(self):
+
+        config = ConfigParser()
+        if os.path.isfile(self.trops_conf):
+            config.read(self.trops_conf)
+            if config.has_section(self.trops_env):
+                if yes_or_no(f"Really want to remove { self.trops_env } from { self.trops_conf }?"):
+                    config.remove_section(self.trops_env)
+                    print(
+                        f"Deleting { self.trops_env } from { self.trops_conf }..")
+                    with open(self.trops_conf, mode='w') as configfile:
+                        config.write(configfile)
+
+        # Check if the self.trops_git_dir ends with .git
+        dirname = os.path.basename(self.trops_git_dir)
+        if dirname[-4:] == '.git':
+            really_ok1 = True
+        else:
+            really_ok1 = False
+
+        # Check if self.trops_git_dir/config
+        # has_option('status', 'showUntrackedFiles')
+        git_config_file = f"{ self.trops_git_dir }/config"
+        git_config = ConfigParser()
+        if os.path.isfile(git_config_file):
+            git_config.read(git_config_file)
+            if git_config.has_option('status', 'showUntrackedFiles'):
+                really_ok2 = True
+            else:
+                really_ok2 = False
+
+        # then delete it
+        if really_ok1 and really_ok2:
+            if yes_or_no(f"Really want to delete { self.trops_git_dir }?"):
+                rmtree(self.trops_git_dir)
+                print(f"Deleting { self.trops_git_dir }..")
 
     def update(self):
 
@@ -201,9 +184,9 @@ class TropsEnv:
                     f"The '{ self.trops_env }' environment does not exists on { self.trops_conf }")
                 exit(1)
 
-        config[self.trops_env] = {'git_dir': f'$TROPS_DIR/{ self.trops_env }.git',
-                                  'sudo': 'False',
-                                  'work_tree': f'{ self.trops_work_tree }'}
+        config[self.trops_env]['git_dir'] = self.trops_git_dir
+        config[self.trops_env]['sudo'] = 'False'
+        config[self.trops_env]['work_tree'] = self.trops_work_tree
         if self.trops_git_remote:
             config[self.trops_env]['git_remote'] = self.trops_git_remote
         with open(self.trops_conf, mode='w') as configfile:
@@ -260,6 +243,13 @@ def env_create(args, other_args):
     trenv.create()
 
 
+def env_delete(args, other_args):
+    """Setup trops project"""
+
+    trenv = TropsEnv(args, other_args)
+    trenv.delete()
+
+
 def env_show(args, other_args):
 
     trenv = TropsEnv(args, other_args)
@@ -292,7 +282,7 @@ def add_env_subparsers(subparsers):
     perser_env_list = env_subparsers.add_parser(
         'list', help='show list of environment')
     perser_env_list.set_defaults(handler=env_list)
-    # trops env init <dir>
+    # trops env create <env>
     parser_env_create = env_subparsers.add_parser(
         'create', help='create trops environment')
     parser_env_create.add_argument(
@@ -302,6 +292,12 @@ def add_env_subparsers(subparsers):
     parser_env_create.add_argument(
         '--git-remote', help='Remote git repository')
     parser_env_create.set_defaults(handler=env_create)
+    # trops env delete <env>
+    parser_env_delete = env_subparsers.add_parser(
+        'delete', help='delete trops environment')
+    parser_env_delete.add_argument(
+        'env', help='Set environment name (default: %(default)s)')
+    parser_env_delete.set_defaults(handler=env_delete)
     # trops env update
     parser_env_update = env_subparsers.add_parser(
         'update', help='update trops environment')
