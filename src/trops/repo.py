@@ -2,6 +2,7 @@ import os
 import subprocess
 import distutils.util
 from configparser import ConfigParser
+from textwrap import dedent
 
 from trops.utils import real_path
 
@@ -9,6 +10,13 @@ from trops.utils import real_path
 class TropsRepo:
 
     def __init__(self, args, other_args):
+
+        if other_args:
+            msg = f"""\
+                Unsupported argments: { ', '.join(other_args)}
+                > trops repo --help"""
+            print(dedent(msg))
+            exit(1)
 
         if os.getenv('TROPS_DIR'):
             self.trops_dir = real_path(os.getenv('TROPS_DIR'))

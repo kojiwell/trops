@@ -370,8 +370,6 @@ class Trops:
             args.handler(args, other_args)
         else:
             parser.print_help()
-        # TODO: The other_args are only needed for trops git. Clean them
-        #       where they're not needed
 
 
 def main():

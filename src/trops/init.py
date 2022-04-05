@@ -10,6 +10,12 @@ class TropsInit:
     def __init__(self, args, other_args):
 
         self.args = args
+        if other_args:
+            msg = f"""\
+                # Unsupported argments { ", ".join(other_args)}
+                # > trops init --help"""
+            print(dedent(msg))
+            exit(1)
 
         if self.args.shell not in ['bash', 'zsh']:
             print("# usage: trops init [bash/zsh]")

@@ -11,6 +11,13 @@ class TropsEnv:
 
     def __init__(self, args, other_args):
 
+        if other_args:
+            msg = f"""\
+                Unsupported argments: { ', '.join(other_args)}
+                > trops env <subcommand> --help"""
+            print(dedent(msg))
+            exit(1)
+
         if hasattr(args, 'dir'):
             self.trops_dir = real_path(args.dir) + '/trops'
         elif 'TROPS_DIR' in os.environ:
