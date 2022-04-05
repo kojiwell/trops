@@ -244,7 +244,7 @@ class TropsCapCmd:
                     result = subprocess.run(cmd, capture_output=True)
                     if result.returncode == 0:
                         self.logger.info(
-                            f"FL Trops ignores { ii_path } -- The file is under a git repository")
+                            f"FL { ii_path } is under a git repository #> PWD=*, EXIT=*, TROPS_SID={ self.trops_sid }, TROPS_ENV={ self.trops_env }")
                         exit(0)
                     # Check if the path is in the git repo
                     cmd = self.git_cmd + ['ls-files', ii_path]
