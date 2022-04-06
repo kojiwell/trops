@@ -23,6 +23,82 @@ from trops.release import __version__
 class Trops:
     """Trops Class"""
 
+    def __init__(self, args, other_args):
+
+        # Set username and hostname
+        self.username = getuser()
+        self.hostname = gethostname().split('.')[0]
+
+        # Set trops_dir
+        if os.getenv('TROPS_DIR'):
+            self.trops_dir = os.path.expandvars('$TROPS_DIR')
+        else:
+            print("TROPS_DIR has not been set")
+            exit(1)
+
+        # Set trops_sid
+        if os.getenv('TROPS_SID'):
+            self.trops_sid = os.path.expandvars('$TROPS_SID')
+        else:
+            self.trops_sid = False
+
+        if os.getenv('TROPS_TAGS'):
+            self.trops_tags = os.path.expandvars('$TROPS_TAGS')
+        else:
+            self.trops_tags = False
+
+        # Set trops_env
+        if hasattr(args, 'env') and args.env:
+            self.trops_env = args.env
+        elif os.getenv('TROPS_ENV'):
+            self.trops_env = os.getenv('TROPS_ENV')
+        else:
+            self.trops_env = False
+
+        self.config = ConfigParser()
+        if self.trops_dir:
+            self.conf_file = self.trops_dir + '/trops.cfg'
+            if os.path.isfile(self.conf_file):
+                self.config.read(self.conf_file)
+
+                if self.config.has_section(self.trops_env):
+                    try:
+                        self.git_dir = os.path.expandvars(
+                            self.config[self.trops_env]['git_dir'])
+                    except KeyError:
+                        print('git_dir does not exist in your configuration file')
+                        exit(1)
+                    try:
+                        self.work_tree = os.path.expandvars(
+                            self.config[self.trops_env]['work_tree'])
+                    except KeyError:
+                        print('work_tree does not exist in your configuration file')
+                        exit(1)
+
+                    self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                                    '--work-tree=' + self.work_tree]
+
+                    try:
+                        self.sudo = distutils.util.strtobool(
+                            self.config[self.trops_env]['sudo'])
+                        if self.sudo:
+                            self.git_cmd = ['sudo'] + self.git_cmd
+                    except KeyError:
+                        pass
+
+        # Set other_args
+        self.other_args = other_args
+
+    def git(self):
+        """Git wrapper command"""
+
+        cmd = self.git_cmd + self.other_args
+        subprocess.call(cmd)
+
+
+class TropsOld:
+    """Trops Old Class"""
+
     def __init__(self):
 
         # Set username and hostname
@@ -92,21 +168,6 @@ class Trops:
                                 filename=self.trops_logfile,
                                 level=logging.DEBUG)
             self.logger = logging.getLogger()
-
-    def git(self, args, other_args):
-        """Git wrapper command"""
-
-        if hasattr(args, 'env') and args.env:
-            self.trops_env = args.env
-            self.git_dir = os.path.expandvars(
-                self.config[self.trops_env]['git_dir'])
-            self.work_tree = os.path.expandvars(
-                self.config[self.trops_env]['work_tree'])
-            self.git_cmd = ['git', '--git-dir=' + self.git_dir,
-                            '--work-tree=' + self.work_tree]
-
-        cmd = self.git_cmd + other_args
-        subprocess.call(cmd)
 
     def show(self, args, other_args):
         """trops show hash[:path]"""
@@ -291,9 +352,15 @@ class Trops:
         subprocess.call(cmd)
 
 
+def trops_git(args, other_args):
+
+    tr = Trops(args, other_args)
+    tr.git()
+
+
 def main():
 
-    tr = Trops()
+    tr = TropsOld()
 
     parser = argparse.ArgumentParser(prog='trops',
                                      description='Trops - Tracking Operations')
@@ -315,7 +382,7 @@ def main():
     parser_git.add_argument('-s', '--sudo', help="Use sudo",
                             action='store_true')
     parser_git.add_argument('-e', '--env', help="Set env")
-    parser_git.set_defaults(handler=tr.git)
+    parser_git.set_defaults(handler=trops_git)
     # trops show commit[:path]
     parser_show = subparsers.add_parser(
         'show', help='trops show commit[:path]')
