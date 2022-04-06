@@ -293,11 +293,11 @@ class Trops:
     def main(self):
         """Get subcommand and arguments and pass them to the hander"""
 
-        parser = argparse.ArgumentParser(
-            description='Trops - Tracking Operations')
+        parser = argparse.ArgumentParser(prog='trops',
+                                         description='Trops - Tracking Operations')
         subparsers = parser.add_subparsers()
-        parser.add_argument('-v', '--version',
-                            help="Print version", action='store_true')
+        parser.add_argument('-v', '--version', action='version',
+                            version=f'%(prog)s {__version__}')
         # Add trops init subparsers and arguments
         add_init_subparsers(subparsers)
         # Add trops env subparsers and arguments
@@ -361,9 +361,6 @@ class Trops:
 
         # Pass args and other args to the hander
         args, other_args = parser.parse_known_args()
-        if args.version:
-            print('trops', __version__)
-            exit(0)
         if hasattr(args, 'handler'):
             args.handler(args, other_args)
         else:
