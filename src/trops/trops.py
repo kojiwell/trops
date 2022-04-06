@@ -55,6 +55,9 @@ class Trops:
         else:
             self.trops_env = False
 
+        if hasattr(args, 'dirs') and args.dirs:
+            self.dirs = args.dirs
+
         self.config = ConfigParser()
         if self.trops_dir:
             self.conf_file = self.trops_dir + '/trops.cfg'
@@ -100,6 +103,19 @@ class Trops:
 
         cmd = self.git_cmd + ['status']
         subprocess.call(cmd)
+
+    def ll(self):
+        """Shows the list of git-tracked files"""
+
+        dirs = self.dirs
+        for dir in dirs:
+            if os.path.isdir(dir):
+                os.chdir(dir)
+                cmd = self.git_cmd + ['ls-files']
+                output = subprocess.check_output(cmd)
+                for f in output.decode("utf-8").splitlines():
+                    cmd = ['ls', '-al', f]
+                    subprocess.call(cmd)
 
 
 class TropsOld:
@@ -224,19 +240,6 @@ class TropsOld:
             except KeyboardInterrupt:
                 print('\nClosing trops log...')
 
-    def ll(self, args, other_args):
-        """Shows the list of git-tracked files"""
-
-        dirs = [args.dir] + other_args
-        for dir in dirs:
-            if os.path.isdir(dir):
-                os.chdir(dir)
-                cmd = self.git_cmd + ['ls-files']
-                output = subprocess.check_output(cmd)
-                for f in output.decode("utf-8").splitlines():
-                    cmd = ['ls', '-al', f]
-                    subprocess.call(cmd)
-
     def touch(self, args, other_args):
 
         for file_path in args.paths:
@@ -355,6 +358,12 @@ def trops_check(args, other_args):
     tr.check()
 
 
+def trops_ll(args, other_args):
+
+    tr = Trops(args, other_args)
+    tr.ll()
+
+
 def main():
 
     tr = TropsOld()
@@ -400,10 +409,10 @@ def main():
     # trops ll
     parser_ll = subparsers.add_parser('ll', help="list files")
     parser_ll.add_argument(
-        'dir', help='directory path', nargs='?', default=os.getcwd())
+        'dirs', help='directory path', nargs='*', default=[os.getcwd()])
     parser_ll.add_argument(
-        '-e', '--env', default='default', help='Set environment name')
-    parser_ll.set_defaults(handler=tr.ll)
+        '-e', '--env', help='Set environment name')
+    parser_ll.set_defaults(handler=trops_ll)
     # trops touch <path>
     parser_touch = subparsers.add_parser(
         'touch', help="add/update file in the git repo")
