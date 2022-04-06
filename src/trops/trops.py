@@ -290,87 +290,83 @@ class Trops:
         cmd = self.git_cmd + ['status']
         subprocess.call(cmd)
 
-    def main(self):
-        """Get subcommand and arguments and pass them to the hander"""
-
-        parser = argparse.ArgumentParser(prog='trops',
-                                         description='Trops - Tracking Operations')
-        subparsers = parser.add_subparsers()
-        parser.add_argument('-v', '--version', action='version',
-                            version=f'%(prog)s {__version__}')
-        # Add trops init subparsers and arguments
-        add_init_subparsers(subparsers)
-        # Add trops env subparsers and arguments
-        add_env_subparsers(subparsers)
-        # Add trops file subparsers and arguments
-        add_file_subparsers(subparsers)
-        # Add trops koumyo arguments
-        koumyo_subparsers(subparsers)
-        # Add trops repo arguments
-        add_repo_subparsers(subparsers)
-        # trops git <file/dir>
-        parser_git = subparsers.add_parser('git', help='git wrapper')
-        parser_git.add_argument('-s', '--sudo', help="Use sudo",
-                                action='store_true')
-        parser_git.add_argument('-e', '--env', help="Set env")
-        parser_git.set_defaults(handler=self.git)
-        # trops show commit[:path]
-        parser_show = subparsers.add_parser(
-            'show', help='trops show commit[:path]')
-        parser_show.add_argument('-e', '--env', help="Set env")
-        parser_show.add_argument('commit', help='Set commit[:path]')
-        parser_show.set_defaults(handler=self.show)
-        # trops capture-cmd <ignore_fields> <return_code> <command>
-        capture_cmd_subparsers(subparsers)
-        # trops log
-        parser_log = subparsers.add_parser('log', help='show log')
-        parser_log.add_argument(
-            '-t', '--tail', type=int, help='set number of lines to show')
-        parser_log.add_argument(
-            '-f', '--follow', action='store_true', help='follow log interactively')
-        parser_log.add_argument(
-            '-a', '--all', action='store_true', help='show all log')
-        parser_log.set_defaults(handler=self.log)
-        # trops ll
-        parser_ll = subparsers.add_parser('ll', help="list files")
-        parser_ll.add_argument(
-            'dir', help='directory path', nargs='?', default=os.getcwd())
-        parser_ll.add_argument(
-            '-e', '--env', default='default', help='Set environment name')
-        parser_ll.set_defaults(handler=self.ll)
-        # trops touch <path>
-        parser_touch = subparsers.add_parser(
-            'touch', help="add/update file in the git repo")
-        parser_touch.add_argument('paths', nargs='+', help='path of file')
-        parser_touch.set_defaults(handler=self.touch)
-        # trops drop <path>
-        parser_drop = subparsers.add_parser(
-            'drop', help="remove file from the git repo")
-        parser_drop.add_argument('paths', nargs='+', help='path of file')
-        parser_drop.set_defaults(handler=self.drop)
-        # trops gensid
-        parser_gensid = subparsers.add_parser(
-            'gensid', help='generate sid')
-        parser_gensid.set_defaults(handler=generate_sid)
-        # trops check
-        parser_check = subparsers.add_parser('check', help='Check status')
-        parser_check.add_argument('-s', '--sudo', help="Use sudo",
-                                  action='store_true')
-        parser_check.add_argument('-e', '--env', help="Set env")
-        parser_check.set_defaults(handler=self.check)
-
-        # Pass args and other args to the hander
-        args, other_args = parser.parse_known_args()
-        if hasattr(args, 'handler'):
-            args.handler(args, other_args)
-        else:
-            parser.print_help()
-
 
 def main():
 
     tr = Trops()
-    tr.main()
+
+    parser = argparse.ArgumentParser(prog='trops',
+                                     description='Trops - Tracking Operations')
+    subparsers = parser.add_subparsers()
+    parser.add_argument('-v', '--version', action='version',
+                        version=f'%(prog)s {__version__}')
+    # Add trops init subparsers and arguments
+    add_init_subparsers(subparsers)
+    # Add trops env subparsers and arguments
+    add_env_subparsers(subparsers)
+    # Add trops file subparsers and arguments
+    add_file_subparsers(subparsers)
+    # Add trops koumyo arguments
+    koumyo_subparsers(subparsers)
+    # Add trops repo arguments
+    add_repo_subparsers(subparsers)
+    # trops git <file/dir>
+    parser_git = subparsers.add_parser('git', help='git wrapper')
+    parser_git.add_argument('-s', '--sudo', help="Use sudo",
+                            action='store_true')
+    parser_git.add_argument('-e', '--env', help="Set env")
+    parser_git.set_defaults(handler=tr.git)
+    # trops show commit[:path]
+    parser_show = subparsers.add_parser(
+        'show', help='trops show commit[:path]')
+    parser_show.add_argument('-e', '--env', help="Set env")
+    parser_show.add_argument('commit', help='Set commit[:path]')
+    parser_show.set_defaults(handler=tr.show)
+    # trops capture-cmd <ignore_fields> <return_code> <command>
+    capture_cmd_subparsers(subparsers)
+    # trops log
+    parser_log = subparsers.add_parser('log', help='show log')
+    parser_log.add_argument(
+        '-t', '--tail', type=int, help='set number of lines to show')
+    parser_log.add_argument(
+        '-f', '--follow', action='store_true', help='follow log interactively')
+    parser_log.add_argument(
+        '-a', '--all', action='store_true', help='show all log')
+    parser_log.set_defaults(handler=tr.log)
+    # trops ll
+    parser_ll = subparsers.add_parser('ll', help="list files")
+    parser_ll.add_argument(
+        'dir', help='directory path', nargs='?', default=os.getcwd())
+    parser_ll.add_argument(
+        '-e', '--env', default='default', help='Set environment name')
+    parser_ll.set_defaults(handler=tr.ll)
+    # trops touch <path>
+    parser_touch = subparsers.add_parser(
+        'touch', help="add/update file in the git repo")
+    parser_touch.add_argument('paths', nargs='+', help='path of file')
+    parser_touch.set_defaults(handler=tr.touch)
+    # trops drop <path>
+    parser_drop = subparsers.add_parser(
+        'drop', help="remove file from the git repo")
+    parser_drop.add_argument('paths', nargs='+', help='path of file')
+    parser_drop.set_defaults(handler=tr.drop)
+    # trops gensid
+    parser_gensid = subparsers.add_parser(
+        'gensid', help='generate sid')
+    parser_gensid.set_defaults(handler=generate_sid)
+    # trops check
+    parser_check = subparsers.add_parser('check', help='Check status')
+    parser_check.add_argument('-s', '--sudo', help="Use sudo",
+                              action='store_true')
+    parser_check.add_argument('-e', '--env', help="Set env")
+    parser_check.set_defaults(handler=tr.check)
+
+    # Pass args and other args to the hander
+    args, other_args = parser.parse_known_args()
+    if hasattr(args, 'handler'):
+        args.handler(args, other_args)
+    else:
+        parser.print_help()
 
 
 if __name__ == "__main__":
