@@ -58,6 +58,9 @@ class Trops:
         if hasattr(args, 'dirs') and args.dirs:
             self.dirs = args.dirs
 
+        if hasattr(args, 'commit') and args.commit:
+            self.commit = args.commit
+
         self.config = ConfigParser()
         if self.trops_dir:
             self.conf_file = self.trops_dir + '/trops.cfg'
@@ -116,6 +119,12 @@ class Trops:
                 for f in output.decode("utf-8").splitlines():
                     cmd = ['ls', '-al', f]
                     subprocess.call(cmd)
+
+    def show(self):
+        """trops show hash[:path]"""
+
+        cmd = self.git_cmd + ['show', self.commit]
+        subprocess.call(cmd)
 
 
 class TropsOld:
@@ -190,21 +199,6 @@ class TropsOld:
                                 filename=self.trops_logfile,
                                 level=logging.DEBUG)
             self.logger = logging.getLogger()
-
-    def show(self, args, other_args):
-        """trops show hash[:path]"""
-
-        if hasattr(args, 'env') and args.env:
-            self.trops_env = args.env
-            self.git_dir = os.path.expandvars(
-                self.config[self.trops_env]['git_dir'])
-            self.work_tree = os.path.expandvars(
-                self.config[self.trops_env]['work_tree'])
-            self.git_cmd = ['git', '--git-dir=' + self.git_dir,
-                            '--work-tree=' + self.work_tree]
-
-        cmd = self.git_cmd + ['show', args.commit]
-        subprocess.call(cmd)
 
     def _follow(self, file):
 
@@ -364,6 +358,12 @@ def trops_ll(args, other_args):
     tr.ll()
 
 
+def trops_show(args, other_args):
+
+    tr = Trops(args, other_args)
+    tr.show()
+
+
 def main():
 
     tr = TropsOld()
@@ -394,7 +394,7 @@ def main():
         'show', help='trops show commit[:path]')
     parser_show.add_argument('-e', '--env', help="Set env")
     parser_show.add_argument('commit', help='Set commit[:path]')
-    parser_show.set_defaults(handler=tr.show)
+    parser_show.set_defaults(handler=trops_show)
     # trops capture-cmd <ignore_fields> <return_code> <command>
     capture_cmd_subparsers(subparsers)
     # trops log
