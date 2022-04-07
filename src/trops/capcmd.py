@@ -21,20 +21,20 @@ class TropsCapCmd:
 
         # Set trops_dir
         if os.getenv('TROPS_DIR'):
-            self.trops_dir = os.path.expandvars('$TROPS_DIR')
+            self.trops_dir = real_path(os.getenv('TROPS_DIR'))
         else:
             print("TROPS_DIR is not set")
             exit(1)
 
         # Set trops_tags
         if os.getenv('TROPS_TAGS'):
-            self.trops_tags = os.path.expandvars('$TROPS_TAGS')
+            self.trops_tags = os.getenv('TROPS_TAGS')
         else:
             self.trops_tags = False
 
         # Set trops_sid
         if os.getenv('TROPS_SID'):
-            self.trops_sid = os.path.expandvars('$TROPS_SID')
+            self.trops_sid = os.getenv('TROPS_SID')
         else:
             self.trops_sid = False
 
