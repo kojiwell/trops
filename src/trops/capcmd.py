@@ -56,13 +56,13 @@ class TropsCapCmd:
             if os.path.isfile(self.conf_file):
                 self.config.read(self.conf_file)
                 try:
-                    self.git_dir = os.path.expandvars(
+                    self.git_dir = real_path(
                         self.config[self.trops_env]['git_dir'])
                 except KeyError:
                     print('git_dir does not exist in your configuration file')
                     exit(1)
                 try:
-                    self.work_tree = os.path.expandvars(
+                    self.work_tree = real_path(
                         self.config[self.trops_env]['work_tree'])
                 except KeyError:
                     print('work_tree does not exist in your configuration file')

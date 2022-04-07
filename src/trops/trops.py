@@ -146,7 +146,7 @@ class TropsOld:
 
         # Set trops_dir
         if os.getenv('TROPS_DIR'):
-            self.trops_dir = os.path.expandvars('$TROPS_DIR')
+            self.trops_dir = real_path(os.getenv('TROPS_DIR'))
         else:
             print("TROPS_DIR has not been set")
             exit(1)
@@ -176,7 +176,7 @@ class TropsOld:
 
                 if self.config.has_section(self.trops_env):
                     try:
-                        self.git_dir = os.path.expandvars(
+                        self.git_dir = real_path(
                             self.config[self.trops_env]['git_dir'])
                     except KeyError:
                         print('git_dir does not exist in your configuration file')
