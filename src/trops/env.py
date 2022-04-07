@@ -21,7 +21,7 @@ class TropsEnv:
         if hasattr(args, 'dir'):
             self.trops_dir = real_path(args.dir) + '/trops'
         elif 'TROPS_DIR' in os.environ:
-            self.trops_dir = os.path.expandvars('$TROPS_DIR')
+            self.trops_dir = real_path('$TROPS_DIR')
         else:
             print('TROPS_DIR does not exists')
             exit(1)

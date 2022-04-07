@@ -19,7 +19,7 @@ class TropsFile:
             exit(1)
 
         if os.getenv('TROPS_DIR'):
-            self.trops_dir = os.getenv('TROPS_DIR')
+            self.trops_dir = real_path(os.getenv('TROPS_DIR'))
             self.trops_conf = self.trops_dir + '/trops.cfg'
             self.trops_log_dir = self.trops_dir + '/log'
         else:
@@ -38,7 +38,7 @@ class TropsFile:
             self.config.read(self.trops_conf)
 
             try:
-                self.git_dir = os.path.expandvars(
+                self.git_dir = real_path(
                     self.config[self.trops_env]['git_dir'])
             except KeyError:
                 print('git_dir does not exist in your configuration file')
