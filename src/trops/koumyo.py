@@ -108,7 +108,7 @@ def run(args, other_args):
     tk.run()
 
 
-def koumyo_subparsers(subparsers):
+def add_koumyo_subparsers(subparsers):
 
     # trops koumyo
     parser_koumyo = subparsers.add_parser(

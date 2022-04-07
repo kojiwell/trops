@@ -14,8 +14,8 @@ from trops.utils import real_path, generate_sid
 from trops.env import add_env_subparsers
 from trops.file import add_file_subparsers
 from trops.repo import add_repo_subparsers
-from trops.capcmd import capture_cmd_subparsers
-from trops.koumyo import koumyo_subparsers
+from trops.capcmd import add_capture_cmd_subparsers
+from trops.koumyo import add_koumyo_subparsers
 from trops.init import add_init_subparsers
 from trops.release import __version__
 
@@ -318,40 +318,26 @@ def trops_drop(args, other_args):
     tr.drop()
 
 
-def main():
+def add_git_subparsers(subparsers):
 
-    tr = TropsOld()
-
-    parser = argparse.ArgumentParser(prog='trops',
-                                     description='Trops - Tracking Operations')
-    subparsers = parser.add_subparsers()
-    parser.add_argument('-v', '--version', action='version',
-                        version=f'%(prog)s {__version__}')
-    # Add trops init subparsers and arguments
-    add_init_subparsers(subparsers)
-    # Add trops env subparsers and arguments
-    add_env_subparsers(subparsers)
-    # Add trops file subparsers and arguments
-    add_file_subparsers(subparsers)
-    # Add trops koumyo arguments
-    koumyo_subparsers(subparsers)
-    # Add trops repo arguments
-    add_repo_subparsers(subparsers)
-    # trops git <file/dir>
     parser_git = subparsers.add_parser('git', help='git wrapper')
     parser_git.add_argument('-s', '--sudo', help="Use sudo",
                             action='store_true')
     parser_git.add_argument('-e', '--env', help="Set env")
     parser_git.set_defaults(handler=trops_git)
-    # trops show commit[:path]
+
+
+def add_show_subparsers(subparsers):
+
     parser_show = subparsers.add_parser(
         'show', help='trops show commit[:path]')
     parser_show.add_argument('-e', '--env', help="Set env")
     parser_show.add_argument('commit', help='Set commit[:path]')
     parser_show.set_defaults(handler=trops_show)
-    # trops capture-cmd <ignore_fields> <return_code> <command>
-    capture_cmd_subparsers(subparsers)
-    # trops log
+
+
+def add_log_subparsers(subparsers):
+
     parser_log = subparsers.add_parser('log', help='show log')
     parser_log.add_argument(
         '-t', '--tail', type=int, help='set number of lines to show')
@@ -360,33 +346,75 @@ def main():
     parser_log.add_argument(
         '-a', '--all', action='store_true', help='show all log')
     parser_log.set_defaults(handler=trops_log)
-    # trops ll
+
+
+def add_ll_subparsers(subparsers):
+
     parser_ll = subparsers.add_parser('ll', help="list files")
     parser_ll.add_argument(
         'dirs', help='directory path', nargs='*', default=[os.getcwd()])
     parser_ll.add_argument(
         '-e', '--env', help='Set environment name')
     parser_ll.set_defaults(handler=trops_ll)
-    # trops touch <path>
+
+
+def add_touch_subparsers(subparsers):
+
     parser_touch = subparsers.add_parser(
         'touch', help="add/update file in the git repo")
     parser_touch.add_argument('paths', nargs='+', help='path of file')
     parser_touch.set_defaults(handler=trops_touch)
-    # trops drop <path>
+
+
+def add_drop_subparsers(subparsers):
+
     parser_drop = subparsers.add_parser(
         'drop', help="remove file from the git repo")
     parser_drop.add_argument('paths', nargs='+', help='path of file')
     parser_drop.set_defaults(handler=trops_drop)
-    # trops gensid
+
+
+def add_gensid_subparsers(subparsers):
+
     parser_gensid = subparsers.add_parser(
         'gensid', help='generate sid')
     parser_gensid.set_defaults(handler=generate_sid)
-    # trops check
+
+
+def add_check_subparsers(subparsers):
+
     parser_check = subparsers.add_parser('check', help='Check status')
     parser_check.add_argument('-s', '--sudo', help="Use sudo",
                               action='store_true')
     parser_check.add_argument('-e', '--env', help="Set env")
     parser_check.set_defaults(handler=trops_check)
+
+
+def main():
+
+    parser = argparse.ArgumentParser(prog='trops',
+                                     description='Trops - Tracking Operations')
+    subparsers = parser.add_subparsers()
+    parser.add_argument('-v', '--version', action='version',
+                        version=f'%(prog)s {__version__}')
+
+    for func in [
+        'init',
+        'env',
+        'file',
+        'koumyo',
+        'repo',
+        'git',
+        'show',
+        'capture_cmd',
+        'log',
+        'll',
+        'touch',
+        'drop',
+        'gensid',
+        'check'
+    ]:
+        eval(f'add_{ func }_subparsers(subparsers)')
 
     # Pass args and other args to the hander
     args, other_args = parser.parse_known_args()

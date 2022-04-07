@@ -290,7 +290,7 @@ def capture_cmd(args, other_args):
     tc.capture_cmd()
 
 
-def capture_cmd_subparsers(subparsers):
+def add_capture_cmd_subparsers(subparsers):
 
     parser_capture_cmd = subparsers.add_parser(
         'capture-cmd', help='Capture command line strings', add_help=False)
