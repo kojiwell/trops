@@ -25,6 +25,10 @@ class Trops:
 
     def __init__(self, args, other_args):
 
+        # Make args sharable among functions
+        self.args = args
+        self.other_args = other_args
+
         # Set username and hostname
         self.username = getuser()
         self.hostname = gethostname().split('.')[0]
@@ -55,12 +59,6 @@ class Trops:
         else:
             self.trops_env = False
 
-        if hasattr(args, 'dirs') and args.dirs:
-            self.dirs = args.dirs
-
-        if hasattr(args, 'commit') and args.commit:
-            self.commit = args.commit
-
         self.config = ConfigParser()
         if self.trops_dir:
             self.conf_file = self.trops_dir + '/trops.cfg'
@@ -71,8 +69,6 @@ class Trops:
                     try:
                         self.git_dir = real_path(
                             self.config[self.trops_env]['git_dir'])
-                        print(
-                            real_path(self.config[self.trops_env]['git_dir']))
                     except KeyError:
                         print('git_dir does not exist in your configuration file')
                         exit(1)
@@ -93,9 +89,6 @@ class Trops:
                             self.git_cmd = ['sudo'] + self.git_cmd
                     except KeyError:
                         pass
-
-        # Set other_args
-        self.other_args = other_args
 
 
 class TropsMain(Trops):
@@ -118,7 +111,7 @@ class TropsMain(Trops):
     def ll(self):
         """Shows the list of git-tracked files"""
 
-        dirs = self.dirs
+        dirs = self.args.dirs
         for dir in dirs:
             if os.path.isdir(dir):
                 os.chdir(dir)
@@ -131,8 +124,42 @@ class TropsMain(Trops):
     def show(self):
         """trops show hash[:path]"""
 
-        cmd = self.git_cmd + ['show', self.commit]
+        cmd = self.git_cmd + ['show', self.args.commit]
         subprocess.call(cmd)
+
+    def _follow(self, file):
+
+        file.seek(0, os.SEEK_END)
+        while True:
+            line = file.readline()
+            if not line:
+                time.sleep(0.1)
+                continue
+            yield line
+
+    def log(self):
+
+        log_file = self.trops_dir + '/log/trops.log'
+        numlines = 15
+        if self.args.tail and self.args.tail != None:
+            numlines = self.args.tail
+
+        if self.args.all:
+            with open(log_file) as ff:
+                for line in ff.readlines():
+                    print(line, end='')
+        else:
+            with open(log_file) as ff:
+                for line in ff.readlines()[-numlines:]:
+                    print(line, end='')
+        if self.args.follow:
+            ff = open(log_file, "r")
+            try:
+                lines = self._follow(ff)
+                for line in lines:
+                    print(line, end='')
+            except KeyboardInterrupt:
+                print('\nClosing trops log...')
 
 
 class TropsOld:
@@ -207,40 +234,6 @@ class TropsOld:
                                 filename=self.trops_logfile,
                                 level=logging.DEBUG)
             self.logger = logging.getLogger()
-
-    def _follow(self, file):
-
-        file.seek(0, os.SEEK_END)
-        while True:
-            line = file.readline()
-            if not line:
-                time.sleep(0.1)
-                continue
-            yield line
-
-    def log(self, args, other_args):
-
-        log_file = self.trops_dir + '/log/trops.log'
-        numlines = 15
-        if args.tail and args.tail != None:
-            numlines = args.tail
-
-        if args.all:
-            with open(log_file) as ff:
-                for line in ff.readlines():
-                    print(line, end='')
-        else:
-            with open(log_file) as ff:
-                for line in ff.readlines()[-numlines:]:
-                    print(line, end='')
-        if args.follow:
-            ff = open(log_file, "r")
-            try:
-                lines = self._follow(ff)
-                for line in lines:
-                    print(line, end='')
-            except KeyboardInterrupt:
-                print('\nClosing trops log...')
 
     def touch(self, args, other_args):
 
@@ -372,6 +365,12 @@ def trops_show(args, other_args):
     tr.show()
 
 
+def trops_log(args, other_args):
+
+    tr = TropsMain(args, other_args)
+    tr.log()
+
+
 def main():
 
     tr = TropsOld()
@@ -413,7 +412,7 @@ def main():
         '-f', '--follow', action='store_true', help='follow log interactively')
     parser_log.add_argument(
         '-a', '--all', action='store_true', help='show all log')
-    parser_log.set_defaults(handler=tr.log)
+    parser_log.set_defaults(handler=trops_log)
     # trops ll
     parser_ll = subparsers.add_parser('ll', help="list files")
     parser_ll.add_argument(
