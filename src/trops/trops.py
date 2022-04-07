@@ -161,6 +161,66 @@ class TropsMain(Trops):
             except KeyboardInterrupt:
                 print('\nClosing trops log...')
 
+    def touch(self):
+
+        for file_path in self.args.paths:
+
+            self._touch_file(file_path)
+
+    def _touch_file(self, file_path):
+        """Add a file or directory in the git repo"""
+
+        file_path = real_path(file_path)
+
+        # Check if the path exists
+        if not os.path.exists(file_path):
+            print(f"{ file_path } doesn't exists")
+            exit(1)
+        # TODO: Allow touch directory later
+        if not os.path.isfile(file_path):
+            message = f"""\
+                Error: { file_path } is not a file
+                Only file is allowed to be touched"""
+            print(dedent(message))
+            exit(1)
+
+        # Check if the path is in the git repo
+        cmd = self.git_cmd + ['ls-files', file_path]
+        result = subprocess.run(cmd, capture_output=True)
+        if result.returncode != 0:
+            print(result.stderr.decode('utf-8'))
+            exit(result.returncode)
+        output = result.stdout.decode('utf-8')
+        # Set the message based on the output
+        if output:
+            git_msg = f"Update { file_path }"
+            log_note = "UPDATE"
+        else:
+            git_msg = f"Add { file_path }"
+            log_note = "ADD"
+        if self.trops_tags:
+            git_msg = f"{ git_msg } ({ self.trops_tags })"
+        # Add and commit
+        cmd = self.git_cmd + ['add', file_path]
+        subprocess.call(cmd)
+        cmd = self.git_cmd + ['commit', '-m', git_msg, file_path]
+        subprocess.call(cmd)
+        cmd = self.git_cmd + ['log', '--oneline', '-1', file_path]
+        output = subprocess.check_output(
+            cmd).decode("utf-8").split()
+        if file_path in output:
+            env = self.trops_env
+            commit = output[0]
+            path = real_path(file_path).lstrip(self.work_tree)
+            mode = oct(os.stat(file_path).st_mode)[-4:]
+            owner = Path(file_path).owner()
+            group = Path(file_path).group()
+            message = f"FL trops show -e { env } { commit }:{ path }  #> { log_note } O={ owner },G={ group },M={ mode }"
+            if self.trops_sid:
+                message = message + f" TROPS_SID={ self.trops_sid }"
+            message = message + f" TROPS_ENV={ env }"
+            self.logger.info(message)
+
 
 class TropsOld:
     """Trops Old Class"""
@@ -234,66 +294,6 @@ class TropsOld:
                                 filename=self.trops_logfile,
                                 level=logging.DEBUG)
             self.logger = logging.getLogger()
-
-    def touch(self, args, other_args):
-
-        for file_path in args.paths:
-
-            self._touch_file(file_path)
-
-    def _touch_file(self, file_path):
-        """Add a file or directory in the git repo"""
-
-        file_path = real_path(file_path)
-
-        # Check if the path exists
-        if not os.path.exists(file_path):
-            print(f"{ file_path } doesn't exists")
-            exit(1)
-        # TODO: Allow touch directory later
-        if not os.path.isfile(file_path):
-            message = f"""\
-                Error: { file_path } is not a file
-                Only file is allowed to be touched"""
-            print(dedent(message))
-            exit(1)
-
-        # Check if the path is in the git repo
-        cmd = self.git_cmd + ['ls-files', file_path]
-        result = subprocess.run(cmd, capture_output=True)
-        if result.returncode != 0:
-            print(result.stderr.decode('utf-8'))
-            exit(result.returncode)
-        output = result.stdout.decode('utf-8')
-        # Set the message based on the output
-        if output:
-            git_msg = f"Update { file_path }"
-            log_note = "UPDATE"
-        else:
-            git_msg = f"Add { file_path }"
-            log_note = "ADD"
-        if self.trops_tags:
-            git_msg = f"{ git_msg } ({ self.trops_tags })"
-        # Add and commit
-        cmd = self.git_cmd + ['add', file_path]
-        subprocess.call(cmd)
-        cmd = self.git_cmd + ['commit', '-m', git_msg, file_path]
-        subprocess.call(cmd)
-        cmd = self.git_cmd + ['log', '--oneline', '-1', file_path]
-        output = subprocess.check_output(
-            cmd).decode("utf-8").split()
-        if file_path in output:
-            env = self.trops_env
-            commit = output[0]
-            path = real_path(file_path).lstrip(self.work_tree)
-            mode = oct(os.stat(file_path).st_mode)[-4:]
-            owner = Path(file_path).owner()
-            group = Path(file_path).group()
-            message = f"FL trops show -e { env } { commit }:{ path }  #> { log_note } O={ owner },G={ group },M={ mode }"
-            if self.trops_sid:
-                message = message + f" TROPS_SID={ self.trops_sid }"
-            message = message + f" TROPS_ENV={ env }"
-            self.logger.info(message)
 
     def drop(self, args, other_args):
 
