@@ -15,7 +15,14 @@ def real_path(path):
     if '~' == path[0]:
         return os.path.expanduser(path)
     elif '$' in path:
-        return os.path.expandvars(path)
+        new_path = os.path.expandvars(path)
+        if '~' == new_path[0]:
+            return os.path.expanduser(new_path)
+        elif '/' == new_path[0]:
+            return os.path.expandvars(path)
+        else:
+            print(f'{ path } is not a path...')
+            exit(1)
     if '/' == path[0]:
         return path
     else:

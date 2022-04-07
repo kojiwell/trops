@@ -21,20 +21,20 @@ class TropsCapCmd:
 
         # Set trops_dir
         if os.getenv('TROPS_DIR'):
-            self.trops_dir = os.path.expandvars('$TROPS_DIR')
+            self.trops_dir = real_path(os.getenv('TROPS_DIR'))
         else:
             print("TROPS_DIR is not set")
             exit(1)
 
         # Set trops_tags
         if os.getenv('TROPS_TAGS'):
-            self.trops_tags = os.path.expandvars('$TROPS_TAGS')
+            self.trops_tags = os.getenv('TROPS_TAGS')
         else:
             self.trops_tags = False
 
         # Set trops_sid
         if os.getenv('TROPS_SID'):
-            self.trops_sid = os.path.expandvars('$TROPS_SID')
+            self.trops_sid = os.getenv('TROPS_SID')
         else:
             self.trops_sid = False
 
@@ -56,13 +56,13 @@ class TropsCapCmd:
             if os.path.isfile(self.conf_file):
                 self.config.read(self.conf_file)
                 try:
-                    self.git_dir = os.path.expandvars(
+                    self.git_dir = real_path(
                         self.config[self.trops_env]['git_dir'])
                 except KeyError:
                     print('git_dir does not exist in your configuration file')
                     exit(1)
                 try:
-                    self.work_tree = os.path.expandvars(
+                    self.work_tree = real_path(
                         self.config[self.trops_env]['work_tree'])
                 except KeyError:
                     print('work_tree does not exist in your configuration file')
@@ -290,7 +290,7 @@ def capture_cmd(args, other_args):
     tc.capture_cmd()
 
 
-def capture_cmd_subparsers(subparsers):
+def add_capture_cmd_subparsers(subparsers):
 
     parser_capture_cmd = subparsers.add_parser(
         'capture-cmd', help='Capture command line strings', add_help=False)

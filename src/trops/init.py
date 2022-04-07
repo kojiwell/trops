@@ -73,8 +73,12 @@ class TropsInit:
     def _init_bash(self):
 
         bash_lines = f"""\
+            _trops_capcmd () {{
+                trops capture-cmd 1 $? $(history 1)
+            }}
+
             ontrops() {{
-                export TROPS_DIR={ self.trops_dir }
+                export TROPS_DIR=/home/ktanaka/workspace/aretha/trops
                 if [ "$#" -ne 1 ]; then
                     echo "# upsage: on-trops <env>"
                 else
@@ -83,13 +87,17 @@ class TropsInit:
                     if [[ ! $PS1 =~ "[trops]" ]]; then
                         export PS1="[trops]$PS1"
                     fi
-                    PROMPT_COMMAND='trops capture-cmd 1 $? $(history 1)'
+
+                    if ! [[ "${{PROMPT_COMMAND:-}}" =~ "_trops_capcmd" ]]; then
+                        PROMPT_COMMAND="_trops_capcmd;$PROMPT_COMMAND"
+                    fi
+
                 fi
             }}
 
             offtrops() {{
                 export PS1=${{PS1//\[trops\]}}
-                unset PROMPT_COMMAND
+                PROMPT_COMMAND=${{PROMPT_COMMAND//_trops_capcmd\;}}
             }}
             """
 
