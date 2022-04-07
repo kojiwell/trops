@@ -90,6 +90,15 @@ class Trops:
                     except KeyError:
                         pass
 
+            os.makedirs(self.trops_dir + '/log', exist_ok=True)
+            self.trops_logfile = self.trops_dir + '/log/trops.log'
+
+            logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
+                                datefmt='%Y-%m-%d %H:%M:%S',
+                                filename=self.trops_logfile,
+                                level=logging.DEBUG)
+            self.logger = logging.getLogger()
+
 
 class TropsMain(Trops):
 
@@ -221,83 +230,9 @@ class TropsMain(Trops):
             message = message + f" TROPS_ENV={ env }"
             self.logger.info(message)
 
+    def drop(self):
 
-class TropsOld:
-    """Trops Old Class"""
-
-    def __init__(self):
-
-        # Set username and hostname
-        self.username = getuser()
-        self.hostname = gethostname().split('.')[0]
-
-        # Set trops_dir
-        if os.getenv('TROPS_DIR'):
-            self.trops_dir = real_path(os.getenv('TROPS_DIR'))
-        else:
-            print("TROPS_DIR has not been set")
-            exit(1)
-
-        # Set trops_sid
-        if os.getenv('TROPS_SID'):
-            self.trops_sid = os.path.expandvars('$TROPS_SID')
-        else:
-            self.trops_sid = False
-
-        if os.getenv('TROPS_TAGS'):
-            self.trops_tags = os.path.expandvars('$TROPS_TAGS')
-        else:
-            self.trops_tags = False
-
-        # Set trops_env
-        if os.getenv('TROPS_ENV'):
-            self.trops_env = os.getenv('TROPS_ENV')
-        else:
-            self.trops_env = False
-
-        self.config = ConfigParser()
-        if self.trops_dir:
-            self.conf_file = self.trops_dir + '/trops.cfg'
-            if os.path.isfile(self.conf_file):
-                self.config.read(self.conf_file)
-
-                if self.config.has_section(self.trops_env):
-                    try:
-                        self.git_dir = real_path(
-                            self.config[self.trops_env]['git_dir'])
-                    except KeyError:
-                        print('git_dir does not exist in your configuration file')
-                        exit(1)
-                    try:
-                        self.work_tree = os.path.expandvars(
-                            self.config[self.trops_env]['work_tree'])
-                    except KeyError:
-                        print('work_tree does not exist in your configuration file')
-                        exit(1)
-
-                    self.git_cmd = ['git', '--git-dir=' + self.git_dir,
-                                    '--work-tree=' + self.work_tree]
-
-                    try:
-                        self.sudo = distutils.util.strtobool(
-                            self.config[self.trops_env]['sudo'])
-                        if self.sudo:
-                            self.git_cmd = ['sudo'] + self.git_cmd
-                    except KeyError:
-                        pass
-
-            os.makedirs(self.trops_dir + '/log', exist_ok=True)
-            self.trops_logfile = self.trops_dir + '/log/trops.log'
-
-            logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
-                                datefmt='%Y-%m-%d %H:%M:%S',
-                                filename=self.trops_logfile,
-                                level=logging.DEBUG)
-            self.logger = logging.getLogger()
-
-    def drop(self, args, other_args):
-
-        for file_path in args.paths:
+        for file_path in self.args.paths:
 
             self._drop_file(file_path)
 
@@ -371,6 +306,18 @@ def trops_log(args, other_args):
     tr.log()
 
 
+def trops_touch(args, other_args):
+
+    tr = TropsMain(args, other_args)
+    tr.touch()
+
+
+def trops_drop(args, other_args):
+
+    tr = TropsMain(args, other_args)
+    tr.drop()
+
+
 def main():
 
     tr = TropsOld()
@@ -424,12 +371,12 @@ def main():
     parser_touch = subparsers.add_parser(
         'touch', help="add/update file in the git repo")
     parser_touch.add_argument('paths', nargs='+', help='path of file')
-    parser_touch.set_defaults(handler=tr.touch)
+    parser_touch.set_defaults(handler=trops_touch)
     # trops drop <path>
     parser_drop = subparsers.add_parser(
         'drop', help="remove file from the git repo")
     parser_drop.add_argument('paths', nargs='+', help='path of file')
-    parser_drop.set_defaults(handler=tr.drop)
+    parser_drop.set_defaults(handler=trops_drop)
     # trops gensid
     parser_gensid = subparsers.add_parser(
         'gensid', help='generate sid')
