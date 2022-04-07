@@ -31,19 +31,19 @@ class Trops:
 
         # Set trops_dir
         if os.getenv('TROPS_DIR'):
-            self.trops_dir = os.path.expandvars('$TROPS_DIR')
+            self.trops_dir = real_path(os.getenv('TROPS_DIR'))
         else:
             print("TROPS_DIR has not been set")
             exit(1)
 
         # Set trops_sid
         if os.getenv('TROPS_SID'):
-            self.trops_sid = os.path.expandvars('$TROPS_SID')
+            self.trops_sid = os.getenv('TROPS_SID')
         else:
             self.trops_sid = False
 
         if os.getenv('TROPS_TAGS'):
-            self.trops_tags = os.path.expandvars('$TROPS_TAGS')
+            self.trops_tags = os.getenv('TROPS_TAGS')
         else:
             self.trops_tags = False
 
@@ -69,13 +69,15 @@ class Trops:
 
                 if self.config.has_section(self.trops_env):
                     try:
-                        self.git_dir = os.path.expandvars(
+                        self.git_dir = real_path(
                             self.config[self.trops_env]['git_dir'])
+                        print(
+                            real_path(self.config[self.trops_env]['git_dir']))
                     except KeyError:
                         print('git_dir does not exist in your configuration file')
                         exit(1)
                     try:
-                        self.work_tree = os.path.expandvars(
+                        self.work_tree = real_path(
                             self.config[self.trops_env]['work_tree'])
                     except KeyError:
                         print('work_tree does not exist in your configuration file')
@@ -94,6 +96,12 @@ class Trops:
 
         # Set other_args
         self.other_args = other_args
+
+
+class TropsMain(Trops):
+
+    def __init__(self, args, other_args):
+        super().__init__(args, other_args)
 
     def git(self):
         """Git wrapper command"""
@@ -342,25 +350,25 @@ class TropsOld:
 
 def trops_git(args, other_args):
 
-    tr = Trops(args, other_args)
+    tr = TropsMain(args, other_args)
     tr.git()
 
 
 def trops_check(args, other_args):
 
-    tr = Trops(args, other_args)
+    tr = TropsMain(args, other_args)
     tr.check()
 
 
 def trops_ll(args, other_args):
 
-    tr = Trops(args, other_args)
+    tr = TropsMain(args, other_args)
     tr.ll()
 
 
 def trops_show(args, other_args):
 
-    tr = Trops(args, other_args)
+    tr = TropsMain(args, other_args)
     tr.show()
 
 
