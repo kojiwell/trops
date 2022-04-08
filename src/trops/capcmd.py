@@ -26,6 +26,10 @@ class TropsCapCmd:
             print("TROPS_DIR is not set")
             exit(1)
 
+        # Create the log directory
+        self.trops_log_dir = self.trops_dir + '/log'
+        os.makedirs(self.trops_log_dir, exist_ok=True)
+
         # Set trops_tags
         if os.getenv('TROPS_TAGS'):
             self.trops_tags = os.getenv('TROPS_TAGS')
@@ -85,8 +89,11 @@ class TropsCapCmd:
                 else:
                     self.ignore_cmds = False
 
-            os.makedirs(self.trops_dir + '/log', exist_ok=True)
-            self.trops_logfile = self.trops_dir + '/log/trops.log'
+                if 'logfile' in self.config[self.trops_env]:
+                    self.trops_logfile = real_path(
+                        self.config[self.trops_env]['logfile'])
+                else:
+                    self.trops_logfile = self.trops_log_dir + '/trops.log'
 
             logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
                                 datefmt='%Y-%m-%d %H:%M:%S',

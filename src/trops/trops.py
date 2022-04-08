@@ -40,6 +40,10 @@ class Trops:
             print("TROPS_DIR has not been set")
             exit(1)
 
+        # Create the log directory
+        self.trops_log_dir = self.trops_dir + '/log'
+        os.makedirs(self.trops_log_dir, exist_ok=True)
+
         # Set trops_sid
         if os.getenv('TROPS_SID'):
             self.trops_sid = os.getenv('TROPS_SID')
@@ -90,8 +94,11 @@ class Trops:
                     except KeyError:
                         pass
 
-            os.makedirs(self.trops_dir + '/log', exist_ok=True)
-            self.trops_logfile = self.trops_dir + '/log/trops.log'
+                    if 'logfile' in self.config[self.trops_env]:
+                        self.trops_logfile = real_path(
+                            self.config[self.trops_env]['logfile'])
+                    else:
+                        self.trops_logfile = self.trops_log_dir + '/trops.log'
 
             logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
                                 datefmt='%Y-%m-%d %H:%M:%S',
@@ -148,7 +155,7 @@ class TropsMain(Trops):
 
     def log(self):
 
-        log_file = self.trops_dir + '/log/trops.log'
+        log_file = self.trops_logfile
         numlines = 15
         if self.args.tail and self.args.tail != None:
             numlines = self.args.tail
