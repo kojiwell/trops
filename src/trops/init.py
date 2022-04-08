@@ -78,7 +78,6 @@ class TropsInit:
             }}
 
             ontrops() {{
-                export TROPS_DIR=/home/ktanaka/workspace/aretha/trops
                 if [ "$#" -ne 1 ]; then
                     echo "# upsage: on-trops <env>"
                 else
