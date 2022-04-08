@@ -26,33 +26,40 @@ class TropsCapCmd:
             print("TROPS_DIR is not set")
             exit(1)
 
-        # Create the log directory
-        self.trops_log_dir = self.trops_dir + '/log'
-        os.makedirs(self.trops_log_dir, exist_ok=True)
-
-        # Set trops_tags
-        if os.getenv('TROPS_TAGS'):
-            self.trops_tags = os.getenv('TROPS_TAGS')
+        # Start setting the header
+        self.trops_header = ["-= /trops"]
+        # Set trops_env
+        if os.getenv('TROPS_ENV'):
+            self.trops_env = os.getenv('TROPS_ENV')
+            self.trops_header.append(self.trops_env)
         else:
-            self.trops_tags = False
+            print("TROPS_ENV is not set")
+            exit(1)
 
         # Set trops_sid
         if os.getenv('TROPS_SID'):
             self.trops_sid = os.getenv('TROPS_SID')
+            self.trops_header.append(self.trops_sid)
         else:
             self.trops_sid = False
+
+        # Set trops_tags
+        if os.getenv('TROPS_TAGS'):
+            self.trops_tags = os.getenv('TROPS_TAGS')
+            self.trops_header.append(self.trops_tags)
+        else:
+            self.trops_tags = False
+
+        # Finish setting up the header
+        self.trops_header.append(" =-")
+        # Create the log directory
+        self.trops_log_dir = self.trops_dir + '/log'
+        os.makedirs(self.trops_log_dir, exist_ok=True)
 
         # return_code
         self.return_code = args.return_code
         self.ignore_fields = args.ignore_fields
         self.other_args = other_args
-
-        # Set trops_env
-        if os.getenv('TROPS_ENV'):
-            self.trops_env = os.getenv('TROPS_ENV')
-        else:
-            print("TROPS_ENV is not set")
-            exit(1)
 
         self.config = ConfigParser()
         if self.trops_dir:
@@ -142,6 +149,9 @@ class TropsCapCmd:
         self._yum_log(executed_cmd)
         self._apt_log(executed_cmd)
         self._update_files(executed_cmd)
+
+        # Print -= trops/env/sid/tags =-
+        print('/'.join(self.trops_header))
 
     def _yum_log(self, executed_cmd):
 
