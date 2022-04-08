@@ -42,6 +42,19 @@ class TropsInit:
                     echo "# upsage: on-trops <env>"
                 else
                     export TROPS_ENV=$1
+                    if [[ ! $PROMPT =~ "[trops]" ]]; then
+                        export PROMPT="[trops]$PROMPT"
+                    fi
+                    # Pure prompt https://github.com/sindresorhus/pure
+                    if [ -z ${{PURE_PROMPT_SYMBOL+x}} ]; then
+                        if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
+                            export PURE_PROMPT_SYMBOL="[trops]❯"
+                        fi
+                    else
+                        if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
+                            export PURE_PROMPT_SYMBOL="[trops]$PURE_PROMPT_SYMBOL"
+                        fi
+                    fi
                     precmd() {{
                         trops capture-cmd 1 $? $(history|tail -1)
                     }}
@@ -49,6 +62,8 @@ class TropsInit:
             }}
 
             offtrops() {{
+                export PROMPT=${{PROMPT//\[trops\]}}
+                export PURE_PROMPT_SYMBOL=${{PURE_PROMPT_SYMBOL//\[trops\]}}
                 LC_ALL=C type precmd >/dev/null && unset -f precmd
             }}
             """
@@ -68,6 +83,9 @@ class TropsInit:
                 else
                     export TROPS_ENV=$1
                     export TROPS_SID=$(trops gensid)
+                    if [[ ! $PS1 =~ "[trops]" ]]; then
+                        export PS1="[trops]$PS1"
+                    fi
 
                     if ! [[ "${{PROMPT_COMMAND:-}}" =~ "_trops_capcmd" ]]; then
                         PROMPT_COMMAND="_trops_capcmd;$PROMPT_COMMAND"
@@ -77,6 +95,7 @@ class TropsInit:
             }}
 
             offtrops() {{
+                export PS1=${{PS1//\[trops\]}}
                 PROMPT_COMMAND=${{PROMPT_COMMAND//_trops_capcmd\;}}
             }}
             """

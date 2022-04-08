@@ -27,7 +27,7 @@ class TropsCapCmd:
             exit(1)
 
         # Start setting the header
-        self.trops_header = ["-= /trops"]
+        self.trops_header = []
         # Set trops_env
         if os.getenv('TROPS_ENV'):
             self.trops_env = os.getenv('TROPS_ENV')
@@ -51,7 +51,6 @@ class TropsCapCmd:
             self.trops_tags = False
 
         # Finish setting up the header
-        self.trops_header.append(" =-")
         # Create the log directory
         self.trops_log_dir = self.trops_dir + '/log'
         os.makedirs(self.trops_log_dir, exist_ok=True)
@@ -151,7 +150,7 @@ class TropsCapCmd:
         self._update_files(executed_cmd)
 
         # Print -= trops/env/sid/tags =-
-        print('/'.join(self.trops_header))
+        print('-= ' + '|'.join(self.trops_header) + ' =-')
 
     def _yum_log(self, executed_cmd):
 
