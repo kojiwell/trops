@@ -28,17 +28,17 @@ class TropsInit(Trops):
                     echo "# upsage: on-trops <env>"
                 else
                     export TROPS_ENV=$1
-                    if [[ ! $PROMPT =~ "[tr]" ]]; then
-                        export PROMPT="[tr]$PROMPT"
+                    if [[ ! $PROMPT =~ "(τ)" ]]; then
+                        export PROMPT="(τ)$PROMPT"
                     fi
                     # Pure prompt https://github.com/sindresorhus/pure
                     if [ -z ${{PURE_PROMPT_SYMBOL+x}} ]; then
-                        if [[ ! $PURE_PROMPT_SYMBOL =~ "[tr]" ]]; then
-                            export PURE_PROMPT_SYMBOL="[tr]❯"
+                        if [[ ! $PURE_PROMPT_SYMBOL =~ "(τ)" ]]; then
+                            export PURE_PROMPT_SYMBOL="(τ)❯"
                         fi
                     else
-                        if [[ ! $PURE_PROMPT_SYMBOL =~ "[tr]" ]]; then
-                            export PURE_PROMPT_SYMBOL="[tr]$PURE_PROMPT_SYMBOL"
+                        if [[ ! $PURE_PROMPT_SYMBOL =~ "(τ)" ]]; then
+                            export PURE_PROMPT_SYMBOL="(τ)$PURE_PROMPT_SYMBOL"
                         fi
                     fi
                     precmd() {{
@@ -48,8 +48,8 @@ class TropsInit(Trops):
             }}
 
             offtrops() {{
-                export PROMPT=${{PROMPT//\[tr\]}}
-                export PURE_PROMPT_SYMBOL=${{PURE_PROMPT_SYMBOL//\[trops\]}}
+                export PROMPT=${{PROMPT//\(τ\)}}
+                export PURE_PROMPT_SYMBOL=${{PURE_PROMPT_SYMBOL//\(τ\)}}
                 LC_ALL=C type precmd >/dev/null && unset -f precmd
             }}
             """
@@ -69,8 +69,8 @@ class TropsInit(Trops):
                 else
                     export TROPS_ENV=$1
                     export TROPS_SID=$(trops gensid)
-                    if [[ ! $PS1 =~ "[tr]" ]]; then
-                        export PS1="[tr]$PS1"
+                    if [[ ! $PS1 =~ "(τ)" ]]; then
+                        export PS1="(τ)$PS1"
                     fi
 
                     if ! [[ "${{PROMPT_COMMAND:-}}" =~ "_trops_capcmd" ]]; then
@@ -81,7 +81,7 @@ class TropsInit(Trops):
             }}
 
             offtrops() {{
-                export PS1=${{PS1//\[tr\]}}
+                export PS1=${{PS1//\(τ\)}}
                 PROMPT_COMMAND=${{PROMPT_COMMAND//_trops_capcmd\;}}
             }}
             """
