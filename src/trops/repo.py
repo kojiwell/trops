@@ -4,12 +4,13 @@ import distutils.util
 from configparser import ConfigParser
 from textwrap import dedent
 
-from trops.utils import real_path
+from trops.trops import Trops
 
 
-class TropsRepo:
+class TropsRepo(Trops):
 
     def __init__(self, args, other_args):
+        super().__init__(args, other_args)
 
         if other_args:
             msg = f"""\
@@ -18,80 +19,18 @@ class TropsRepo:
             print(dedent(msg))
             exit(1)
 
-        if os.getenv('TROPS_DIR'):
-            self.trops_dir = real_path(os.getenv('TROPS_DIR'))
-            self.trops_conf = self.trops_dir + '/trops.cfg'
-            self.trops_log_dir = self.trops_dir + '/log'
-        else:
-            print('TROPS_DIR is not set')
-            exit(1)
-
-        if hasattr(args, 'git_remote'):
-            self.trops_git_remote = args.git_remote
-        else:
-            self.trops_git_remote = None
-
-        self.config = ConfigParser()
-        if os.path.isfile(self.trops_conf):
-            self.config.read(self.trops_conf)
-
-            if hasattr(args, 'env') and args.env:
-                self.trops_env = args.env
-            elif os.getenv('TROPS_ENV'):
-                self.trops_env = os.getenv('TROPS_ENV')
-            else:
-                print("trops env is not set.")
-
-            if self.config.has_option(self.trops_env, 'git_dir'):
-                self.trops_git_dir = os.path.expandvars(
-                    self.config[self.trops_env]['git_dir'])
-            else:
-                self.trops_git_dir = f"{ self.trops_dir }/repo/{ self.trops_env }"
-
-            # TODO: -w should be higher priority
-            if self.config.has_option(self.trops_env, 'work_tree'):
-                self.trops_work_tree = os.path.expandvars(
-                    self.config[self.trops_env]['work_tree'])
-            else:
-                self.trops_work_tree = '/'
-
-            if self.config.has_option(self.trops_env, 'git_remote'):
-                self.trops_git_remote = self.config[self.trops_env]['git_remote']
-                print(self.trops_git_remote)
-
-            # trops file put <path> <dest>
-            if hasattr(args, 'path'):
-                self.path = args.path
-            if hasattr(args, 'dest'):
-                # Make sure destination(dest) is a directory
-                if os.path.isdir(args.dest):
-                    # Change work_tree from orginal to args.dest
-                    self.trops_work_tree = real_path(args.dest)
-                else:
-                    print(f"ERROR: '{ args.dest }' is not a directory")
-                    exit(1)
-
-            self.git_cmd = ['git', '--git-dir=' + self.trops_git_dir,
-                            '--work-tree=' + self.trops_work_tree]
-
-            if self.config.has_option(self.trops_env, 'sudo'):
-                sudo_true = distutils.util.strtobool(
-                    self.config[self.trops_env]['sudo'])
-                if sudo_true:
-                    self.git_cmd = ['sudo'] + self.git_cmd
-
     def push(self):
 
         git_conf = ConfigParser()
-        git_conf.read(self.trops_git_dir + '/config')
+        git_conf.read(self.git_dir + '/config')
         if not git_conf.has_option('remote "origin"', 'url'):
             cmd = self.git_cmd + ['remote', 'add',
-                                  'origin', self.trops_git_remote]
+                                  'origin', self.git_remote]
             subprocess.call(cmd)
-        if not git_conf.has_option(f'branch "trops_{ self.trops_env }"', 'remote'):
+        if not git_conf.has_option(f'branch "trops/{ self.trops_env }"', 'remote'):
             cmd = self.git_cmd + \
                 ['push', '--set-upstream', 'origin',
-                    f'trops_{ self.trops_env }']
+                    f'trops/{ self.trops_env }']
         else:
             cmd = self.git_cmd + ['push']
         subprocess.call(cmd)
@@ -102,9 +41,9 @@ class TropsRepo:
         pull_work_tree = f'{self.trops_dir}/files/{self.trops_env}'
         if not os.path.isdir(pull_work_tree):
             os.makedirs(pull_work_tree, exist_ok=True)
-        self.trops_git_dir = os.path.expandvars(
+        self.git_dir = os.path.expandvars(
             self.config[self.trops_env]['git_dir'])
-        self.git_cmd = ['git', '--git-dir=' + self.trops_git_dir,
+        self.git_cmd = ['git', '--git-dir=' + self.git_dir,
                         f'--work-tree={pull_work_tree}']
 
         os.chdir(pull_work_tree)
@@ -116,12 +55,12 @@ class TropsRepo:
         clone_work_tree = f'{self.trops_dir}/files/{self.trops_env}'
         if not os.path.isdir(clone_work_tree):
             os.makedirs(clone_work_tree, exist_ok=True)
-        self.git_cmd = ['git', '--git-dir=' + self.trops_git_dir,
+        self.git_cmd = ['git', '--git-dir=' + self.git_dir,
                         f'--work-tree={clone_work_tree}']
 
         # git clone --bare -b <git_remote> <git_dir>
-        cmd = ['git', 'clone', '--bare', '-b', f'trops_{ self.trops_env }',
-               f'{self.trops_git_remote}', self.trops_git_dir]
+        cmd = ['git', 'clone', '--bare', '-b', f'trops/{ self.trops_env }',
+               f'{self.git_remote}', self.git_dir]
         subprocess.call(cmd)
 
         os.chdir(clone_work_tree)
