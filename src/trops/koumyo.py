@@ -114,7 +114,19 @@ def add_koumyo_subparsers(subparsers):
     parser_koumyo = subparsers.add_parser(
         'km', help='(KM)Kou-Myo sheds light on trops log')
     parser_koumyo.add_argument(
-        '-o', '--only', help='List of items (e.g. --only=command,directory')
+        '--only', choices=[
+            'date',
+            'time',
+            'user',
+            'level',
+            'type',
+            'command',
+            'directory',
+            'exit',
+            'id',
+            'env'
+        ],
+        help='List of items (e.g. --only=command,directory')
     parser_koumyo.set_defaults(handler=run)
     # TODO: Add --output option to save the output in as a file
     # TODO: Add option to print it as markdown table
