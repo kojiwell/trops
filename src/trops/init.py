@@ -1,15 +1,13 @@
-import os
-from configparser import ConfigParser
 from textwrap import dedent
 
-from trops.utils import real_path
+from trops.trops import Trops
 
 
-class TropsInit:
+class TropsInit(Trops):
 
     def __init__(self, args, other_args):
+        super().__init__(args, other_args)
 
-        self.args = args
         if other_args:
             msg = f"""\
                 # Unsupported argments { ", ".join(other_args)}
@@ -21,18 +19,6 @@ class TropsInit:
             print("# usage: trops init [bash/zsh]")
             exit(1)
 
-        if os.getenv('TROPS_DIR'):
-            self.trops_dir = real_path(os.getenv('TROPS_DIR'))
-        else:
-            self.trops_dir = real_path('$HOME/.trops')
-
-        self.trops_conf = self.trops_dir + '/trops.cfg'
-        self.trops_log_dir = self.trops_dir + '/log'
-
-        self.config = ConfigParser()
-        if os.path.isfile(self.trops_conf):
-            self.config.read(self.trops_conf)
-
     def _init_zsh(self):
 
         zsh_lines = f"""\
@@ -42,17 +28,17 @@ class TropsInit:
                     echo "# upsage: on-trops <env>"
                 else
                     export TROPS_ENV=$1
-                    if [[ ! $PROMPT =~ "[trops]" ]]; then
-                        export PROMPT="[trops]$PROMPT"
+                    if [[ ! $PROMPT =~ "[tr]" ]]; then
+                        export PROMPT="[tr]$PROMPT"
                     fi
                     # Pure prompt https://github.com/sindresorhus/pure
                     if [ -z ${{PURE_PROMPT_SYMBOL+x}} ]; then
-                        if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
-                            export PURE_PROMPT_SYMBOL="[trops]❯"
+                        if [[ ! $PURE_PROMPT_SYMBOL =~ "[tr]" ]]; then
+                            export PURE_PROMPT_SYMBOL="[tr]❯"
                         fi
                     else
-                        if [[ ! $PURE_PROMPT_SYMBOL =~ "[trops]" ]]; then
-                            export PURE_PROMPT_SYMBOL="[trops]$PURE_PROMPT_SYMBOL"
+                        if [[ ! $PURE_PROMPT_SYMBOL =~ "[tr]" ]]; then
+                            export PURE_PROMPT_SYMBOL="[tr]$PURE_PROMPT_SYMBOL"
                         fi
                     fi
                     precmd() {{
@@ -62,7 +48,7 @@ class TropsInit:
             }}
 
             offtrops() {{
-                export PROMPT=${{PROMPT//\[trops\]}}
+                export PROMPT=${{PROMPT//\[tr\]}}
                 export PURE_PROMPT_SYMBOL=${{PURE_PROMPT_SYMBOL//\[trops\]}}
                 LC_ALL=C type precmd >/dev/null && unset -f precmd
             }}
@@ -83,8 +69,8 @@ class TropsInit:
                 else
                     export TROPS_ENV=$1
                     export TROPS_SID=$(trops gensid)
-                    if [[ ! $PS1 =~ "[trops]" ]]; then
-                        export PS1="[trops]$PS1"
+                    if [[ ! $PS1 =~ "[tr]" ]]; then
+                        export PS1="[tr]$PS1"
                     fi
 
                     if ! [[ "${{PROMPT_COMMAND:-}}" =~ "_trops_capcmd" ]]; then
@@ -95,7 +81,7 @@ class TropsInit:
             }}
 
             offtrops() {{
-                export PS1=${{PS1//\[trops\]}}
+                export PS1=${{PS1//\[tr\]}}
                 PROMPT_COMMAND=${{PROMPT_COMMAND//_trops_capcmd\;}}
             }}
             """
