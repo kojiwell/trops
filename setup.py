@@ -29,6 +29,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
     ],
     entry_points={
-        'console_scripts': ['trops=trops.trops:main'],
+        'console_scripts': ['trops=trops.exec:main'],
     },
 )
