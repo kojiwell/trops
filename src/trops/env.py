@@ -41,7 +41,8 @@ class TropsEnv:
         elif os.getenv('TROPS_ENV'):
             self.trops_env = os.getenv('TROPS_ENV')
         else:
-            self.trops_env = gethostname().split('.')[0]
+            print('TROPS_ENV is not set.')
+            exit(1)
 
         if hasattr(args, 'git_dir') and args.git_dir:
             self.trops_git_dir = args.git_dir

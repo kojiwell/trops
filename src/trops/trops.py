@@ -96,6 +96,9 @@ class Trops:
                 else:
                     self.ignore_cmds = False
 
+                if 'git_remote' in self.config[self.trops_env]:
+                    self.git_remote = self.config[self.trops_env]['git_remote']
+
         if self.trops_logfile:
             logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
                                 datefmt='%Y-%m-%d %H:%M:%S',
