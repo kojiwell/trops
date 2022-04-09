@@ -18,6 +18,8 @@ class TropsEnv:
             print(dedent(msg))
             exit(1)
 
+        self.trops_args = args
+
         if hasattr(args, 'dir'):
             self.trops_dir = real_path(args.dir) + '/trops'
         elif 'TROPS_DIR' in os.environ:
@@ -125,7 +127,7 @@ class TropsEnv:
         # Set branch name as trops
         cmd = git_cmd + ['branch', '--show-current']
         branch_name = subprocess.check_output(cmd).decode("utf-8")
-        new_branch_name = 'trops_' + self.trops_env
+        new_branch_name = 'trops/' + self.trops_env
         if new_branch_name not in branch_name:
             cmd = git_cmd + ['--work-tree=/',
                              'checkout', '-b', new_branch_name]
@@ -194,7 +196,6 @@ class TropsEnv:
 
     def list(self):
 
-        self.trops_conf = self.trops_dir + '/trops.cfg'
         config = ConfigParser()
         config.read(self.trops_conf)
         current_env = self.trops_env
@@ -208,8 +209,6 @@ class TropsEnv:
                 print(f'- { envname}')
 
     def show(self):
-
-        self.trops_conf = self.trops_dir + '/trops.cfg'
 
         print('ENV')
         try:
@@ -234,6 +233,10 @@ class TropsEnv:
             print(f"  work-tree = { config.get(trops_env, 'work_tree') }")
         if config.has_option(trops_env, 'git_remote'):
             print(f"  git_remote = { config.get(trops_env, 'git_remote') }")
+        if config.has_option(trops_env, 'logfile'):
+            print(f"  logfile = { config.get(trops_env, 'logfile') }")
+        else:
+            print(f"  logfile = $TROPS_DIR/log/trops.log")
 
 
 def env_create(args, other_args):
@@ -307,6 +310,8 @@ def add_env_subparsers(subparsers):
         '-g', '--git-dir', help='git-dir')
     parser_env_update.add_argument(
         '--git-remote', help='Remote git repository')
+    parser_env_update.add_argument(
+        '--logfile', help='Path of log file')
     parser_env_update.add_argument(
         '-e', '--env', help='Set environment name')
     parser_env_update.set_defaults(handler=env_update)
