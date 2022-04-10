@@ -8,7 +8,7 @@ def read(fname):
 
 setuptools.setup(
     name="trops",
-    version="0.2.4",
+    version="0.2.5",
     author="Koji Tanaka",
     author_email="kojiwelly@gmail.com",
     description=("Track operations"),
@@ -29,6 +29,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
     ],
     entry_points={
-        'console_scripts': ['trops=trops.trops:main'],
+        'console_scripts': ['trops=trops.exec:main'],
     },
 )

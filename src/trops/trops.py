@@ -1,7 +1,6 @@
 import os
 import subprocess
 import time
-import argparse
 import logging
 import distutils.util
 from configparser import ConfigParser
@@ -10,14 +9,7 @@ from pathlib import Path
 from getpass import getuser
 from socket import gethostname
 
-from trops.utils import real_path, generate_sid
-from trops.env import add_env_subparsers
-from trops.file import add_file_subparsers
-from trops.repo import add_repo_subparsers
-from trops.capcmd import add_capture_cmd_subparsers
-from trops.koumyo import add_koumyo_subparsers
-from trops.init import add_init_subparsers
-from trops.release import __version__
+from trops.utils import real_path
 
 
 class Trops:
@@ -42,18 +34,8 @@ class Trops:
 
         # Create the log directory
         self.trops_log_dir = self.trops_dir + '/log'
+        self.trops_logfile = self.trops_log_dir + '/trops.log'
         os.makedirs(self.trops_log_dir, exist_ok=True)
-
-        # Set trops_sid
-        if os.getenv('TROPS_SID'):
-            self.trops_sid = os.getenv('TROPS_SID')
-        else:
-            self.trops_sid = False
-
-        if os.getenv('TROPS_TAGS'):
-            self.trops_tags = os.getenv('TROPS_TAGS')
-        else:
-            self.trops_tags = False
 
         # Set trops_env
         if hasattr(args, 'env') and args.env:
@@ -63,43 +45,64 @@ class Trops:
         else:
             self.trops_env = False
 
+        # Set trops_sid
+        if os.getenv('TROPS_SID'):
+            self.trops_sid = os.getenv('TROPS_SID')
+        else:
+            self.trops_sid = False
+
         self.config = ConfigParser()
-        if self.trops_dir:
-            self.conf_file = self.trops_dir + '/trops.cfg'
-            if os.path.isfile(self.conf_file):
-                self.config.read(self.conf_file)
+        self.conf_file = self.trops_dir + '/trops.cfg'
+        if os.path.isfile(self.conf_file):
+            self.config.read(self.conf_file)
 
-                if self.config.has_section(self.trops_env):
-                    try:
-                        self.git_dir = real_path(
-                            self.config[self.trops_env]['git_dir'])
-                    except KeyError:
-                        print('git_dir does not exist in your configuration file')
-                        exit(1)
-                    try:
-                        self.work_tree = real_path(
-                            self.config[self.trops_env]['work_tree'])
-                    except KeyError:
-                        print('work_tree does not exist in your configuration file')
-                        exit(1)
+            if self.config.has_section(self.trops_env):
+                try:
+                    self.git_dir = real_path(
+                        self.config[self.trops_env]['git_dir'])
+                except KeyError:
+                    print('git_dir does not exist in your configuration file')
+                    exit(1)
+                try:
+                    self.work_tree = real_path(
+                        self.config[self.trops_env]['work_tree'])
+                except KeyError:
+                    print('work_tree does not exist in your configuration file')
+                    exit(1)
 
-                    self.git_cmd = ['git', '--git-dir=' + self.git_dir,
-                                    '--work-tree=' + self.work_tree]
+                self.git_cmd = ['git', '--git-dir=' + self.git_dir,
+                                '--work-tree=' + self.work_tree]
 
-                    try:
-                        self.sudo = distutils.util.strtobool(
-                            self.config[self.trops_env]['sudo'])
-                        if self.sudo:
-                            self.git_cmd = ['sudo'] + self.git_cmd
-                    except KeyError:
-                        pass
+                try:
+                    self.sudo = distutils.util.strtobool(
+                        self.config[self.trops_env]['sudo'])
+                    if self.sudo:
+                        self.git_cmd = ['sudo'] + self.git_cmd
+                except KeyError:
+                    pass
 
-                    if 'logfile' in self.config[self.trops_env]:
-                        self.trops_logfile = real_path(
-                            self.config[self.trops_env]['logfile'])
-                    else:
-                        self.trops_logfile = self.trops_log_dir + '/trops.log'
+                if 'logfile' in self.config[self.trops_env]:
+                    self.trops_logfile = real_path(
+                        self.config[self.trops_env]['logfile'])
 
+                if 'ignore_cmds' in self.config[self.trops_env]:
+                    self.ignore_cmds = self.config[self.trops_env]['ignore_cmds'].split(
+                        ',')
+                else:
+                    self.ignore_cmds = False
+
+                if 'git_remote' in self.config[self.trops_env]:
+                    self.git_remote = self.config[self.trops_env]['git_remote']
+
+                if os.getenv('TROPS_TAGS'):
+                    self.trops_tags = os.getenv('TROPS_TAGS')
+                elif 'tags' in self.config[self.trops_env]:
+                    self.trops_tags = self.config[self.trops_env]['tags'].replace(
+                        ' ', '')
+                else:
+                    self.trops_tags = False
+
+        if self.trops_logfile:
             logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
                                 datefmt='%Y-%m-%d %H:%M:%S',
                                 filename=self.trops_logfile,
@@ -267,8 +270,10 @@ class TropsMain(Trops):
         if output:
             cmd = self.git_cmd + ['rm', '--cached', file_path]
             subprocess.call(cmd)
-            message = f"Goodbye { file_path }"
-            cmd = self.git_cmd + ['commit', '-m', message]
+            git_msg = f"Goodbye { file_path }"
+            if self.trops_tags:
+                git_msg = f"{ git_msg } ({ self.trops_tags })"
+            cmd = self.git_cmd + ['commit', '-m', git_msg]
             subprocess.call(cmd)
         else:
             message = f"{ file_path } is not in the git repo"
@@ -281,155 +286,3 @@ class TropsMain(Trops):
             message = message + f" TROPS_SID={ self.trops_sid }"
         message = message + f" TROPS_ENV={ self.trops_env }"
         self.logger.info(message)
-
-
-def trops_git(args, other_args):
-
-    tr = TropsMain(args, other_args)
-    tr.git()
-
-
-def trops_check(args, other_args):
-
-    tr = TropsMain(args, other_args)
-    tr.check()
-
-
-def trops_ll(args, other_args):
-
-    tr = TropsMain(args, other_args)
-    tr.ll()
-
-
-def trops_show(args, other_args):
-
-    tr = TropsMain(args, other_args)
-    tr.show()
-
-
-def trops_log(args, other_args):
-
-    tr = TropsMain(args, other_args)
-    tr.log()
-
-
-def trops_touch(args, other_args):
-
-    tr = TropsMain(args, other_args)
-    tr.touch()
-
-
-def trops_drop(args, other_args):
-
-    tr = TropsMain(args, other_args)
-    tr.drop()
-
-
-def add_git_subparsers(subparsers):
-
-    parser_git = subparsers.add_parser('git', help='git wrapper')
-    parser_git.add_argument('-s', '--sudo', help="Use sudo",
-                            action='store_true')
-    parser_git.add_argument('-e', '--env', help="Set env")
-    parser_git.set_defaults(handler=trops_git)
-
-
-def add_show_subparsers(subparsers):
-
-    parser_show = subparsers.add_parser(
-        'show', help='trops show commit[:path]')
-    parser_show.add_argument('-e', '--env', help="Set env")
-    parser_show.add_argument('commit', help='Set commit[:path]')
-    parser_show.set_defaults(handler=trops_show)
-
-
-def add_log_subparsers(subparsers):
-
-    parser_log = subparsers.add_parser('log', help='show log')
-    parser_log.add_argument(
-        '-t', '--tail', type=int, help='set number of lines to show')
-    parser_log.add_argument(
-        '-f', '--follow', action='store_true', help='follow log interactively')
-    parser_log.add_argument(
-        '-a', '--all', action='store_true', help='show all log')
-    parser_log.set_defaults(handler=trops_log)
-
-
-def add_ll_subparsers(subparsers):
-
-    parser_ll = subparsers.add_parser('ll', help="list files")
-    parser_ll.add_argument(
-        'dirs', help='directory path', nargs='*', default=[os.getcwd()])
-    parser_ll.add_argument(
-        '-e', '--env', help='Set environment name')
-    parser_ll.set_defaults(handler=trops_ll)
-
-
-def add_touch_subparsers(subparsers):
-
-    parser_touch = subparsers.add_parser(
-        'touch', help="add/update file in the git repo")
-    parser_touch.add_argument('paths', nargs='+', help='path of file')
-    parser_touch.set_defaults(handler=trops_touch)
-
-
-def add_drop_subparsers(subparsers):
-
-    parser_drop = subparsers.add_parser(
-        'drop', help="remove file from the git repo")
-    parser_drop.add_argument('paths', nargs='+', help='path of file')
-    parser_drop.set_defaults(handler=trops_drop)
-
-
-def add_gensid_subparsers(subparsers):
-
-    parser_gensid = subparsers.add_parser(
-        'gensid', help='generate sid')
-    parser_gensid.set_defaults(handler=generate_sid)
-
-
-def add_check_subparsers(subparsers):
-
-    parser_check = subparsers.add_parser('check', help='Check status')
-    parser_check.add_argument('-s', '--sudo', help="Use sudo",
-                              action='store_true')
-    parser_check.add_argument('-e', '--env', help="Set env")
-    parser_check.set_defaults(handler=trops_check)
-
-
-def main():
-
-    parser = argparse.ArgumentParser(prog='trops',
-                                     description='Trops - Tracking Operations')
-    subparsers = parser.add_subparsers()
-    parser.add_argument('-v', '--version', action='version',
-                        version=f'%(prog)s {__version__}')
-
-    for func in [
-        'init',
-        'env',
-        'file',
-        'koumyo',
-        'repo',
-        'git',
-        'show',
-        'capture_cmd',
-        'log',
-        'll',
-        'touch',
-        'drop',
-        'gensid',
-        'check'
-    ]:
-        eval(f'add_{ func }_subparsers(subparsers)')
-
-    # Pass args and other args to the hander
-    args, other_args = parser.parse_known_args()
-    if hasattr(args, 'handler'):
-        args.handler(args, other_args)
-    else:
-        parser.print_help()
-
-
-if __name__ == "__main__":
-    main()

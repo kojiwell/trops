@@ -8,104 +8,28 @@ from getpass import getuser
 from socket import gethostname
 from pathlib import Path
 
+from trops.trops import Trops
 from trops.utils import real_path
 
 
-class TropsCapCmd:
+class TropsCapCmd(Trops):
 
     def __init__(self, args, other_args):
-
-        # Set username and hostname
-        self.username = getuser()
-        self.hostname = gethostname().split('.')[0]
-
-        # Set trops_dir
-        if os.getenv('TROPS_DIR'):
-            self.trops_dir = real_path(os.getenv('TROPS_DIR'))
-        else:
-            print("TROPS_DIR is not set")
-            exit(1)
+        super().__init__(args, other_args)
 
         # Start setting the header
-        self.trops_header = []
-        # Set trops_env
-        if os.getenv('TROPS_ENV'):
-            self.trops_env = os.getenv('TROPS_ENV')
+        self.trops_header = ['trops']
+        if self.trops_env:
             self.trops_header.append(self.trops_env)
-        else:
-            print("TROPS_ENV is not set")
-            exit(1)
-
-        # Set trops_sid
-        if os.getenv('TROPS_SID'):
-            self.trops_sid = os.getenv('TROPS_SID')
+        if self.trops_sid:
             self.trops_header.append(self.trops_sid)
-        else:
-            self.trops_sid = False
-
-        # Set trops_tags
-        if os.getenv('TROPS_TAGS'):
-            self.trops_tags = os.getenv('TROPS_TAGS')
+        if self.trops_tags:
             self.trops_header.append(self.trops_tags)
-        else:
-            self.trops_tags = False
-
-        # Finish setting up the header
-        # Create the log directory
-        self.trops_log_dir = self.trops_dir + '/log'
-        os.makedirs(self.trops_log_dir, exist_ok=True)
 
         # return_code
         self.return_code = args.return_code
         self.ignore_fields = args.ignore_fields
         self.other_args = other_args
-
-        self.config = ConfigParser()
-        if self.trops_dir:
-            self.conf_file = self.trops_dir + '/trops.cfg'
-            if os.path.isfile(self.conf_file):
-                self.config.read(self.conf_file)
-                try:
-                    self.git_dir = real_path(
-                        self.config[self.trops_env]['git_dir'])
-                except KeyError:
-                    print('git_dir does not exist in your configuration file')
-                    exit(1)
-                try:
-                    self.work_tree = real_path(
-                        self.config[self.trops_env]['work_tree'])
-                except KeyError:
-                    print('work_tree does not exist in your configuration file')
-                    exit(1)
-
-                self.git_cmd = ['git', '--git-dir=' + self.git_dir,
-                                '--work-tree=' + self.work_tree]
-
-                try:
-                    self.sudo = distutils.util.strtobool(
-                        self.config[self.trops_env]['sudo'])
-                    if self.sudo:
-                        self.git_cmd = ['sudo'] + self.git_cmd
-                except KeyError:
-                    pass
-
-                if 'ignore_cmds' in self.config[self.trops_env]:
-                    self.ignore_cmds = self.config[self.trops_env]['ignore_cmds'].split(
-                        ',')
-                else:
-                    self.ignore_cmds = False
-
-                if 'logfile' in self.config[self.trops_env]:
-                    self.trops_logfile = real_path(
-                        self.config[self.trops_env]['logfile'])
-                else:
-                    self.trops_logfile = self.trops_log_dir + '/trops.log'
-
-            logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
-                                datefmt='%Y-%m-%d %H:%M:%S',
-                                filename=self.trops_logfile,
-                                level=logging.DEBUG)
-            self.logger = logging.getLogger()
 
     def capture_cmd(self):
         """\
@@ -150,7 +74,7 @@ class TropsCapCmd:
         self._update_files(executed_cmd)
 
         # Print -= trops/env/sid/tags =-
-        print('-= ' + '|'.join(self.trops_header) + ' =-')
+        print('\n-= ' + '|'.join(self.trops_header) + ' =-')
 
     def _yum_log(self, executed_cmd):
 

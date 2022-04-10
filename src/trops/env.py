@@ -2,7 +2,7 @@ import os
 import subprocess
 from shutil import rmtree
 from configparser import ConfigParser
-from socket import gethostname
+from textwrap import dedent
 
 from trops.utils import real_path, yes_or_no
 
@@ -18,7 +18,7 @@ class TropsEnv:
             print(dedent(msg))
             exit(1)
 
-        self.trops_args = args
+        self.args = args
 
         if hasattr(args, 'dir'):
             self.trops_dir = real_path(args.dir) + '/trops'
@@ -41,11 +41,11 @@ class TropsEnv:
         elif os.getenv('TROPS_ENV'):
             self.trops_env = os.getenv('TROPS_ENV')
         else:
-            self.trops_env = gethostname().split('.')[0]
+            self.trops_env = None
 
         if hasattr(args, 'git_dir') and args.git_dir:
             self.trops_git_dir = args.git_dir
-        else:
+        elif hasattr(self, 'trops_env'):
             self.trops_git_dir = self.trops_dir + \
                 f'/repo/{ self.trops_env }.git'
 
@@ -88,6 +88,11 @@ class TropsEnv:
                                   'work_tree': f'{ self.trops_work_tree}'}
         if self.trops_git_remote:
             config[self.trops_env]['git_remote'] = self.trops_git_remote
+        if self.args.logfile:
+            config[self.trops_env]['logfile'] = self.args.logfile
+        if self.args.tags:
+            config[self.trops_env]['tags'] = self.args.tags
+
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
 
@@ -191,6 +196,11 @@ class TropsEnv:
         config[self.trops_env]['work_tree'] = self.trops_work_tree
         if self.trops_git_remote:
             config[self.trops_env]['git_remote'] = self.trops_git_remote
+        if self.args.logfile:
+            config[self.trops_env]['logfile'] = self.args.logfile
+        if self.args.tags:
+            config[self.trops_env]['tags'] = self.args.tags
+            print(self.args.tags)
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
 
@@ -201,9 +211,7 @@ class TropsEnv:
         current_env = self.trops_env
 
         for envname in config.sections():
-            if envname == 'active':
-                pass
-            elif envname == current_env:
+            if envname == current_env:
                 print(f'- { envname }*')
             else:
                 print(f'- { envname}')
@@ -212,31 +220,39 @@ class TropsEnv:
 
         print('ENV')
         try:
-            print(f"  TROPS_DIR = {os.environ['TROPS_DIR']}")
+            print(f"  {'TROPS_DIR '.ljust(11)} = {os.getenv('TROPS_DIR')}")
         except KeyError:
-            print(f"  {os.environ['TROPS_DIR']} = None")
+            print(f"  {'TROPS_DIR '.ljust(11)} = None")
             exit(1)
         try:
-            print(f"  TROPS_ENV = {os.environ['TROPS_ENV']}")
+            print(f"  {'TROPS_ENV'.ljust(11)} = {os.environ['TROPS_ENV']}")
             trops_env = os.environ['TROPS_ENV']
         except KeyError:
-            print('  TROPS_ENV = None')
+            print(f"  {'TROPS_ENV'.ljust(11)} = None")
             trops_env = 'default'
-        print(f"  TROPS_SID = {os.environ['TROPS_SID']}")
+        try:
+            print(f"  {'TROPS_SID'.ljust(11)} = {os.environ['TROPS_SID']}")
+        except KeyError:
+            print(f"  {'TROPS_SID'.ljust(11)} = None")
+
+        if os.getenv('TROPS_TAGS'):
+            print(f"  {'TROPS_TAGS'.ljust(11)} = { os.getenv('TROPS_TAGS') }")
 
         config = ConfigParser()
         config.read(self.trops_conf)
         print('Git')
         if config.has_option(trops_env, 'git_dir'):
-            print(f"  git-dir = { config.get(trops_env, 'git_dir') }")
+            print(f"  {'git-dir'.ljust(11)} = { config.get(trops_env, 'git_dir') }")
         if config.has_option(trops_env, 'work_tree'):
-            print(f"  work-tree = { config.get(trops_env, 'work_tree') }")
+            print(
+                f"  {'work-tree'.ljust(11)} = { config.get(trops_env, 'work_tree') }")
         if config.has_option(trops_env, 'git_remote'):
-            print(f"  git_remote = { config.get(trops_env, 'git_remote') }")
+            print(
+                f"  {'git-remote'.ljust(11)} = { config.get(trops_env, 'git_remote') }")
         if config.has_option(trops_env, 'logfile'):
-            print(f"  logfile = { config.get(trops_env, 'logfile') }")
+            print(f"  {'logfile'.ljust(11)} = { config.get(trops_env, 'logfile') }")
         else:
-            print(f"  logfile = $TROPS_DIR/log/trops.log")
+            print(f"  {'logfile'.ljust(11)} = $TROPS_DIR/log/trops.log")
 
 
 def env_create(args, other_args):
@@ -294,6 +310,10 @@ def add_env_subparsers(subparsers):
         'env', help='Set environment name (default: %(default)s)')
     parser_env_create.add_argument(
         '--git-remote', help='Remote git repository')
+    parser_env_create.add_argument(
+        '--logfile', help='Path of log file')
+    parser_env_create.add_argument(
+        '--tags', help='Tags (e.g. issue numbers)')
     parser_env_create.set_defaults(handler=env_create)
     # trops env delete <env>
     parser_env_delete = env_subparsers.add_parser(
@@ -305,6 +325,8 @@ def add_env_subparsers(subparsers):
     parser_env_update = env_subparsers.add_parser(
         'update', help='update trops environment')
     parser_env_update.add_argument(
+        'env', default=os.getenv('TROPS_ENV'), nargs='?', help='Set environment name (default: %(default)s)')
+    parser_env_update.add_argument(
         '-w', '--work-tree', default='/', help='work-tree')
     parser_env_update.add_argument(
         '-g', '--git-dir', help='git-dir')
@@ -313,6 +335,6 @@ def add_env_subparsers(subparsers):
     parser_env_update.add_argument(
         '--logfile', help='Path of log file')
     parser_env_update.add_argument(
-        '-e', '--env', help='Set environment name')
+        '--tags', help='Tags (e.g. issue numbers)')
     parser_env_update.set_defaults(handler=env_update)
     # TODO: Add trops deactivate
