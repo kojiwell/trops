@@ -230,7 +230,10 @@ class TropsEnv:
         except KeyError:
             print(f"  {'TROPS_ENV'.ljust(11)} = None")
             trops_env = 'default'
-        print(f"  {'TROPS_SID'.ljust(11)} = {os.environ['TROPS_SID']}")
+        try:
+            print(f"  {'TROPS_SID'.ljust(11)} = {os.environ['TROPS_SID']}")
+        except KeyError:
+            print(f"  {'TROPS_SID'.ljust(11)} = None")
 
         if os.getenv('TROPS_TAGS'):
             print(f"  {'TROPS_TAGS'.ljust(11)} = { os.getenv('TROPS_TAGS') }")
