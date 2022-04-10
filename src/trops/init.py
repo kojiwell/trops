@@ -22,6 +22,7 @@ class TropsInit(Trops):
     def _init_zsh(self):
 
         zsh_lines = f"""\
+            autoload -Uz add-zsh-hook
             ontrops() {{
                 export TROPS_SID=$(trops gensid)
                 if [ "$#" -ne 1 ]; then
@@ -41,16 +42,17 @@ class TropsInit(Trops):
                             export PURE_PROMPT_SYMBOL="(τ)$PURE_PROMPT_SYMBOL"
                         fi
                     fi
-                    precmd() {{
+                    _tr_capcmd() {{
                         trops capture-cmd 1 $? $(history|tail -1)
                     }}
+                    add-zsh-hook precmd _tr_capcmd
                 fi
             }}
 
             offtrops() {{
                 export PROMPT=${{PROMPT//\(τ\)}}
                 export PURE_PROMPT_SYMBOL=${{PURE_PROMPT_SYMBOL//\(τ\)}}
-                LC_ALL=C type precmd >/dev/null && unset -f precmd
+                add-zsh-hook -D precmd _tr_capcmd
             }}
             """
 
