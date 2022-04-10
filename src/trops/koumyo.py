@@ -29,6 +29,8 @@ class TropsKoumyo:
         self.logs = input.splitlines()
         if hasattr(args, 'only') and args.only != None:
             self.only_list = args.only.split(',')
+        self.markdown = args.markdown
+        self.html = args.html
 
     def _format(self):
 
@@ -41,8 +43,12 @@ class TropsKoumyo:
                 cmd_start_idx = splitted_log.index('CM') + 1
                 cmd_end_idx = splitted_log.index('#>')
                 formatted_log = splitted_log[:cmd_start_idx]
-                formatted_log.append(
-                    ' '.join(splitted_log[cmd_start_idx:cmd_end_idx]))
+                if self.markdown:
+                    formatted_log.append(
+                        ' '.join(splitted_log[cmd_start_idx:cmd_end_idx]).replace('|', '\|'))
+                else:
+                    formatted_log.append(
+                        ' '.join(splitted_log[cmd_start_idx:cmd_end_idx]))
                 formatted_log = formatted_log + splitted_log[cmd_end_idx:]
                 # formatted_log.remove('CM')
                 formatted_log.remove('#>')
@@ -95,7 +101,12 @@ class TropsKoumyo:
                 formatted_logs.append(selected_log)
             else:
                 formatted_logs.append(formatted_log)
-        print(tabulate(formatted_logs, headers, tablefmt="github"))
+        if self.markdown:
+            print(tabulate(formatted_logs, headers, tablefmt="github"))
+        elif self.html:
+            print(tabulate(formatted_logs, headers, tablefmt="html"))
+        else:
+            print(tabulate(formatted_logs, headers))
 
     def run(self):
 
@@ -114,19 +125,15 @@ def add_koumyo_subparsers(subparsers):
     parser_koumyo = subparsers.add_parser(
         'km', help='(KM)Kou-Myo sheds light on trops log')
     parser_koumyo.add_argument(
-        '--only', choices=[
-            'date',
-            'time',
-            'user',
-            'level',
-            'type',
-            'command',
-            'directory',
-            'exit',
-            'id',
-            'env'
-        ],
+        '-o', '--only',
         help='List of items (e.g. --only=command,directory')
+    group = parser_koumyo.add_mutually_exclusive_group()
+    group.add_argument(
+        '--markdown', action='store_true',
+        help='Markdown table format')
+    group.add_argument(
+        '--html', action='store_true',
+        help='HTML table format')
     parser_koumyo.set_defaults(handler=run)
     # TODO: Add --output option to save the output in as a file
     # TODO: Add option to print it as markdown table
