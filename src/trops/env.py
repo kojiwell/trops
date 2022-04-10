@@ -90,6 +90,8 @@ class TropsEnv:
             config[self.trops_env]['git_remote'] = self.trops_git_remote
         if self.args.logfile:
             config[self.trops_env]['logfile'] = self.args.logfile
+        if self.args.tags:
+            config[self.trops_env]['tags'] = self.args.tags
 
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
@@ -196,6 +198,9 @@ class TropsEnv:
             config[self.trops_env]['git_remote'] = self.trops_git_remote
         if self.args.logfile:
             config[self.trops_env]['logfile'] = self.args.logfile
+        if self.args.tags:
+            config[self.trops_env]['tags'] = self.args.tags
+            print(self.args.tags)
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
 
@@ -317,6 +322,8 @@ def add_env_subparsers(subparsers):
     parser_env_update = env_subparsers.add_parser(
         'update', help='update trops environment')
     parser_env_update.add_argument(
+        'env', default=os.getenv('TROPS_ENV'), nargs='?', help='Set environment name (default: %(default)s)')
+    parser_env_update.add_argument(
         '-w', '--work-tree', default='/', help='work-tree')
     parser_env_update.add_argument(
         '-g', '--git-dir', help='git-dir')
@@ -325,6 +332,6 @@ def add_env_subparsers(subparsers):
     parser_env_update.add_argument(
         '--logfile', help='Path of log file')
     parser_env_update.add_argument(
-        '-e', '--env', help='Set environment name')
+        '--tags', help='Tags (e.g. issue numbers)')
     parser_env_update.set_defaults(handler=env_update)
     # TODO: Add trops deactivate

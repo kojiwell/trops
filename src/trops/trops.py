@@ -51,11 +51,6 @@ class Trops:
         else:
             self.trops_sid = False
 
-        if os.getenv('TROPS_TAGS'):
-            self.trops_tags = os.getenv('TROPS_TAGS')
-        else:
-            self.trops_tags = False
-
         self.config = ConfigParser()
         self.conf_file = self.trops_dir + '/trops.cfg'
         if os.path.isfile(self.conf_file):
@@ -98,6 +93,14 @@ class Trops:
 
                 if 'git_remote' in self.config[self.trops_env]:
                     self.git_remote = self.config[self.trops_env]['git_remote']
+
+                if os.getenv('TROPS_TAGS'):
+                    self.trops_tags = os.getenv('TROPS_TAGS')
+                elif 'tags' in self.config[self.trops_env]:
+                    self.trops_tags = self.config[self.trops_env]['tags'].replace(
+                        ' ', '')
+                else:
+                    self.trops_tags = False
 
         if self.trops_logfile:
             logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
@@ -267,8 +270,10 @@ class TropsMain(Trops):
         if output:
             cmd = self.git_cmd + ['rm', '--cached', file_path]
             subprocess.call(cmd)
-            message = f"Goodbye { file_path }"
-            cmd = self.git_cmd + ['commit', '-m', message]
+            git_msg = f"Goodbye { file_path }"
+            if self.trops_tags:
+                git_msg = f"{ git_msg } ({ self.trops_tags })"
+            cmd = self.git_cmd + ['commit', '-m', git_msg]
             subprocess.call(cmd)
         else:
             message = f"{ file_path } is not in the git repo"
