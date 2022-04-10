@@ -2,7 +2,7 @@ import os
 import subprocess
 from shutil import rmtree
 from configparser import ConfigParser
-from socket import gethostname
+from textwrap import dedent
 
 from trops.utils import real_path, yes_or_no
 
@@ -18,7 +18,7 @@ class TropsEnv:
             print(dedent(msg))
             exit(1)
 
-        self.trops_args = args
+        self.args = args
 
         if hasattr(args, 'dir'):
             self.trops_dir = real_path(args.dir) + '/trops'
@@ -89,7 +89,7 @@ class TropsEnv:
         if self.trops_git_remote:
             config[self.trops_env]['git_remote'] = self.trops_git_remote
         if self.args.logfile:
-            print(f'self.args.logfile is { self.args.logfile }')
+            config[self.trops_env]['logfile'] = self.args.logfile
 
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
@@ -194,6 +194,8 @@ class TropsEnv:
         config[self.trops_env]['work_tree'] = self.trops_work_tree
         if self.trops_git_remote:
             config[self.trops_env]['git_remote'] = self.trops_git_remote
+        if self.args.logfile:
+            config[self.trops_env]['logfile'] = self.args.logfile
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
 
@@ -302,6 +304,8 @@ def add_env_subparsers(subparsers):
         '--git-remote', help='Remote git repository')
     parser_env_create.add_argument(
         '--logfile', help='Path of log file')
+    parser_env_create.add_argument(
+        '--tags', help='Tags (e.g. issue numbers)')
     parser_env_create.set_defaults(handler=env_create)
     # trops env delete <env>
     parser_env_delete = env_subparsers.add_parser(
