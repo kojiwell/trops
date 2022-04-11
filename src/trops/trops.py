@@ -1,13 +1,13 @@
+import distutils.util
+import logging
 import os
 import subprocess
 import time
-import logging
-import distutils.util
 from configparser import ConfigParser
-from textwrap import dedent
-from pathlib import Path
 from getpass import getuser
+from pathlib import Path
 from socket import gethostname
+from textwrap import dedent
 
 from trops.utils import real_path
 
@@ -157,12 +157,16 @@ class TropsMain(Trops):
             yield line
 
     def log(self):
+        """Print trops log"""
 
         log_file = self.trops_logfile
         numlines = 15
-        if self.args.tail and self.args.tail != None:
+
+        # -t/--tail <num>
+        if self.args.tail:
             numlines = self.args.tail
 
+        # -a/--all
         if self.args.all:
             with open(log_file) as ff:
                 for line in ff.readlines():
@@ -171,6 +175,7 @@ class TropsMain(Trops):
             with open(log_file) as ff:
                 for line in ff.readlines()[-numlines:]:
                     print(line, end='')
+
         if self.args.follow:
             ff = open(log_file, "r")
             try:
