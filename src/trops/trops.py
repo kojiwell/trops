@@ -243,6 +243,8 @@ class TropsMain(Trops):
             if self.trops_sid:
                 message = message + f" TROPS_SID={ self.trops_sid }"
             message = message + f" TROPS_ENV={ env }"
+            if self.trops_tags:
+                message = message + f" TROPS_TAGS={self.trops_tags}"
             self.logger.info(message)
 
     def drop(self):
@@ -290,4 +292,6 @@ class TropsMain(Trops):
         if self.trops_sid:
             message = message + f" TROPS_SID={ self.trops_sid }"
         message = message + f" TROPS_ENV={ self.trops_env }"
+        if self.trops_tags:
+            message = message + f" TROPS_TAGS={self.trops_tags}"
         self.logger.info(message)

@@ -65,6 +65,8 @@ class TropsCapCmd(Trops):
             message = message + ', TROPS_SID=' + os.environ['TROPS_SID']
         if 'TROPS_ENV' in os.environ:
             message = message + ', TROPS_ENV=' + os.environ['TROPS_ENV']
+        if self.trops_tags:
+            message = message + f" TROPS_TAGS={self.trops_tags}"
         if rc == 0:
             self.logger.info(message)
         else:
@@ -158,6 +160,9 @@ class TropsCapCmd(Trops):
                 if self.trops_sid:
                     message = f"{ message } TROPS_SID={ self.trops_sid }"
                 message = f"{ message } TROPS_ENV={ self.trops_env }"
+                if self.trops_tags:
+                    message = message + f" TROPS_TAGS={self.trops_tags}"
+
                 self.logger.info(message)
         else:
             print('No update')
@@ -219,6 +224,10 @@ class TropsCapCmd(Trops):
                             if self.trops_sid:
                                 message = f"{ message } TROPS_SID={ self.trops_sid }"
                             message = f"{ message } TROPS_ENV={ self.trops_env }"
+                            if self.trops_tags:
+                                message = message + \
+                                    f" TROPS_TAGS={self.trops_tags}"
+
                             self.logger.info(message)
                     else:
                         print('No update')

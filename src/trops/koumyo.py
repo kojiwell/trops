@@ -63,6 +63,9 @@ class TropsKoumyo:
                     elif 'TROPS_ENV=' in n:
                         formatted_log[i] = n.replace(
                             'TROPS_ENV=', '').rstrip(',')
+                    elif 'TROPS_TAGS=' in n:
+                        formatted_log[i] = n.replace(
+                            'TROPS_TAGS=', '').rstrip(',')
                 while len(formatted_log) < 10:
                     formatted_log.append('-')
             elif 'FL' in splitted_log:
@@ -83,10 +86,13 @@ class TropsKoumyo:
                     elif 'TROPS_ENV=' in n:
                         formatted_log[i] = n.replace(
                             'TROPS_ENV=', '').rstrip(',')
+                    elif 'TROPS_TAGS=' in n:
+                        formatted_log[i] = n.replace(
+                            'TROPS_TAGS=', '').rstrip(',')
                 while len(formatted_log) < 10:
                     formatted_log.append('-')
             headers = ['date', 'time', 'user',
-                       'level', 'type', 'command', 'directory', 'exit', 'id', 'env']
+                       'level', 'type', 'command', 'directory', 'exit', 'id', 'env', 'tags']
             # if --only is added, pick the only chosen elements
             if hasattr(self, 'only_list'):
                 i = []
