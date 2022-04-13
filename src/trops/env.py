@@ -200,7 +200,10 @@ class TropsEnv:
             config[self.trops_env]['logfile'] = self.args.logfile
         if self.args.tags:
             config[self.trops_env]['tags'] = self.args.tags
-            print(self.args.tags)
+        # --tags='' should delete the tags option
+        if self.args.tags == '':
+            config.remove_option(self.trops_env, 'tags')
+
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
 
