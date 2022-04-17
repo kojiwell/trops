@@ -5,7 +5,7 @@ from configparser import ConfigParser
 from shutil import rmtree
 from textwrap import dedent
 
-from .utils import real_path, yes_or_no
+from .utils import absolute_path, yes_or_no
 
 
 class TropsEnv:
@@ -22,9 +22,9 @@ class TropsEnv:
         self.args = args
 
         if hasattr(args, 'dir'):
-            self.trops_dir = real_path(args.dir) + '/trops'
+            self.trops_dir = absolute_path(args.dir) + '/trops'
         elif 'TROPS_DIR' in os.environ:
-            self.trops_dir = real_path('$TROPS_DIR')
+            self.trops_dir = absolute_path('$TROPS_DIR')
         else:
             print('TROPS_DIR does not exists')
             exit(1)
