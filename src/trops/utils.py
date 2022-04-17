@@ -17,7 +17,7 @@ def generate_sid(args, other_args):
 def yes_or_no(question):
     while True:
         reply = str(input(question+' (y/n): ')).lower().strip()
-        if reply[0] == 'y':
+        if reply in ['y', 'yes']:
             return True
-        if reply[0] == 'n':
+        if reply in ['n', 'no']:
             return False
