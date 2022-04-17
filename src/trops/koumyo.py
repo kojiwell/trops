@@ -1,12 +1,15 @@
 import sys
 
-from textwrap import dedent
 from tabulate import tabulate
+from textwrap import dedent
 
 
 class TropsKoumyo:
 
     def __init__(self, args, other_args):
+
+        self.markdown = args.markdown
+        self.html = args.html
 
         if other_args:
             msg = f"""\
@@ -29,8 +32,6 @@ class TropsKoumyo:
         self.logs = input.splitlines()
         if hasattr(args, 'only') and args.only != None:
             self.only_list = args.only.split(',')
-        self.markdown = args.markdown
-        self.html = args.html
 
     def _format(self):
 
@@ -132,14 +133,13 @@ def add_koumyo_subparsers(subparsers):
         'km', help='(KM)Kou-Myo sheds light on trops log')
     parser_koumyo.add_argument(
         '-o', '--only',
-        help='List of items (e.g. --only=command,directory')
+        help='list of items (e.g. --only=command,directory')
     group = parser_koumyo.add_mutually_exclusive_group()
     group.add_argument(
         '--markdown', action='store_true',
-        help='Markdown table format')
+        help='markdown table format')
     group.add_argument(
         '--html', action='store_true',
         help='HTML table format')
     parser_koumyo.set_defaults(handler=run)
     # TODO: Add --output option to save the output in as a file
-    # TODO: Add option to print it as markdown table
