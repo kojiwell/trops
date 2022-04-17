@@ -158,15 +158,7 @@ class TropsEnv:
         self._setup_trops_conf()
         self._setup_bare_git_repo()
 
-    def delete(self):
-
-        if self.trops_env == os.getenv('TROPS_ENV'):
-            msg = f"""\
-                You're still on the {self.trops_env} environment. Please go off from it before deleting it.
-                    > offtrops
-                    > trops env delete {self.trops_env}"""
-            print(dedent(msg))
-            exit(1)
+    def _delete_env_from_conf(self):
 
         config = ConfigParser()
         if os.path.isfile(self.trops_conf):
@@ -178,6 +170,8 @@ class TropsEnv:
                         f"Deleting { self.trops_env } from { self.trops_conf }..")
                     with open(self.trops_conf, mode='w') as configfile:
                         config.write(configfile)
+
+    def _delete_git_dir(self):
 
         # Check if the self.trops_git_dir ends with .git
         dirname = os.path.basename(self.trops_git_dir)
@@ -202,6 +196,18 @@ class TropsEnv:
             if yes_or_no(f"Really want to delete { self.trops_git_dir }?"):
                 rmtree(self.trops_git_dir)
                 print(f"Deleting { self.trops_git_dir }..")
+
+    def delete(self):
+
+        if self.trops_env == os.getenv('TROPS_ENV'):
+            msg = f"""\
+                You're still on the {self.trops_env} environment. Please go off from it before deleting it.
+                    > offtrops
+                    > trops env delete {self.trops_env}"""
+            raise SystemExit(dedent(msg))
+
+        self._delete_env_from_conf()
+        self._delete_git_dir()
 
     def update(self):
 
