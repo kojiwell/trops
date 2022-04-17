@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-from trops.trops import Trops
+from .trops import Trops
 
 
 class TropsInit(Trops):
@@ -52,6 +52,7 @@ class TropsInit(Trops):
             offtrops() {{
                 export PROMPT=${{PROMPT//\(τ\)}}
                 export PURE_PROMPT_SYMBOL=${{PURE_PROMPT_SYMBOL//\(τ\)}}
+                unset TROPS_ENV TROPS_SID
                 add-zsh-hook -D precmd _tr_capcmd
             }}
             """
@@ -84,6 +85,7 @@ class TropsInit(Trops):
 
             offtrops() {{
                 export PS1=${{PS1//\(τ\)}}
+                unset TROPS_ENV TROPS_SID
                 PROMPT_COMMAND=${{PROMPT_COMMAND//_trops_capcmd\;}}
             }}
             """

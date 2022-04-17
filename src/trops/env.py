@@ -1,10 +1,11 @@
 import os
 import subprocess
-from shutil import rmtree
+
 from configparser import ConfigParser
+from shutil import rmtree
 from textwrap import dedent
 
-from trops.utils import real_path, yes_or_no
+from .utils import real_path, yes_or_no
 
 
 class TropsEnv:
@@ -158,6 +159,14 @@ class TropsEnv:
         self._setup_bare_git_repo()
 
     def delete(self):
+
+        if self.trops_env == os.getenv('TROPS_ENV'):
+            msg = f"""\
+                You're still on the {self.trops_env} environment. Please go off from it before deleting it.
+                    > offtrops
+                    > trops env delete {self.trops_env}"""
+            print(dedent(msg))
+            exit(1)
 
         config = ConfigParser()
         if os.path.isfile(self.trops_conf):

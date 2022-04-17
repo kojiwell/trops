@@ -1,10 +1,11 @@
+import distutils.util
 import os
 import subprocess
-import distutils.util
+
 from configparser import ConfigParser
 
-from trops.trops import Trops
-from trops.utils import real_path
+from .trops import Trops
+from .utils import real_path
 
 
 class TropsFile(Trops):

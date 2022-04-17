@@ -1,15 +1,15 @@
 import argparse
 import os
 
-from trops.trops import TropsMain
-from trops.env import add_env_subparsers
-from trops.file import add_file_subparsers
-from trops.repo import add_repo_subparsers
-from trops.capcmd import add_capture_cmd_subparsers
-from trops.koumyo import add_koumyo_subparsers
-from trops.init import add_init_subparsers
-from trops.release import __version__
-from trops.utils import generate_sid
+from .capcmd import add_capture_cmd_subparsers
+from .env import add_env_subparsers
+from .file import add_file_subparsers
+from .init import add_init_subparsers
+from .koumyo import add_koumyo_subparsers
+from .release import __version__
+from .repo import add_repo_subparsers
+from .trops import TropsMain
+from .utils import generate_sid
 
 
 def trops_git(args, other_args):
@@ -67,7 +67,7 @@ def add_show_subparsers(subparsers):
 
     parser_show = subparsers.add_parser(
         'show', help='trops show commit[:path]')
-    parser_show.add_argument('-e', '--env', help="Set env")
+    parser_show.add_argument('-e', '--env', help="environment name")
     parser_show.add_argument('commit', help='Set commit[:path]')
     parser_show.set_defaults(handler=trops_show)
 
@@ -119,7 +119,7 @@ def add_gensid_subparsers(subparsers):
 
 def add_check_subparsers(subparsers):
 
-    parser_check = subparsers.add_parser('check', help='Check status')
+    parser_check = subparsers.add_parser('check', help='check status')
     parser_check.add_argument('-s', '--sudo', help="Use sudo",
                               action='store_true')
     parser_check.add_argument('-e', '--env', help="Set env")

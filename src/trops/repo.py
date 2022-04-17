@@ -1,10 +1,10 @@
 import os
 import subprocess
-import distutils.util
+
 from configparser import ConfigParser
 from textwrap import dedent
 
-from trops.trops import Trops
+from .trops import Trops
 
 
 class TropsRepo(Trops):

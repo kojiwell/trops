@@ -1,15 +1,10 @@
 import os
 import subprocess
-import distutils.util
-import logging
 
-from configparser import ConfigParser
-from getpass import getuser
-from socket import gethostname
 from pathlib import Path
 
-from trops.trops import Trops
-from trops.utils import real_path
+from .trops import Trops
+from .utils import real_path
 
 
 class TropsCapCmd(Trops):
