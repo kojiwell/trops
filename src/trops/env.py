@@ -1,10 +1,11 @@
 import os
 import subprocess
-from shutil import rmtree
+
 from configparser import ConfigParser
+from shutil import rmtree
 from textwrap import dedent
 
-from trops.utils import real_path, yes_or_no
+from .utils import absolute_path, yes_or_no
 
 
 class TropsEnv:
@@ -21,9 +22,9 @@ class TropsEnv:
         self.args = args
 
         if hasattr(args, 'dir'):
-            self.trops_dir = real_path(args.dir) + '/trops'
+            self.trops_dir = absolute_path(args.dir) + '/trops'
         elif 'TROPS_DIR' in os.environ:
-            self.trops_dir = real_path('$TROPS_DIR')
+            self.trops_dir = absolute_path('$TROPS_DIR')
         else:
             print('TROPS_DIR does not exists')
             exit(1)
@@ -37,11 +38,21 @@ class TropsEnv:
             self.trops_git_remote = None
 
         if hasattr(args, 'env') and args.env:
-            self.trops_env = args.env
+            # Exit if the env name has a space
+            if ' ' in args.env:
+                print("You cannot use a space in environment name")
+                exit(1)
+            else:
+                self.trops_env = args.env
         elif os.getenv('TROPS_ENV'):
             self.trops_env = os.getenv('TROPS_ENV')
         else:
             self.trops_env = None
+
+        if hasattr(args, 'git_branch') and args.git_branch:
+            self.trops_git_branch = args.git_branch
+        else:
+            self.trops_git_branch = f'trops/{self.trops_env}'
 
         if hasattr(args, 'git_dir') and args.git_dir:
             self.trops_git_dir = args.git_dir
@@ -96,22 +107,11 @@ class TropsEnv:
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
 
-    def _setup_bare_git_repo(self):
+    def setup_git_config(self, git_dir):
 
-        # Create trops's bare git directory
-        if not os.path.isdir(self.trops_git_dir):
-            cmd = ['git', 'init', '--bare', self.trops_git_dir]
-            result = subprocess.run(cmd, capture_output=True)
-            if result.returncode == 0:
-                print(result.stdout.decode('utf-8'))
-            else:
-                print(result.stderr.decode('utf-8'))
-                exit(result.returncode)
-
-        # Prepare for updating trops.git/config
-        git_cmd = ['git', '--git-dir=' + self.trops_git_dir]
+        git_cmd = ['git', '--git-dir=' + git_dir]
         git_conf = ConfigParser()
-        git_conf.read(self.trops_git_dir + '/config')
+        git_conf.read(git_dir + '/config')
         # Set "status.showUntrackedFiles no" locally
         if not git_conf.has_option('status', 'showUntrackedFiles'):
             cmd = git_cmd + ['config', '--local',
@@ -128,11 +128,25 @@ class TropsEnv:
             cmd = git_cmd + ['config', '--local', 'user.email', useremail]
             subprocess.call(cmd)
 
-        # TODO: branch name should become an option, too
-        # Set branch name as trops
+    def _setup_bare_git_repo(self):
+
+        git_cmd = ['git', '--git-dir=' + self.trops_git_dir]
+        # Create trops's bare git directory
+        if not os.path.isdir(self.trops_git_dir):
+            cmd = ['git', 'init', '--bare', self.trops_git_dir]
+            result = subprocess.run(cmd, capture_output=True)
+            if result.returncode == 0:
+                print(result.stdout.decode('utf-8'))
+            else:
+                print(result.stderr.decode('utf-8'))
+                exit(result.returncode)
+
+        self.setup_git_config(self.trops_git_dir)
+
         cmd = git_cmd + ['branch', '--show-current']
-        branch_name = subprocess.check_output(cmd).decode("utf-8")
-        new_branch_name = 'trops/' + self.trops_env
+        branch_name = subprocess.check_output(cmd).decode("utf-8").strip()
+        new_branch_name = self.trops_git_branch
+        print(f'new_branch_name = {new_branch_name}')
         if new_branch_name not in branch_name:
             cmd = git_cmd + ['--work-tree=/',
                              'checkout', '-b', new_branch_name]
@@ -144,7 +158,7 @@ class TropsEnv:
         self._setup_trops_conf()
         self._setup_bare_git_repo()
 
-    def delete(self):
+    def _delete_env_from_conf(self):
 
         config = ConfigParser()
         if os.path.isfile(self.trops_conf):
@@ -156,6 +170,8 @@ class TropsEnv:
                         f"Deleting { self.trops_env } from { self.trops_conf }..")
                     with open(self.trops_conf, mode='w') as configfile:
                         config.write(configfile)
+
+    def _delete_git_dir(self):
 
         # Check if the self.trops_git_dir ends with .git
         dirname = os.path.basename(self.trops_git_dir)
@@ -181,6 +197,18 @@ class TropsEnv:
                 rmtree(self.trops_git_dir)
                 print(f"Deleting { self.trops_git_dir }..")
 
+    def delete(self):
+
+        if self.trops_env == os.getenv('TROPS_ENV'):
+            msg = f"""\
+                You're still on the {self.trops_env} environment. Please go off from it before deleting it.
+                    > offtrops
+                    > trops env delete {self.trops_env}"""
+            raise SystemExit(dedent(msg))
+
+        self._delete_env_from_conf()
+        self._delete_git_dir()
+
     def update(self):
 
         config = ConfigParser()
@@ -200,7 +228,10 @@ class TropsEnv:
             config[self.trops_env]['logfile'] = self.args.logfile
         if self.args.tags:
             config[self.trops_env]['tags'] = self.args.tags
-            print(self.args.tags)
+        # --tags='' should delete the tags option
+        if self.args.tags == '':
+            config.remove_option(self.trops_env, 'tags')
+
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
 
@@ -310,6 +341,8 @@ def add_env_subparsers(subparsers):
         'env', help='Set environment name (default: %(default)s)')
     parser_env_create.add_argument(
         '--git-remote', help='Remote git repository')
+    parser_env_create.add_argument(
+        '--git-branch', help='Name of the git branch (*default=trops/<envname>)')
     parser_env_create.add_argument(
         '--logfile', help='Path of log file')
     parser_env_create.add_argument(

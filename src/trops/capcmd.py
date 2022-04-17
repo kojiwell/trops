@@ -1,15 +1,10 @@
 import os
 import subprocess
-import distutils.util
-import logging
 
-from configparser import ConfigParser
-from getpass import getuser
-from socket import gethostname
 from pathlib import Path
 
-from trops.trops import Trops
-from trops.utils import real_path
+from .trops import Trops
+from .utils import absolute_path
 
 
 class TropsCapCmd(Trops):
@@ -65,6 +60,8 @@ class TropsCapCmd(Trops):
             message = message + ', TROPS_SID=' + os.environ['TROPS_SID']
         if 'TROPS_ENV' in os.environ:
             message = message + ', TROPS_ENV=' + os.environ['TROPS_ENV']
+        if self.trops_tags:
+            message = message + f" TROPS_TAGS={self.trops_tags}"
         if rc == 0:
             self.logger.info(message)
         else:
@@ -154,10 +151,13 @@ class TropsCapCmd(Trops):
                 mode = oct(os.stat(apt_log_file).st_mode)[-4:]
                 owner = Path(apt_log_file).owner()
                 group = Path(apt_log_file).group()
-                message = f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(apt_log_file).lstrip(self.work_tree)}  #> { log_note } O={ owner },G={ group },M={ mode }"
+                message = f"FL trops show -e { self.trops_env } { output[0] }:{ absolute_path(apt_log_file).lstrip(self.work_tree)}  #> { log_note } O={ owner },G={ group },M={ mode }"
                 if self.trops_sid:
                     message = f"{ message } TROPS_SID={ self.trops_sid }"
                 message = f"{ message } TROPS_ENV={ self.trops_env }"
+                if self.trops_tags:
+                    message = message + f" TROPS_TAGS={self.trops_tags}"
+
                 self.logger.info(message)
         else:
             print('No update')
@@ -175,7 +175,7 @@ class TropsCapCmd(Trops):
         if executed_cmd[0] in editors:
             # Add the edited file in trops git
             for ii in executed_cmd[1:]:
-                ii_path = real_path(ii)
+                ii_path = absolute_path(ii)
                 if os.path.isfile(ii_path):
                     # Ignore the file if it is under a git repository
                     ii_parent_dir = os.path.dirname(ii_path)
@@ -215,10 +215,14 @@ class TropsCapCmd(Trops):
                             mode = oct(os.stat(ii_path).st_mode)[-4:]
                             owner = Path(ii_path).owner()
                             group = Path(ii_path).group()
-                            message = f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(ii_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }"
+                            message = f"FL trops show -e { self.trops_env } { output[0] }:{ absolute_path(ii_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }"
                             if self.trops_sid:
                                 message = f"{ message } TROPS_SID={ self.trops_sid }"
                             message = f"{ message } TROPS_ENV={ self.trops_env }"
+                            if self.trops_tags:
+                                message = message + \
+                                    f" TROPS_TAGS={self.trops_tags}"
+
                             self.logger.info(message)
                     else:
                         print('No update')

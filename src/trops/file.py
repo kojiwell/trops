@@ -1,10 +1,11 @@
+import distutils.util
 import os
 import subprocess
-import distutils.util
+
 from configparser import ConfigParser
 
-from trops.trops import Trops
-from trops.utils import real_path
+from .trops import Trops
+from .utils import absolute_path
 
 
 class TropsFile(Trops):
@@ -26,7 +27,7 @@ class TropsFile(Trops):
             # Make sure destination(dest) is a directory
             if os.path.isdir(args.dest):
                 # Change work_tree from orginal to args.dest
-                self.work_tree = real_path(args.dest)
+                self.work_tree = absolute_path(args.dest)
                 self.git_cmd = ['git', '--git-dir=' + self.git_dir,
                                 '--work-tree=' + self.work_tree]
 

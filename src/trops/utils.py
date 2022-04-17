@@ -1,32 +1,11 @@
-from subprocess import Popen, PIPE
-import os
-import random
 import hashlib
+import os
 
 from datetime import datetime
 
 
-def real_path(path):
-    """\
-    Return the realpath of any of these:
-    > ~/path/to/dir
-    > $HOME/path/to/dir
-    > path/to/dir"""
-    if '~' == path[0]:
-        return os.path.expanduser(path)
-    elif '$' in path:
-        new_path = os.path.expandvars(path)
-        if '~' == new_path[0]:
-            return os.path.expanduser(new_path)
-        elif '/' == new_path[0]:
-            return os.path.expandvars(path)
-        else:
-            print(f'{ path } is not a path...')
-            exit(1)
-    if '/' == path[0]:
-        return path
-    else:
-        return os.path.realpath(path)
+def absolute_path(dir_path):
+    return os.path.expanduser(os.path.expandvars(dir_path))
 
 
 def generate_sid(args, other_args):
@@ -36,9 +15,9 @@ def generate_sid(args, other_args):
 
 
 def yes_or_no(question):
-    while "the answer is invalid":
+    while True:
         reply = str(input(question+' (y/n): ')).lower().strip()
-        if reply[0] == 'y':
+        if reply in ['y', 'yes']:
             return True
-        if reply[0] == 'n':
+        if reply in ['n', 'no']:
             return False

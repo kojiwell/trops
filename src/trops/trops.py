@@ -1,15 +1,16 @@
+import distutils.util
+import logging
 import os
 import subprocess
 import time
-import logging
-import distutils.util
-from configparser import ConfigParser
-from textwrap import dedent
-from pathlib import Path
-from getpass import getuser
-from socket import gethostname
 
-from trops.utils import real_path
+from configparser import ConfigParser
+from getpass import getuser
+from pathlib import Path
+from socket import gethostname
+from textwrap import dedent
+
+from trops.utils import absolute_path
 
 
 class Trops:
@@ -20,17 +21,11 @@ class Trops:
         # Make args sharable among functions
         self.args = args
         self.other_args = other_args
-
         # Set username and hostname
         self.username = getuser()
         self.hostname = gethostname().split('.')[0]
-
         # Set trops_dir
-        if os.getenv('TROPS_DIR'):
-            self.trops_dir = real_path(os.getenv('TROPS_DIR'))
-        else:
-            print("TROPS_DIR has not been set")
-            exit(1)
+        self.trops_dir = absolute_path(os.getenv('TROPS_DIR'))
 
         # Create the log directory
         self.trops_log_dir = self.trops_dir + '/log'
@@ -58,13 +53,13 @@ class Trops:
 
             if self.config.has_section(self.trops_env):
                 try:
-                    self.git_dir = real_path(
+                    self.git_dir = absolute_path(
                         self.config[self.trops_env]['git_dir'])
                 except KeyError:
                     print('git_dir does not exist in your configuration file')
                     exit(1)
                 try:
-                    self.work_tree = real_path(
+                    self.work_tree = absolute_path(
                         self.config[self.trops_env]['work_tree'])
                 except KeyError:
                     print('work_tree does not exist in your configuration file')
@@ -82,7 +77,7 @@ class Trops:
                     pass
 
                 if 'logfile' in self.config[self.trops_env]:
-                    self.trops_logfile = real_path(
+                    self.trops_logfile = absolute_path(
                         self.config[self.trops_env]['logfile'])
 
                 if 'ignore_cmds' in self.config[self.trops_env]:
@@ -157,12 +152,16 @@ class TropsMain(Trops):
             yield line
 
     def log(self):
+        """Print trops log"""
 
         log_file = self.trops_logfile
         numlines = 15
-        if self.args.tail and self.args.tail != None:
+
+        # -t/--tail <num>
+        if self.args.tail:
             numlines = self.args.tail
 
+        # -a/--all
         if self.args.all:
             with open(log_file) as ff:
                 for line in ff.readlines():
@@ -171,6 +170,7 @@ class TropsMain(Trops):
             with open(log_file) as ff:
                 for line in ff.readlines()[-numlines:]:
                     print(line, end='')
+
         if self.args.follow:
             ff = open(log_file, "r")
             try:
@@ -189,7 +189,7 @@ class TropsMain(Trops):
     def _touch_file(self, file_path):
         """Add a file or directory in the git repo"""
 
-        file_path = real_path(file_path)
+        file_path = absolute_path(file_path)
 
         # Check if the path exists
         if not os.path.exists(file_path):
@@ -230,7 +230,7 @@ class TropsMain(Trops):
         if file_path in output:
             env = self.trops_env
             commit = output[0]
-            path = real_path(file_path).lstrip(self.work_tree)
+            path = absolute_path(file_path).lstrip(self.work_tree)
             mode = oct(os.stat(file_path).st_mode)[-4:]
             owner = Path(file_path).owner()
             group = Path(file_path).group()
@@ -238,6 +238,8 @@ class TropsMain(Trops):
             if self.trops_sid:
                 message = message + f" TROPS_SID={ self.trops_sid }"
             message = message + f" TROPS_ENV={ env }"
+            if self.trops_tags:
+                message = message + f" TROPS_TAGS={self.trops_tags}"
             self.logger.info(message)
 
     def drop(self):
@@ -249,7 +251,7 @@ class TropsMain(Trops):
     def _drop_file(self, file_path):
         """Remove a file from the git repo"""
 
-        file_path = real_path(file_path)
+        file_path = absolute_path(file_path)
 
         # Check if the path exists
         if not os.path.exists(file_path):
@@ -281,8 +283,10 @@ class TropsMain(Trops):
         cmd = self.git_cmd + ['log', '--oneline', '-1', file_path]
         output = subprocess.check_output(
             cmd).decode("utf-8").split()
-        message = f"FL trops show -e { self.trops_env } { output[0] }:{ real_path(file_path).lstrip('/')}  #> BYE BYE"
+        message = f"FL trops show -e { self.trops_env } { output[0] }:{ absolute_path(file_path).lstrip('/')}  #> BYE BYE"
         if self.trops_sid:
             message = message + f" TROPS_SID={ self.trops_sid }"
         message = message + f" TROPS_ENV={ self.trops_env }"
+        if self.trops_tags:
+            message = message + f" TROPS_TAGS={self.trops_tags}"
         self.logger.info(message)
