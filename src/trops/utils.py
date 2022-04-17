@@ -15,7 +15,7 @@ def generate_sid(args, other_args):
 
 
 def yes_or_no(question):
-    while "the answer is invalid":
+    while True:
         reply = str(input(question+' (y/n): ')).lower().strip()
         if reply[0] == 'y':
             return True
