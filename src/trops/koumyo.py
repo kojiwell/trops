@@ -46,18 +46,32 @@ class TropsKoumyo:
         return new_cmd
 
     def _ignore_cmd(self, cmd):
+        """Return True when the command(cmd) should be ignored"""
 
-        if (cmd[0:2] != ['trops', 'log']) and \
+        # If any of '|', '>', and '<' is in the command,
+        # it shouldn't be ignored, except `trops log` and `history`.
+        if (cmd[0:2] != ['trops', 'log'] and cmd[0] != 'history') and \
                 ('|' in cmd or '>' in cmd or '<' in cmd):
             return False
-        elif cmd[0] in ['ls', 'cat', 'echo', 'sl', 'cd']:
+        # These commands should be ignored
+        elif cmd[0] in [
+            'ls',
+            'll',
+            'cat',
+            'echo',
+            'sl',
+            'cd',
+            'history'
+        ]:
             return True
+        # These trops commands should be ignored
         elif cmd[0] == 'trops':
             if 'log' in cmd \
                     or 'show' in cmd \
                     or 'list' in cmd \
                     or 'll' in cmd:
                 return True
+        # The other commands shouldn't be ignored
         else:
             return False
 
