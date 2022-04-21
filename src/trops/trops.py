@@ -88,6 +88,7 @@ class Trops:
 
                 if 'git_remote' in self.config[self.trops_env]:
                     self.git_remote = self.config[self.trops_env]['git_remote']
+                    self.glab_cmd = ['glab', '-R', self.git_remote]
 
                 if os.getenv('TROPS_TAGS'):
                     self.trops_tags = os.getenv('TROPS_TAGS')
@@ -114,6 +115,17 @@ class TropsMain(Trops):
         """Git wrapper command"""
 
         cmd = self.git_cmd + self.other_args
+        subprocess.call(cmd)
+
+    def glab(self):
+        """Glab wrapper command"""
+
+        if self.other_args == ['auth', 'login']:
+            hostname = input(
+                'Your GitLab hostname(default: gitlab.com): ') or 'gitlab.com'
+            cmd = ['glab', 'auth', 'login', '--hostname', hostname]
+        else:
+            cmd = self.glab_cmd + self.other_args
         subprocess.call(cmd)
 
     def check(self):

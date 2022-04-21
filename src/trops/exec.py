@@ -18,6 +18,12 @@ def trops_git(args, other_args):
     tr.git()
 
 
+def trops_glab(args, other_args):
+
+    tr = TropsMain(args, other_args)
+    tr.glab()
+
+
 def trops_check(args, other_args):
 
     tr = TropsMain(args, other_args)
@@ -61,6 +67,13 @@ def add_git_subparsers(subparsers):
                             action='store_true')
     parser_git.add_argument('-e', '--env', help="Set env")
     parser_git.set_defaults(handler=trops_git)
+
+
+def add_glab_subparsers(subparsers):
+
+    parser_glab = subparsers.add_parser('glab', help='glab wrapper')
+    parser_glab.add_argument('-e', '--env', help="Set env")
+    parser_glab.set_defaults(handler=trops_glab)
 
 
 def add_show_subparsers(subparsers):
@@ -141,6 +154,7 @@ def main():
         'koumyo',
         'repo',
         'git',
+        'glab',
         'show',
         'capture_cmd',
         'log',
