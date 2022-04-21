@@ -8,7 +8,7 @@ def read(fname):
 
 setuptools.setup(
     name="trops",
-    version="0.2.7",
+    version="0.2.8",
     author="Koji Tanaka",
     author_email="kojiwelly@gmail.com",
     description=("Track operations"),
