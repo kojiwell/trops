@@ -1,3 +1,4 @@
+import re
 import sys
 
 from tabulate import tabulate
@@ -8,8 +9,7 @@ class TropsKoumyo:
 
     def __init__(self, args, other_args):
 
-        self.markdown = args.markdown
-        self.html = args.html
+        self.args = args
 
         if other_args:
             msg = f"""\
@@ -33,6 +33,48 @@ class TropsKoumyo:
         if hasattr(args, 'only') and args.only != None:
             self.only_list = args.only.split(',')
 
+    def _split_pipe_in_cmd(self, cmd):
+
+        new_cmd = []
+        for i in cmd:
+            if '|' in i:
+                new_cmd += re.split('(\|+)', i)
+            elif '>' in i:
+                new_cmd += re.split('(\>+)', i)
+            else:
+                new_cmd += [i]
+        return new_cmd
+
+    def _ignore_cmd(self, cmd):
+        """Return True when the command(cmd) should be ignored"""
+
+        # If any of '|', '>', and '<' is in the command,
+        # it shouldn't be ignored, except `trops log` and `history`.
+        if (cmd[0:2] != ['trops', 'log'] and cmd[0] != 'history') and \
+                ('|' in cmd or '>' in cmd or '<' in cmd):
+            return False
+        # These commands should be ignored
+        elif cmd[0] in [
+            'ls',
+            'll',
+            'cat',
+            'echo',
+            'sl',
+            'cd',
+            'history'
+        ]:
+            return True
+        # These trops commands should be ignored
+        elif cmd[0] == 'trops':
+            if 'log' in cmd \
+                    or 'show' in cmd \
+                    or 'list' in cmd \
+                    or 'll' in cmd:
+                return True
+        # The other commands shouldn't be ignored
+        else:
+            return False
+
     def _format(self):
 
         formatted_logs = []
@@ -44,7 +86,11 @@ class TropsKoumyo:
                 cmd_start_idx = splitted_log.index('CM') + 1
                 cmd_end_idx = splitted_log.index('#>')
                 formatted_log = splitted_log[:cmd_start_idx]
-                if self.markdown:
+                splitted_cmd = splitted_log[cmd_start_idx:cmd_end_idx]
+                if not self.args.no_declutter and \
+                        self._ignore_cmd(self._split_pipe_in_cmd(splitted_cmd)):
+                    continue
+                if self.args.markdown:
                     formatted_log.append(
                         ' '.join(splitted_log[cmd_start_idx:cmd_end_idx]).replace('|', '\|'))
                 else:
@@ -108,9 +154,9 @@ class TropsKoumyo:
                 formatted_logs.append(selected_log)
             else:
                 formatted_logs.append(formatted_log)
-        if self.markdown:
+        if self.args.markdown:
             print(tabulate(formatted_logs, headers, tablefmt="github"))
-        elif self.html:
+        elif self.args.html:
             print(tabulate(formatted_logs, headers, tablefmt="html"))
         else:
             print(tabulate(formatted_logs, headers))
@@ -134,9 +180,12 @@ def add_koumyo_subparsers(subparsers):
     parser_koumyo.add_argument(
         '-o', '--only',
         help='list of items (e.g. --only=command,directory')
+    parser_koumyo.add_argument(
+        '--no-declutter', action='store_true',
+        help='disable log-decluttering')
     group = parser_koumyo.add_mutually_exclusive_group()
     group.add_argument(
-        '--markdown', action='store_true',
+        '-m', '--markdown', action='store_true',
         help='markdown table format')
     group.add_argument(
         '--html', action='store_true',

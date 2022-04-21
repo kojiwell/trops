@@ -125,6 +125,9 @@ class TropsMain(Trops):
     def ll(self):
         """Shows the list of git-tracked files"""
 
+        if os.getenv('TROPS_ENV') == None:
+            raise SystemExit("You're not under any trops environment")
+
         dirs = self.args.dirs
         for dir in dirs:
             if os.path.isdir(dir):
