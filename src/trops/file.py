@@ -3,6 +3,7 @@ import os
 import subprocess
 
 from configparser import ConfigParser
+from textwrap import dedent
 
 from .trops import Trops
 from .utils import absolute_path
