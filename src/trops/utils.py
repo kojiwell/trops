@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 def absolute_path(dir_path):
-    return os.path.expanduser(os.path.expandvars(dir_path))
+    return os.path.abspath(os.path.expanduser(os.path.expandvars(dir_path)))
 
 
 def generate_sid(args, other_args):
