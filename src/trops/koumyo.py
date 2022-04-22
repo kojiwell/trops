@@ -141,7 +141,7 @@ class TropsKoumyo:
             headers = ['date', 'time', 'user',
                        'level', 'type', 'command', 'directory', 'exit', 'id', 'env', 'tags']
             # if --only is added, pick the only chosen elements
-            if hasattr(self, 'only_list'):
+            if hasattr(self, 'only_list') and self.args.all != True:
                 i = []
                 selected_log = []
                 selected_headers = []
@@ -178,11 +178,14 @@ def add_koumyo_subparsers(subparsers):
     parser_koumyo = subparsers.add_parser(
         'km', help='(KM)Kou-Myo sheds light on trops log')
     parser_koumyo.add_argument(
-        '-o', '--only',
-        help='list of items (e.g. --only=command,directory')
+        '-o', '--only', default='date,time,user,command,directory',
+        help='list of items (default: %(default)s)')
     parser_koumyo.add_argument(
         '--no-declutter', action='store_true',
         help='disable log-decluttering')
+    parser_koumyo.add_argument(
+        '-a', '--all', action='store_true',
+        help='all items in the log')
     group = parser_koumyo.add_mutually_exclusive_group()
     group.add_argument(
         '-m', '--markdown', action='store_true',
