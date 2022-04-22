@@ -179,7 +179,8 @@ class TropsCapCmd(Trops):
                 if os.path.isfile(ii_path):
                     # Ignore the file if it is under a git repository
                     ii_parent_dir = os.path.dirname(ii_path)
-                    os.chdir(ii_parent_dir)
+                    if ii_parent_dir != '':
+                        os.chdir(ii_parent_dir)
                     cmd = ['git', 'rev-parse', '--is-inside-work-tree']
                     result = subprocess.run(cmd, capture_output=True)
                     if result.returncode == 0:
