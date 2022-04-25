@@ -138,18 +138,31 @@ class TropsKoumyo:
                             'TROPS_TAGS=', '').rstrip(',')
                 while len(formatted_log) < 10:
                     formatted_log.append('-')
-            headers = ['date', 'time', 'user',
-                       'level', 'type', 'command', 'directory', 'exit', 'id', 'env', 'tags']
+            dict_headers = {
+                '%D': 'Date',
+                '%T': 'Time',
+                '%u': 'User@host',
+                '%ll': 'Log level',
+                '%lt': 'Log type',
+                '%c': 'Command',
+                '%d': 'Directory/O,G,M',
+                '%x': 'Excode',
+                '%i': 'ID',
+                '%e': 'Env',
+                '%t': 'Tags'}
+            headers = []
+            for k, v in dict_headers.items():
+                headers.append(f'{v}[{k}]')
             # if --only is added, pick the only chosen elements
             if hasattr(self, 'only_list') and self.args.all != True:
                 i = []
                 selected_log = []
                 selected_headers = []
                 for item in self.only_list:
-                    i.append(headers.index(item))
+                    i.append(list(dict_headers.keys()).index(item))
                 for index in i:
                     selected_log.append(formatted_log[index])
-                    selected_headers.append(headers[index])
+                    selected_headers.append(list(dict_headers.values())[index])
                 headers = selected_headers
                 formatted_logs.append(selected_log)
             else:
@@ -176,12 +189,12 @@ def add_koumyo_subparsers(subparsers):
 
     # trops koumyo
     parser_koumyo = subparsers.add_parser(
-        'km', help='(KM)Kou-Myo sheds light on trops log')
+        'km', help=dedent('kou-myo(km) sheds light on trops log'))
     parser_koumyo.add_argument(
-        '-o', '--only', default='date,time,user,command,directory',
+        '-o', '--only', default='%D,%T,%u,%c,%d',
         help='list of items (default: %(default)s)')
     parser_koumyo.add_argument(
-        '--no-declutter', action='store_true',
+        '-n', '--no-declutter', action='store_true',
         help='disable log-decluttering')
     parser_koumyo.add_argument(
         '-a', '--all', action='store_true',
