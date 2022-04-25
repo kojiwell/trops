@@ -48,11 +48,12 @@ def tranquility():
 def generate_sid(args, other_args):
     """Generate a session ID"""
     s = tranquility()
+    # Three is a magic number
     hlen = 3
     tlen = 4
     n = randint(0, len(s)-hlen)
     now = datetime.now().isoformat()
     head = ''.join(list(s)[n:n+hlen]).lower()
     tail = hashlib.sha256(bytes(now, 'utf-8')).hexdigest()[0:tlen]
-
+    # Seven is also a magic number
     print(head + tail)
