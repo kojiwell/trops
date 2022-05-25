@@ -2,7 +2,6 @@ import distutils.util
 import logging
 import os
 import subprocess
-import time
 
 from configparser import ConfigParser
 from getpass import getuser
@@ -155,45 +154,6 @@ class TropsMain(Trops):
 
         cmd = self.git_cmd + ['show', self.args.commit]
         subprocess.call(cmd)
-
-    def _follow(self, file):
-
-        file.seek(0, os.SEEK_END)
-        while True:
-            line = file.readline()
-            if not line:
-                time.sleep(0.1)
-                continue
-            yield line
-
-    def log(self):
-        """Print trops log"""
-
-        log_file = self.trops_logfile
-        numlines = 15
-
-        # -t/--tail <num>
-        if self.args.tail:
-            numlines = self.args.tail
-
-        # -a/--all
-        if self.args.all:
-            with open(log_file) as ff:
-                for line in ff.readlines():
-                    print(line, end='')
-        else:
-            with open(log_file) as ff:
-                for line in ff.readlines()[-numlines:]:
-                    print(line, end='')
-
-        if self.args.follow:
-            ff = open(log_file, "r")
-            try:
-                lines = self._follow(ff)
-                for line in lines:
-                    print(line, end='')
-            except KeyboardInterrupt:
-                print('\nClosing trops log...')
 
     def touch(self):
 
