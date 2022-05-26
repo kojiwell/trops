@@ -147,7 +147,7 @@ class TropsKoumyo(TropsMain):
                 '%lt': 'Log type',
                 '%c': 'Command',
                 '%d': 'Directory/O,G,M',
-                '%x': 'Excode',
+                '%x': 'Exit',
                 '%i': 'ID',
                 '%e': 'Env',
                 '%t': 'Tags'}
@@ -227,7 +227,7 @@ def add_koumyo_subparsers(subparsers):
     parser_koumyo = subparsers.add_parser(
         'km', help=dedent('kou-myo(km) sheds light on trops log'))
     parser_koumyo.add_argument(
-        '-o', '--only', default='%D,%T,%u,%c,%d',
+        '-o', '--only', default='%D,%T,%u,%c,%d,%x',
         help='list of items (default: %(default)s)')
     parser_koumyo.add_argument(
         '-n', '--no-declutter', action='store_true',
