@@ -69,10 +69,8 @@ class TropsKoumyo(TropsMain):
             return True
         # These trops commands should be ignored
         elif cmd[0] == 'trops':
-            if 'log' in cmd \
-                    or 'show' in cmd \
-                    or 'list' in cmd \
-                    or 'll' in cmd:
+            check_list = ['log', 'show', 'list', 'll']
+            if any(w in cmd for w in check_list):
                 return True
         # The other commands shouldn't be ignored
         else:
