@@ -169,10 +169,11 @@ class TropsKoumyo(TropsMain):
             else:
                 formatted_logs.append(formatted_log)
 
-        if self.args.save:
+        if 'headers' not in locals():
+            print('Koumyo(km) ignored everything in the output')
+            exit(1)
+        elif self.args.save:
             self._save(tabulate(formatted_logs, headers, tablefmt="github"))
-
-
         elif self.args.markdown:
             print(tabulate(formatted_logs, headers, tablefmt="github"))
         elif self.args.html:
@@ -191,10 +192,13 @@ class TropsKoumyo(TropsMain):
 
         if self.args.name:
             file_name = self.args.name.replace(' ', '_') + '.md'
+        elif not self.trops_tags:
+            print("You don't have a tag. Please set --name <name> option")
+            exit(1)
         else:
             check_list = [',', ';']
             if any(c in self.trops_tags for c in check_list):
-                print('You have multiple tags. Please set --name <name> option.')
+                print('You have multiple tags. Please set --name <name> option')
                 exit(1)
             elif self.trops_tags[0] == '#':
                 file_name = repo_name + self.trops_tags.replace('#', '__i') + '.md'
