@@ -9,7 +9,7 @@ from pathlib import Path
 from socket import gethostname
 from textwrap import dedent
 
-from trops.utils import absolute_path
+from .utils import absolute_path
 
 
 class Trops:
