@@ -1,13 +1,16 @@
+import os
 import re
 import sys
 
 from tabulate import tabulate
 from textwrap import dedent
 
+from .trops import TropsMain
 
-class TropsKoumyo:
+class TropsKoumyo(TropsMain):
 
     def __init__(self, args, other_args):
+        super().__init__(args, other_args)
 
         self.args = args
 
@@ -167,12 +170,40 @@ class TropsKoumyo:
                 formatted_logs.append(selected_log)
             else:
                 formatted_logs.append(formatted_log)
-        if self.args.markdown:
+
+        if self.args.save:
+            self._save(tabulate(formatted_logs, headers, tablefmt="github"))
+
+
+        elif self.args.markdown:
             print(tabulate(formatted_logs, headers, tablefmt="github"))
         elif self.args.html:
             print(tabulate(formatted_logs, headers, tablefmt="html"))
         else:
             print(tabulate(formatted_logs, headers))
+
+    def _save(self, kmout):
+
+        km_dir = self.trops_dir + '/km'
+
+        if not os.path.isdir(km_dir):
+            os.mkdir(km_dir)
+
+        repo_name = self.git_remote.split('/')[-1].rstrip('.git')
+
+        if self.trops_tags[0] == '#':
+            file_name = repo_name + self.trops_tags.replace('#', '__i') + '.md'
+        elif self.trops_tags[0] == '!':
+            file_name = repo_name + self.trops_tags.replace('!', '__c') + '.md'
+        else:
+            pass
+
+        file_path = km_dir + '/' + file_name
+
+        with open(file_path, mode='w') as f:
+            f.write(kmout)
+
+        self._touch_file(file_path)
 
     def run(self):
 
@@ -202,6 +233,9 @@ def add_koumyo_subparsers(subparsers):
     group = parser_koumyo.add_mutually_exclusive_group()
     group.add_argument(
         '-m', '--markdown', action='store_true',
+        help='markdown table format')
+    group.add_argument(
+        '-s', '--save', action='store_true',
         help='markdown table format')
     group.add_argument(
         '--html', action='store_true',
