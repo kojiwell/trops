@@ -191,12 +191,19 @@ class TropsKoumyo(TropsMain):
 
         repo_name = self.git_remote.split('/')[-1].rstrip('.git')
 
-        if self.trops_tags[0] == '#':
-            file_name = repo_name + self.trops_tags.replace('#', '__i') + '.md'
-        elif self.trops_tags[0] == '!':
-            file_name = repo_name + self.trops_tags.replace('!', '__c') + '.md'
+        if self.args.name:
+            file_name = self.args.name.replace(' ', '_') + '.md'
         else:
-            pass
+            check_list = [',', ';']
+            if any(c in self.trops_tags for c in check_list):
+                print('You have multiple tags. Please set --name <name> option.')
+                exit(1)
+            elif self.trops_tags[0] == '#':
+                file_name = repo_name + self.trops_tags.replace('#', '__i') + '.md'
+            elif self.trops_tags[0] == '!':
+                file_name = repo_name + self.trops_tags.replace('!', '__c') + '.md'
+            else:
+                file_name = self.trops_tags.replace('#', '__i').replace('!', '__c') + '.md'
 
         file_path = km_dir + '/' + file_name
 
@@ -230,12 +237,14 @@ def add_koumyo_subparsers(subparsers):
     parser_koumyo.add_argument(
         '-a', '--all', action='store_true',
         help='all items in the log')
+    parser_koumyo.add_argument(
+        '-s', '--save', action='store_true',
+        help='markdown table format')
+    parser_koumyo.add_argument(
+        '--name', help='with --save, you can specify the name')
     group = parser_koumyo.add_mutually_exclusive_group()
     group.add_argument(
         '-m', '--markdown', action='store_true',
-        help='markdown table format')
-    group.add_argument(
-        '-s', '--save', action='store_true',
         help='markdown table format')
     group.add_argument(
         '--html', action='store_true',
