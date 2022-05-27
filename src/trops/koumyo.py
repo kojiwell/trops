@@ -91,7 +91,7 @@ class TropsKoumyo(TropsMain):
                 if not self.args.no_declutter and \
                         self._ignore_cmd(self._split_pipe_in_cmd(splitted_cmd)):
                     continue
-                if self.args.markdown:
+                if self.args.markdown or self.args.save:
                     formatted_log.append(
                         ' '.join(splitted_log[cmd_start_idx:cmd_end_idx]).replace('|', '\|'))
                 else:
