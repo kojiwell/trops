@@ -20,10 +20,9 @@ def yes_or_no(question):
             return False
 
 
-def tranquility():
+def that():
     """Tribute to this.py and Laozi"""
-    s = """\
-    Tao Te Ching / Chapter 45
+    s = """Tao Te Ching / Chapter 45
     Great support seems deficient,
     Employed it will not collapse;
     Great buoyancy seems empty,
@@ -47,12 +46,12 @@ def tranquility():
 
 def generate_sid(args, other_args):
     """Generate a session ID"""
-    s = tranquility()
+    s = that()
+    # Three and seven are magic numbers
     hlen = 3
     tlen = 4
     n = randint(0, len(s)-hlen)
     now = datetime.now().isoformat()
     head = ''.join(list(s)[n:n+hlen]).lower()
     tail = hashlib.sha256(bytes(now, 'utf-8')).hexdigest()[0:tlen]
-
     print(head + tail)

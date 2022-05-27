@@ -1,13 +1,16 @@
+import os
 import re
 import sys
 
 from tabulate import tabulate
 from textwrap import dedent
 
+from .trops import TropsMain
 
-class TropsKoumyo:
+class TropsKoumyo(TropsMain):
 
     def __init__(self, args, other_args):
+        super().__init__(args, other_args)
 
         self.args = args
 
@@ -66,10 +69,8 @@ class TropsKoumyo:
             return True
         # These trops commands should be ignored
         elif cmd[0] == 'trops':
-            if 'log' in cmd \
-                    or 'show' in cmd \
-                    or 'list' in cmd \
-                    or 'll' in cmd:
+            check_list = ['log', 'show', 'list', 'll']
+            if any(w in cmd for w in check_list):
                 return True
         # The other commands shouldn't be ignored
         else:
@@ -146,7 +147,7 @@ class TropsKoumyo:
                 '%lt': 'Log type',
                 '%c': 'Command',
                 '%d': 'Directory/O,G,M',
-                '%x': 'Excode',
+                '%x': 'Exit',
                 '%i': 'ID',
                 '%e': 'Env',
                 '%t': 'Tags'}
@@ -167,12 +168,51 @@ class TropsKoumyo:
                 formatted_logs.append(selected_log)
             else:
                 formatted_logs.append(formatted_log)
-        if self.args.markdown:
+
+        if 'headers' not in locals():
+            print('Koumyo(km) ignored everything in the output')
+            exit(1)
+        elif self.args.save:
+            self._save(tabulate(formatted_logs, headers, tablefmt="github"))
+        elif self.args.markdown:
             print(tabulate(formatted_logs, headers, tablefmt="github"))
         elif self.args.html:
             print(tabulate(formatted_logs, headers, tablefmt="html"))
         else:
             print(tabulate(formatted_logs, headers))
+
+    def _save(self, kmout):
+
+        km_dir = self.trops_dir + '/km'
+
+        if not os.path.isdir(km_dir):
+            os.mkdir(km_dir)
+
+        repo_name = self.git_remote.split('/')[-1].rstrip('.git')
+
+        if self.args.name:
+            file_name = self.args.name.replace(' ', '_') + '.md'
+        elif not self.trops_tags:
+            print("You don't have a tag. Please set --name <name> option")
+            exit(1)
+        else:
+            check_list = [',', ';']
+            if any(c in self.trops_tags for c in check_list):
+                print('You have multiple tags. Please set --name <name> option')
+                exit(1)
+            elif self.trops_tags[0] == '#':
+                file_name = repo_name + self.trops_tags.replace('#', '__i') + '.md'
+            elif self.trops_tags[0] == '!':
+                file_name = repo_name + self.trops_tags.replace('!', '__c') + '.md'
+            else:
+                file_name = self.trops_tags.replace('#', '__i').replace('!', '__c') + '.md'
+
+        file_path = km_dir + '/' + file_name
+
+        with open(file_path, mode='w') as f:
+            f.write(kmout)
+
+        self._touch_file(file_path)
 
     def run(self):
 
@@ -191,7 +231,7 @@ def add_koumyo_subparsers(subparsers):
     parser_koumyo = subparsers.add_parser(
         'km', help=dedent('kou-myo(km) sheds light on trops log'))
     parser_koumyo.add_argument(
-        '-o', '--only', default='%D,%T,%u,%c,%d',
+        '-o', '--only', default='%D,%T,%u,%c,%d,%x',
         help='list of items (default: %(default)s)')
     parser_koumyo.add_argument(
         '-n', '--no-declutter', action='store_true',
@@ -199,6 +239,11 @@ def add_koumyo_subparsers(subparsers):
     parser_koumyo.add_argument(
         '-a', '--all', action='store_true',
         help='all items in the log')
+    parser_koumyo.add_argument(
+        '-s', '--save', action='store_true',
+        help='markdown table format')
+    parser_koumyo.add_argument(
+        '--name', help='with --save, you can specify the name')
     group = parser_koumyo.add_mutually_exclusive_group()
     group.add_argument(
         '-m', '--markdown', action='store_true',

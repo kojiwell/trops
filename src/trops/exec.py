@@ -6,6 +6,7 @@ from .env import add_env_subparsers
 from .file import add_file_subparsers
 from .init import add_init_subparsers
 from .koumyo import add_koumyo_subparsers
+from .log import add_log_subparsers
 from .release import __version__
 from .repo import add_repo_subparsers
 from .trops import TropsMain
@@ -83,18 +84,6 @@ def add_show_subparsers(subparsers):
     parser_show.add_argument('-e', '--env', help="environment name")
     parser_show.add_argument('commit', help='Set commit[:path]')
     parser_show.set_defaults(handler=trops_show)
-
-
-def add_log_subparsers(subparsers):
-
-    parser_log = subparsers.add_parser('log', help='show log')
-    parser_log.add_argument(
-        '-t', '--tail', type=int, help='set number of lines to show')
-    parser_log.add_argument(
-        '-f', '--follow', action='store_true', help='follow log interactively')
-    parser_log.add_argument(
-        '-a', '--all', action='store_true', help='show all log')
-    parser_log.set_defaults(handler=trops_log)
 
 
 def add_ll_subparsers(subparsers):
