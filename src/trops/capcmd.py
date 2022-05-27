@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+from datetime import datetime
 from pathlib import Path
 
 from .trops import Trops
@@ -23,18 +24,19 @@ class TropsCapCmd(Trops):
 
         # return_code
         self.return_code = args.return_code
-        self.ignore_fields = args.ignore_fields
         self.other_args = other_args
 
     def capture_cmd(self):
         """\
         log executed command
         NOTE: You need to set PROMPT_COMMAND in bash as shown below:
-        PROMPT_COMMAND='trops capture-cmd <ignore_field> <return code> $(history 1)'"""
+        PROMPT_COMMAND='trops capture-cmd <return code> $(fc -ln -1 -1)'"""
 
         rc = self.return_code
 
+        now = str(datetime.now().hour) + '-' + str(datetime.now().minute)
         executed_cmd = self.other_args
+        time_and_cmd = now + ' ' + ' '.join(executed_cmd)
         # Create trops_dir/tmp directory
         tmp_dir = self.trops_dir + '/tmp'
         if not os.path.isdir(tmp_dir):
@@ -43,13 +45,10 @@ class TropsCapCmd(Trops):
         last_cmd = tmp_dir + '/last_cmd'
         if os.path.isfile(last_cmd):
             with open(last_cmd, mode='r') as f:
-                if ' '.join(executed_cmd) in f.read():
+                if time_and_cmd in f.read():
                     exit(0)
         with open(last_cmd, mode='w') as f:
-            f.write(' '.join(executed_cmd))
-
-        for n in range(self.ignore_fields):
-            executed_cmd.pop(0)
+            f.write(time_and_cmd)
 
         if self.ignore_cmds and executed_cmd[0] in self.ignore_cmds:
             exit(0)
@@ -239,8 +238,6 @@ def add_capture_cmd_subparsers(subparsers):
 
     parser_capture_cmd = subparsers.add_parser(
         'capture-cmd', help='Capture command line strings', add_help=False)
-    parser_capture_cmd.add_argument(
-        'ignore_fields', type=int, help='number of fields to ignore')
     parser_capture_cmd.add_argument(
         'return_code', type=int, help='return code')
     parser_capture_cmd.set_defaults(handler=capture_cmd)
