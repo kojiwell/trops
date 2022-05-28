@@ -63,7 +63,7 @@ class TropsInit(Trops):
 
         bash_lines = f"""\
             _trops_capcmd () {{
-                trops capture-cmd $? $(fc -ln -1 -1)
+                trops capture-cmd $? $(fc -ln -0 -0)
             }}
 
             ontrops() {{
