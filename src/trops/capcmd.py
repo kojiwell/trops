@@ -27,10 +27,7 @@ class TropsCapCmd(Trops):
         self.other_args = other_args
 
     def capture_cmd(self):
-        """\
-        log executed command
-        NOTE: You need to set PROMPT_COMMAND in bash as shown below:
-        PROMPT_COMMAND='trops capture-cmd <return code> $(fc -ln -1 -1)'"""
+        """Caputure the command"""
 
         rc = self.return_code
 
@@ -45,7 +42,7 @@ class TropsCapCmd(Trops):
         last_cmd = tmp_dir + '/last_cmd'
         if os.path.isfile(last_cmd):
             with open(last_cmd, mode='r') as f:
-                if time_and_cmd in f.read():
+                if time_and_cmd == f.read():
                     exit(0)
         with open(last_cmd, mode='w') as f:
             f.write(time_and_cmd)

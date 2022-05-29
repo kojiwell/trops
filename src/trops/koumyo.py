@@ -28,7 +28,19 @@ class TropsKoumyo(TropsMain):
 
                 Usage example of trops km:
                     > trops log | trops km
-                    > trops log | trops km --only=user,command,directory'''
+                    > trops log | trops km --only=%D,%T,%u,%c,%d,%x
+                    
+                    %D: Date
+                    %T: Time
+                    %u: User@host
+                    %ll: Log level
+                    %lt: Log type
+                    %c: Command
+                    %d: Directory/O,G,M
+                    %x: Exit Code
+                    %i: ID
+                    %e: Env
+                    %t: Tags'''
             print(dedent(msg))
             exit(1)
 
@@ -91,7 +103,7 @@ class TropsKoumyo(TropsMain):
                 if not self.args.no_declutter and \
                         self._ignore_cmd(self._split_pipe_in_cmd(splitted_cmd)):
                     continue
-                if self.args.markdown:
+                if self.args.markdown or self.args.save:
                     formatted_log.append(
                         ' '.join(splitted_log[cmd_start_idx:cmd_end_idx]).replace('|', '\|'))
                 else:
@@ -252,4 +264,3 @@ def add_koumyo_subparsers(subparsers):
         '--html', action='store_true',
         help='HTML table format')
     parser_koumyo.set_defaults(handler=run)
-    # TODO: Add --output option to save the output in as a file
