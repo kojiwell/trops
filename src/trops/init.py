@@ -55,6 +55,13 @@ class TropsInit(Trops):
                 unset TROPS_ENV TROPS_SID
                 add-zsh-hook -D precmd _tr_capcmd
             }}
+
+            ttags() {{
+            export TROPS_TAGS=$(echo $@|tr ' ' ,)
+            if [ -n $TMUX ] ; then
+            tmux rename-window "$TROPS_TAGS"
+            fi
+            }}
             """
 
         return dedent(zsh_lines)
@@ -87,6 +94,13 @@ class TropsInit(Trops):
                 export PS1=${{PS1//τ\)}}
                 unset TROPS_ENV TROPS_SID
                 PROMPT_COMMAND=${{PROMPT_COMMAND//_trops_capcmd\;}}
+            }}
+
+            ttags() {{
+            export TROPS_TAGS=$(echo $@|tr ' ' ,)
+            if [ -n $TMUX ] ; then
+            tmux rename-window "$TROPS_TAGS"
+            fi
             }}
             """
 
