@@ -113,7 +113,10 @@ class TropsKoumyo(TropsMain):
                 # formatted_log.remove('CM')
                 formatted_log.remove('#>')
                 for i, n in enumerate(formatted_log):
-                    if 'PWD=' in n:
+                    # Pass until the end of the command and remove the "VAR=""
+                    if i < cmd_end_idx-1:
+                        pass
+                    elif 'PWD=' in n:
                         formatted_log[i] = n.replace('PWD=', '').rstrip(',')
                     elif 'EXIT=' in n:
                         formatted_log[i] = n.replace('EXIT=', '').rstrip(',')
