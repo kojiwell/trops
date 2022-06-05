@@ -112,10 +112,11 @@ class TropsKoumyo(TropsMain):
                 formatted_log = formatted_log + splitted_log[cmd_end_idx:]
                 # formatted_log.remove('CM')
                 formatted_log.remove('#>')
+                print(formatted_log, cmd_end_idx)
                 for i, n in enumerate(formatted_log):
-                    # Pass until the end of the command and remove the "VAR=""
-                    if i < cmd_end_idx-1:
-                        pass
+                    # Skip until after the command(0~5)
+                    if i < 6:
+                        continue
                     elif 'PWD=' in n:
                         formatted_log[i] = n.replace('PWD=', '').rstrip(',')
                     elif 'EXIT=' in n:
@@ -129,6 +130,7 @@ class TropsKoumyo(TropsMain):
                     elif 'TROPS_TAGS=' in n:
                         formatted_log[i] = n.replace(
                             'TROPS_TAGS=', '').rstrip(',')
+                
                 while len(formatted_log) < 10:
                     formatted_log.append('-')
             elif 'FL' in splitted_log:
