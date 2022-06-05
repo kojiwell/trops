@@ -9,6 +9,7 @@ from .utils import absolute_path
 
 
 class TropsCapCmd(Trops):
+    """Trops Capture Command class"""
 
     def __init__(self, args, other_args):
         super().__init__(args, other_args)
@@ -22,14 +23,10 @@ class TropsCapCmd(Trops):
         if self.trops_tags:
             self.trops_header.append(self.trops_tags)
 
-        # return_code
-        self.return_code = args.return_code
-        self.other_args = other_args
-
     def capture_cmd(self):
         """Caputure the command"""
 
-        rc = self.return_code
+        rc = self.args.return_code
 
         now = str(datetime.now().hour) + '-' + str(datetime.now().minute)
         executed_cmd = self.other_args
@@ -66,7 +63,7 @@ class TropsCapCmd(Trops):
         self._apt_log(executed_cmd)
         self._update_files(executed_cmd)
 
-        # Print -= trops/env/sid/tags =-
+        # Print -= trops|env|sid|tags =-
         print('\n-= ' + '|'.join(self.trops_header) + ' =-')
 
     def _yum_log(self, executed_cmd):
@@ -89,21 +86,7 @@ class TropsCapCmd(Trops):
             f.write('\n'.join(pkg_list))
             f.close()
 
-            # Check if the path is in the git repo
-            cmd = self.git_cmd + ['ls-files', pkg_list_file]
-            output = subprocess.check_output(cmd).decode("utf-8")
-            # Set the message based on the output
-            if output:
-                git_msg = f"Update { pkg_list_file }"
-            else:
-                git_msg = f"Add { pkg_list_file }"
-            if self.trops_tags:
-                git_msg = f"{ git_msg } ({ self.trops_tags })"
-            # Add and commit
-            cmd = self.git_cmd + ['add', pkg_list_file]
-            subprocess.call(cmd)
-            cmd = self.git_cmd + ['commit', '-m', git_msg, pkg_list_file]
-            subprocess.call(cmd)
+            self.add_and_commit_file(pkg_list_file)
 
     def _apt_log(self, executed_cmd):
 
@@ -118,45 +101,18 @@ class TropsCapCmd(Trops):
     def _update_pkg_list(self, args):
 
         # Update the pkg_List
-        apt_log_file = '/var/log/apt/history.log'
-        cmd = self.git_cmd + ['ls-files', apt_log_file]
+        cmd = ['apt', 'list', '--installed']
         result = subprocess.run(cmd, capture_output=True)
-        if result.stdout.decode("utf-8"):
-            git_msg = f"Update { apt_log_file }"
-            log_note = 'UPDATE'
-        else:
-            git_msg = f"Add { apt_log_file }"
-            log_note = 'ADD'
-        if self.trops_tags:
-            git_msg = f"{ git_msg } ({ self.trops_tags })"
-        cmd = self.git_cmd + ['add', apt_log_file]
-        subprocess.call(cmd)
-        cmd = self.git_cmd + ['commit', '-m',
-                              git_msg, apt_log_file]
-        # Commit the change if needed
-        result = subprocess.run(cmd, capture_output=True)
-        # If there's an update, log it in the log file
-        if result.returncode == 0:
-            msg = result.stdout.decode('utf-8').splitlines()[0]
-            print(msg)
-            cmd = self.git_cmd + \
-                ['log', '--oneline', '-1', apt_log_file]
-            output = subprocess.check_output(
-                cmd).decode("utf-8").split()
-            if apt_log_file in output:
-                mode = oct(os.stat(apt_log_file).st_mode)[-4:]
-                owner = Path(apt_log_file).owner()
-                group = Path(apt_log_file).group()
-                message = f"FL trops show -e { self.trops_env } { output[0] }:{ absolute_path(apt_log_file).lstrip(self.work_tree)}  #> { log_note } O={ owner },G={ group },M={ mode }"
-                if self.trops_sid:
-                    message = f"{ message } TROPS_SID={ self.trops_sid }"
-                message = f"{ message } TROPS_ENV={ self.trops_env }"
-                if self.trops_tags:
-                    message = message + f" TROPS_TAGS={self.trops_tags}"
+        pkg_list = result.stdout.decode('utf-8').splitlines()
+        pkg_list.sort()
 
-                self.logger.info(message)
-        else:
-            print('No update')
+        pkg_list_file = self.trops_dir + \
+            f'/log/apt_pkg_list.{ self.hostname }'
+        f = open(pkg_list_file, 'w')
+        f.write('\n'.join(pkg_list))
+        f.close()
+
+        self.add_and_commit_file(pkg_list_file)
 
     def _update_files(self, executed_cmd):
         """Add a file or directory in the git repo"""

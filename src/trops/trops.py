@@ -104,6 +104,46 @@ class Trops:
                                 level=logging.DEBUG)
             self.logger = logging.getLogger()
 
+    def add_and_commit_file(self, file_path):
+
+        cmd = self.git_cmd + ['ls-files', file_path]
+        result = subprocess.run(cmd, capture_output=True)
+        if result.stdout.decode("utf-8"):
+            git_msg = f"Update { file_path }"
+            log_note = 'UPDATE'
+        else:
+            git_msg = f"Add { file_path }"
+            log_note = 'ADD'
+        if self.trops_tags:
+            git_msg = f"{ git_msg } ({ self.trops_tags })"
+        cmd = self.git_cmd + ['add', file_path]
+        subprocess.call(cmd)
+        cmd = self.git_cmd + ['commit', '-m',
+                              git_msg, file_path]
+        # Commit the change if needed
+        result = subprocess.run(cmd, capture_output=True)
+        # If there's an update, log it in the log file
+        if result.returncode == 0:
+            msg = result.stdout.decode('utf-8').splitlines()[0]
+            print(msg)
+            cmd = self.git_cmd + \
+                ['log', '--oneline', '-1', file_path]
+            output = subprocess.check_output(
+                cmd).decode("utf-8").split()
+            if file_path in output:
+                mode = oct(os.stat(file_path).st_mode)[-4:]
+                owner = Path(file_path).owner()
+                group = Path(file_path).group()
+                message = f"FL trops show -e { self.trops_env } { output[0] }:{ absolute_path(file_path).lstrip(self.work_tree)}  #> { log_note } O={ owner },G={ group },M={ mode }"
+                if self.trops_sid:
+                    message = f"{ message } TROPS_SID={ self.trops_sid }"
+                message = f"{ message } TROPS_ENV={ self.trops_env }"
+                if self.trops_tags:
+                    message = message + f" TROPS_TAGS={self.trops_tags}"
+
+                self.logger.info(message)
+        else:
+            print('No update')
 
 class TropsMain(Trops):
 
