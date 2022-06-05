@@ -32,7 +32,7 @@ class TropsLog(Trops):
             else:
                 lines = ff.readlines()
             for line in lines:
-                if self.args.all or not self.trops_tags:
+                if self.args.all or not hasattr(self, 'trops_tags'):
                     print(line, end='')
                 elif f'TROPS_TAGS={self.trops_tags}' in line:
                     print(line, end='')

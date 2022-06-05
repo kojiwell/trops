@@ -112,7 +112,6 @@ class TropsKoumyo(TropsMain):
                 formatted_log = formatted_log + splitted_log[cmd_end_idx:]
                 # formatted_log.remove('CM')
                 formatted_log.remove('#>')
-                print(formatted_log, cmd_end_idx)
                 for i, n in enumerate(formatted_log):
                     # Skip until after the command(0~5)
                     if i < 6:
