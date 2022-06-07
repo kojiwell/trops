@@ -25,7 +25,27 @@ build_example2:
 build_example3:
 	docker-compose build example3
 
-build_all:
+build_containers:
 	docker-compose build
 
-all: ssh_dirs ssh_keys build_all
+login_example1:
+	docker-compose exec example1 bash -i
+
+login_example2:
+	docker-compose exec example2 bash -i
+
+login_example3:
+	docker-compose exec example3 bash -i
+
+clean_containers:
+	docker-compose down
+
+clean_keys:
+	rm -rf example1/root/.ssh 	example2/root/.ssh 	example3/root/.ssh example1/home/user1/.ssh
+
+start_containers:
+	docker-compose up -d
+
+all: clean_containers ssh_dirs ssh_keys build_containers start_containers
+
+clean: clean_containers clean_keys
