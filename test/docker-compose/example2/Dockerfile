@@ -10,5 +10,8 @@ RUN curl -sL https://j.mp/glab-cli | sh
 
 ADD root/.bashrc /root/.bashrc
 ADD root/.zshrc /root/.zshrc
+ADD root/.ssh /root/.ssh
+RUN chown -R root:root /root && \
+    chmod 700 /root/.ssh
 
 WORKDIR /root
