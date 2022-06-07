@@ -116,6 +116,11 @@ if ! shopt -oq posix; then
   fi
 fi
 
+if ! which trops > /dev/null; then
+    cd /usr/local/src/trops
+    sudo python3 setup.py develop
+fi
+
 export TROPS_DIR="/opt/shared/trops"
 if [ -d $TROPS_DIR ]; then
     eval "$(trops init bash)"
