@@ -1,6 +1,6 @@
 # test/docker-compose
 
-## Setup the environment
+## Setup the host
 
 ```
 cd test/docker-compose
@@ -15,19 +15,23 @@ make all
 ttags \#1
 ```
 
-## Example1
+## Setup example1
 
 ```
 # login and setup as root
 docker-compose exec -e TROPS_TAGS=$TROPS_TAGS example1 bash -i
 trops env create example1
+ontrops example1
+trops env update --git-remote=<remote_repo>
 
 # login and setup as user1
 docker-compose exec -u user1 -w /home/user1 -e TROPS_TAGS=$TROPS_TAGS example1 bash -i
 trops env create user1
+ontrops user1
+trops env update --git-remote=<remote_repo>
 ```
 
-## Example2 and Example3
+## Setup example2 and example3
 
 ```
 # Example2
@@ -51,6 +55,7 @@ make rebuild_containers
 
 ```
 # Clean up everything
+offtrops
 make clean
 
 # Clean up trops directory
