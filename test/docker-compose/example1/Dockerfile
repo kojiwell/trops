@@ -10,10 +10,15 @@ RUN curl -sL https://j.mp/glab-cli | sh
 
 RUN useradd -m -s /usr/bin/bash user1
 ADD home/user1/.bashrc /home/user1/.bashrc
-RUN chown user1:user1 /home/user1/.bashrc
+ADD home/user1/.ssh /home/user1/.ssh
+RUN chown -R user1:user1 /home/user1 && \
+    chmod 700 /home/user1/.ssh
 
 ADD root/.bashrc /root/.bashrc
 ADD root/.zshrc /root/.zshrc
 ADD etc/sudoers.d/user1 /etc/sudoers.d/user1
+ADD root/.ssh /root/.ssh
+RUN chown -R root:root /root && \
+    chmod 700 /root/.ssh
 
 WORKDIR /root
