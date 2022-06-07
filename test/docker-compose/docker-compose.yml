@@ -1,8 +1,8 @@
 version: "3.9"
 services:
-  blue:
-    build: blue
-    hostname: blue
+  example1:
+    build: example1
+    hostname: example1
     stdin_open: true
     tty: true
     environment:
@@ -10,11 +10,9 @@ services:
     volumes:
       - $PWD/../../:/usr/local/src/trops
       - $PWD/shared:/opt/shared
-      - /root/.ssh/test_trops:/root/.ssh/id_rsa
-      - /root/.ssh/test_trops.pub:/root/.ssh/id_rsa.pub
-  green:
-    build: green
-    hostname: green
+  example2:
+    build: example2
+    hostname: example2
     stdin_open: true
     tty: true
     environment:
@@ -22,5 +20,13 @@ services:
     volumes:
       - $PWD/../../:/usr/local/src/trops
       - $PWD/local:/opt/local
-      - /root/.ssh/test_trops:/root/.ssh/id_rsa
-      - /root/.ssh/test_trops.pub:/root/.ssh/id_rsa.pub
+  example3:
+    build: example3
+    hostname: example3
+    stdin_open: true
+    tty: true
+    environment:
+      - USER=root
+    volumes:
+      - $PWD/../../:/usr/local/src/trops
+      - $PWD/local:/opt/local
