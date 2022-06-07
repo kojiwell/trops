@@ -74,14 +74,15 @@ Turn on/off background tracking::
 If you turn it on, every command will be logged, and editing a file will be commited to a bare git repo.
 So try installing or compiling some application, and then type trops log command::
 
-    # Do some work and shows log
+    # Do some work, and then check log
     trops log
 
-    # Or shows log in a table
+    # Or pass the output to Trops KouMyo(km), 
+    # which unclutters and shows log as a table
     trops log | trops km
 
 If you want to use Github or GitLab for a remote private repository, I think it is a good idea.
-You can link your trops's bare git repository to a remote git repository by this::
+You can link your Trops' bare git repository to a remote git repository by this::
 
     # At creation
     trops env create --git-remote=git@github.com:username/repository_name.git myenv
