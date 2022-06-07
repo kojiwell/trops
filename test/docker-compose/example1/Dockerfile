@@ -21,4 +21,5 @@ ADD root/.ssh /root/.ssh
 RUN chown -R root:root /root && \
     chmod 700 /root/.ssh
 
-WORKDIR /root
+USER user1
+WORKDIR /home/user1
