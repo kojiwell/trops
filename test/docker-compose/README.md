@@ -15,33 +15,25 @@ make all
 ttags \#1
 ```
 
-## Setup example1
+## Setup example1 - Normal user accout with sudo
 
 ```
-# login and setup as root
-docker-compose exec -e TROPS_TAGS=$TROPS_TAGS example1 bash -i
-trops env create example1
-ontrops example1
-trops env update --git-remote=<remote_repo>
-
-# login and setup as user1
 docker-compose exec -u user1 -w /home/user1 -e TROPS_TAGS=$TROPS_TAGS example1 bash -i
-trops env create user1
-ontrops user1
-trops env update --git-remote=<remote_repo>
+trops env create --sudo=True --git-remote=<remote_repo> example1
+ontrops example1
 ```
 
-## Setup example2 and example3
+## Setup example2 and example3 - root access
 
 ```
 # Example2
 docker-compose exec -e TROPS_TAGS=$TROPS_TAGS example2 bash -i
-trops env create example2
+trops env create --git-remote=<remote_repo> example2
 ontrops example3
 
 # Example2
 docker-compose exec -e TROPS_TAGS=$TROPS_TAGS example3 bash -i
-trops env create example3
+trops env create --git-remote=<remote_repo> example3
 ontrops example3
 ```
 

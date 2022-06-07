@@ -1,4 +1,5 @@
 DATE := $(shell date "+%F %R")
+TROPS_TAGS := ${TROPS_TAGS}
 
 example1/root/.ssh \
 example2/root/.ssh \
@@ -42,13 +43,13 @@ build_containers:
 	docker-compose build
 
 login_example1:
-	docker-compose exec example1 bash -i
+	docker-compose exec -e TROPS_TAGS=$(TROPS_TAGS) example1 bash -i
 
 login_example2:
-	docker-compose exec example2 bash -i
+	docker-compose exec -e TROPS_TAGS=$(TROPS_TAGS) example2 bash -i
 
 login_example3:
-	docker-compose exec example3 bash -i
+	docker-compose exec -e TROPS_TAGS=$(TROPS_TAGS) example3 bash -i
 
 clean_containers:
 	docker-compose down
