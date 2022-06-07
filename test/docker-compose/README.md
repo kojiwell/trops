@@ -18,7 +18,7 @@ ttags \#1
 ## Setup example1 - Normal user accout with sudo
 
 ```
-docker-compose exec -u user1 -w /home/user1 -e TROPS_TAGS=$TROPS_TAGS example1 bash -i
+make login_example1
 trops env create --sudo=True --git-remote=<remote_repo> example1
 ontrops example1
 ```
@@ -27,12 +27,12 @@ ontrops example1
 
 ```
 # Example2
-docker-compose exec -e TROPS_TAGS=$TROPS_TAGS example2 bash -i
+make login_example2
 trops env create --git-remote=<remote_repo> example2
 ontrops example3
 
 # Example2
-docker-compose exec -e TROPS_TAGS=$TROPS_TAGS example3 bash -i
+make login_example3
 trops env create --git-remote=<remote_repo> example3
 ontrops example3
 ```

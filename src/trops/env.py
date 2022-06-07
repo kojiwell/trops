@@ -103,6 +103,8 @@ class TropsEnv:
             config[self.trops_env]['logfile'] = self.args.logfile
         if self.args.tags:
             config[self.trops_env]['tags'] = self.args.tags
+        if self.args.sudo:
+            config[self.trops_env]['sudo'] = self.args.sudo
 
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
@@ -225,7 +227,8 @@ class TropsEnv:
             config[self.trops_env]['logfile'] = self.args.logfile
         if self.args.tags:
             config[self.trops_env]['tags'] = self.args.tags
-        # --tags='' should delete the tags option
+        if self.args.sudo:
+            config[self.trops_env]['sudo'] = self.args.sudo
         if self.args.tags == '':
             config.remove_option(self.trops_env, 'tags')
 
@@ -343,6 +346,8 @@ def add_env_subparsers(subparsers):
     parser_env_create.add_argument(
         '--logfile', help='Path of log file')
     parser_env_create.add_argument(
+        '--sudo', default='False', help='Use sudo? (default: %(default)s')
+    parser_env_create.add_argument(
         '--tags', help='Tags (e.g. issue numbers)')
     parser_env_create.set_defaults(handler=env_create)
     # trops env delete <env>
@@ -362,6 +367,8 @@ def add_env_subparsers(subparsers):
         '-g', '--git-dir', help='git-dir')
     parser_env_update.add_argument(
         '--git-remote', help='Remote git repository')
+    parser_env_update.add_argument(
+        '--sudo', default='False', help='Use sudo? (default: %(default)s')
     parser_env_update.add_argument(
         '--logfile', help='Path of log file')
     parser_env_update.add_argument(
