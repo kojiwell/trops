@@ -8,7 +8,12 @@ RUN apt update && \
 
 RUN curl -sL https://j.mp/glab-cli | sh
 
+RUN useradd -m -s /usr/bin/bash user1
+ADD home/user1/.bashrc /home/user1/.bashrc
+RUN chown user1:user1 /home/user1/.bashrc
+
 ADD root/.bashrc /root/.bashrc
 ADD root/.zshrc /root/.zshrc
+ADD etc/sudoers.d/user1 /etc/sudoers.d/user1
 
 WORKDIR /root
