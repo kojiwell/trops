@@ -81,7 +81,7 @@ So try installing or compiling some application, and then type trops log command
     # which unclutters and shows log as a table
     trops log | trops km
 
-If you want to use Github or GitLab for a remote private repository, I think it is a good idea.
+If you want to use Github or GitLab as a remote private repository, I think it is a good idea.
 You can link your Trops' bare git repository to a remote git repository by this::
 
     # At creation
@@ -91,11 +91,14 @@ You can link your Trops' bare git repository to a remote git repository by this:
     ontrops myenv
     trops env update --git-remote=git@github.com:username/repo_name.git
 
-Now you can make your work as issue-based. So create an issue on your Github/GitLab repository,
-and then set the issue number as a tag like this::
+Now you can make your system operation as an issue-driven project. So create an issue on your 
+Github/GitLab Issue -- like "Install barfoo #1" -- and then set the issue number as a tag 
+on your Trops like this::
 
+    # repo_name#<number>
     ttags repo_name#1
-    # or
+
+    # or \#<number>
     ttags \#1
 
 Once your work is done, try this::
