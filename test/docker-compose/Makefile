@@ -1,4 +1,4 @@
-DATE := $(shell date +%F)
+DATE := $(shell date "+%F %R")
 
 example1/root/.ssh \
 example2/root/.ssh \
@@ -6,14 +6,27 @@ example3/root/.ssh \
 example1/home/user1/.ssh:
 	test -d $@ || mkdir -p $@
 
-example1/root/.ssh/id_ed25519 \
+example1/root/.ssh/id_ed25519:
+	ssh-keygen -t ed25519 -N "" -C "test-key $(DATE)" -f $@
+
 example2/root/.ssh/id_ed25519 \
 example3/root/.ssh/id_ed25519 \
 example1/home/user1/.ssh/id_ed25519:
-	ssh-keygen -t ed25519 -N "" -C "test-key $(DATE)" -f $@
+	cp example1/root/.ssh/id_ed25519 $@
+	cp example1/root/.ssh/id_ed25519.pub $@.pub
+
+example1/root/.ssh/known_hosts:
+	ssh-keyscan -t ssh-ed25519,ecdsa-sha2-nistp256 gitlab.com > $@
+	ssh-keyscan -t ssh-ed25519,ecdsa-sha2-nistp256 github.com >> $@
+
+example2/root/.ssh/known_hosts \
+example3/root/.ssh/known_hosts \
+example1/home/user1/.ssh/known_hosts:
+	cp example1/root/.ssh/known_hosts $@
 
 ssh_dirs: example1/root/.ssh example2/root/.ssh example3/root/.ssh example1/home/user1/.ssh
-ssh_keys: example1/root/.ssh/id_ed25519 example2/root/.ssh/id_ed25519 example3/root/.ssh/id_ed25519 example1/home/user1/.ssh/id_ed25519
+ssh_keys: ssh_dirs example1/root/.ssh/id_ed25519 example2/root/.ssh/id_ed25519 example3/root/.ssh/id_ed25519 example1/home/user1/.ssh/id_ed25519
+ssh_known_hosts: ssh_dirs example1/root/.ssh/known_hosts example2/root/.ssh/known_hosts example3/root/.ssh/known_hosts example1/home/user1/.ssh/known_hosts
 
 build_example1: example1/root/.ssh example1/home/user1/.ssh \
 				example1/root/.ssh/id_ed25519 example1/home/user1/.ssh/id_ed25519
@@ -43,9 +56,16 @@ clean_containers:
 clean_keys:
 	rm -rf example1/root/.ssh 	example2/root/.ssh 	example3/root/.ssh example1/home/user1/.ssh
 
+clean_trops:
+	docker-compose exec example1 chown -R user1:user1 /opt/shared/trops
+	rm -rf shared/trops/*
+
 start_containers:
 	docker-compose up -d
 
-all: clean_containers ssh_dirs ssh_keys build_containers start_containers
+print_ssh_pubkey:
+	cat example1/root/.ssh/id_ed25519.pub
+
+all: ssh_keys ssh_known_hosts build_containers start_containers print_ssh_pubkey
 
 clean: clean_containers clean_keys
