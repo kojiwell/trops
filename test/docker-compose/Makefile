@@ -56,16 +56,18 @@ clean_containers:
 clean_keys:
 	rm -rf example1/root/.ssh 	example2/root/.ssh 	example3/root/.ssh example1/home/user1/.ssh
 
-clean_trops:
+clean_trops_dir:
 	docker-compose exec example1 chown -R user1:user1 /opt/shared/trops
 	rm -rf shared/trops/*
 
 start_containers:
 	docker-compose up -d
 
+rebuild_containers: clean_containers build_containers start_containers
+
 print_ssh_pubkey:
 	cat example1/root/.ssh/id_ed25519.pub
 
 all: ssh_keys ssh_known_hosts build_containers start_containers print_ssh_pubkey
 
-clean: clean_containers clean_keys
+clean: clean_keys clean_trops_dir clean_containers 
