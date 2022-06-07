@@ -81,7 +81,7 @@ So try installing or compiling some application, and then type trops log command
     trops log | trops km
 
 If you want to use Github or GitLab for a remote private repository, I think it is a good idea.
-You can link your trops's bare git repository to a remote git repository by this:
+You can link your trops's bare git repository to a remote git repository by this::
 
     # At creation
     trops env create --git-remote=git@github.com:username/repository_name.git myenv
@@ -91,13 +91,13 @@ You can link your trops's bare git repository to a remote git repository by this
     trops env update --git-remote=git@github.com:username/repo_name.git
 
 Now you can make your work as issue-based. So create an issue on your Github/GitLab repository,
-and then set the issue number as a tag like this:
+and then set the issue number as a tag like this::
 
     ttags repo_name#1
     # or
     ttags \#1
 
-Once your work is done, try this:
+Once your work is done, try this::
 
     # Save the log as a markdown table
     trops log | trops km --save
