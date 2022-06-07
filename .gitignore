@@ -132,5 +132,9 @@ dmypy.json
 test/docker-compose/shared
 test/docker-compose/local
 test/docker-compose/.envrc
+test/docker-compose/example1/root/.ssh/*
+test/docker-compose/example1/home/user1/.ssh/*
+test/docker-compose/example2/root/.ssh/*
+test/docker-compose/example3/root/.ssh/*
 # vscode
 .vscode
