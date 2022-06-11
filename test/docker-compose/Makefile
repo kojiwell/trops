@@ -1,3 +1,9 @@
+.PHONY: build_example1 build_example2 build_example3 \
+	login_example1 login_example2 login_example3 \
+	clean_containers clean_keys clean_trops_dir \
+	start_containers rebuild_containers print_ssh_pubkey \
+	all clean
+
 DATE := $(shell date "+%F %R")
 TROPS_TAGS := ${TROPS_TAGS}
 
