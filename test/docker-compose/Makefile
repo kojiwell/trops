@@ -2,7 +2,7 @@
 	login_example1 login_example2 login_example3 \
 	clean_containers clean_keys clean_trops_dir \
 	start_containers rebuild_containers print_ssh_pubkey \
-	all clean
+	all clean help
 
 DATE := $(shell date "+%F %R")
 TROPS_TAGS := ${TROPS_TAGS}
@@ -64,7 +64,7 @@ clean_keys:
 	rm -rf example1/root/.ssh 	example2/root/.ssh 	example3/root/.ssh example1/home/user1/.ssh
 
 clean_trops_dir:
-	docker-compose exec example1 chown -R user1:user1 /opt/shared/trops
+	docker-compose exec --user root example1 chown -R user1:user1 /opt/shared/trops
 	rm -rf shared/trops/*
 
 start_containers:
@@ -78,3 +78,6 @@ print_ssh_pubkey:
 all: ssh_keys ssh_known_hosts build_containers start_containers print_ssh_pubkey
 
 clean: clean_keys clean_trops_dir clean_containers 
+
+help:
+	more README.md
