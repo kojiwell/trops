@@ -11,6 +11,20 @@ class TropsLog(Trops):
     def __init__(self, args, other_args):
         super().__init__(args, other_args)
 
+        if 'TROPS_ENV' not in os.environ:
+            msg = """\
+                ERROR: TROPS_ENV has not been set
+                    # List existing environments
+                    $ trops env list
+                    
+                    # Create new environment
+                    $ trops env create <envname>
+
+                    # Turn on Trops
+                    $ ontrops <envname>"""
+            print(dedent(msg))
+            exit(1)
+
     def _follow(self, file):
 
         file.seek(0, os.SEEK_END)
