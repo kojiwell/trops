@@ -46,9 +46,11 @@ class TropsLog(Trops):
             else:
                 lines = ff.readlines()
             for line in lines:
-                if self.args.all or not hasattr(self, 'trops_tags'):
+                if self.args.all:
                     print(line, end='')
-                elif f'TROPS_TAGS={self.trops_tags}' in line:
+                elif hasattr(self, 'trops_tags') and f'TROPS_TAGS={self.trops_tags}' in line:
+                    print(line, end='')
+                elif hasattr(self, 'trops_sid') and f'TROPS_SID={self.trops_sid}' in line:
                     print(line, end='')
                 else:
                     pass
