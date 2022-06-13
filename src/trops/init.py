@@ -58,8 +58,8 @@ class TropsInit(Trops):
 
             ttags() {{
             export TROPS_TAGS=$(echo $@|tr ' ' ,)
-            if [ -n $TMUX ] ; then
-            tmux rename-window "$TROPS_TAGS"
+            if [ ! x$TMUX == "x" ] ; then
+                tmux rename-window "$TROPS_TAGS"
             fi
             }}
             """
@@ -98,8 +98,8 @@ class TropsInit(Trops):
 
             ttags() {{
             export TROPS_TAGS=$(echo $@|tr ' ' ,)
-            if [ -n $TMUX ] ; then
-            tmux rename-window "$TROPS_TAGS"
+            if [ ! x$TMUX == "x" ] ; then
+                tmux rename-window "$TROPS_TAGS"
             fi
             }}
             """
