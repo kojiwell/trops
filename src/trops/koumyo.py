@@ -204,7 +204,8 @@ class TropsKoumyo(TropsMain):
         if not os.path.isdir(km_dir):
             os.mkdir(km_dir)
 
-        repo_name = self.git_remote.split('/')[-1].rstrip('.git')
+        if self.git_remote:
+            repo_name = self.git_remote.split('/')[-1].rstrip('.git')
 
         if self.args.name:
             file_name = self.args.name.replace(' ', '_') + '.md'
@@ -213,15 +214,19 @@ class TropsKoumyo(TropsMain):
             exit(1)
         else:
             check_list = [',', ';']
-            if any(c in self.trops_tags for c in check_list):
-                print('You have multiple tags. Please set --name <name> option')
-                exit(1)
-            elif self.trops_tags[0] == '#':
-                file_name = repo_name + self.trops_tags.replace('#', '__i') + '.md'
-            elif self.trops_tags[0] == '!':
-                file_name = repo_name + self.trops_tags.replace('!', '__c') + '.md'
+            if ',' in self.trops_tags:
+                primary_tag = self.trops_tags.split(',')[0]
+            elif ';' in self.trops_tags:
+                primary_tag = self.trops_tags.split(';')[0]
             else:
-                file_name = self.trops_tags.replace('#', '__i').replace('!', '__c') + '.md'
+                primary_tag = self.trops_tags
+
+            if primary_tag[0] == '#':
+                file_name = repo_name + primary_tag.replace('#', '__i') + '.md'
+            elif primary_tag[0] == '!':
+                file_name = repo_name + primary_tag.replace('!', '__c') + '.md'
+            else:
+                file_name = primary_tag.replace('#', '__i').replace('!', '__c') + '.md'
 
         file_path = km_dir + '/' + file_name
 
