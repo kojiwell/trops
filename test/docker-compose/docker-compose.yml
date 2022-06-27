@@ -19,7 +19,7 @@ services:
       - USER=root
     volumes:
       - $PWD/../../:/usr/local/src/trops
-      - $PWD/local:/opt/local
+      - $PWD/shared:/opt/shared
   example3:
     build: example3
     hostname: example3
