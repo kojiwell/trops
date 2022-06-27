@@ -204,7 +204,7 @@ class TropsKoumyo(TropsMain):
         if not os.path.isdir(km_dir):
             os.mkdir(km_dir)
 
-        if self.git_remote:
+        if hasattr(self, 'git_remote'):
             repo_name = self.git_remote.split('/')[-1].rstrip('.git')
 
         if self.args.name:
