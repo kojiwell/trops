@@ -132,5 +132,6 @@ dmypy.json
 test/docker-compose/shared
 test/docker-compose/local
 test/docker-compose/.envrc
+test/docker-compose/example*
 # vscode
 .vscode
