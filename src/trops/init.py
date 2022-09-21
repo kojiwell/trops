@@ -24,6 +24,7 @@ class TropsInit(Trops):
         zsh_lines = f"""\
             autoload -Uz add-zsh-hook
             ontrops() {{
+                setopt INC_APPEND_HISTORY
                 export TROPS_SID=$(trops gensid)
                 if [ "$#" -ne 1 ]; then
                     echo "# upsage: on-trops <env>"
@@ -43,7 +44,7 @@ class TropsInit(Trops):
                         fi
                     fi
                     _tr_capcmd() {{
-                        trops capture-cmd $? $(history|tail -1|cut -c 8-)
+                        trops capture-cmd $? $(fc -ln -1 -1)
                     }}
                     add-zsh-hook precmd _tr_capcmd
                 fi
@@ -71,7 +72,7 @@ class TropsInit(Trops):
         bash_lines = f"""\
             _trops_capcmd () {{
                 #trops capture-cmd $? $(fc -ln -0 -0)
-                trops capture-cmd $? $(history 1 | cut -c 8-)
+                trops capture-cmd $? $(history -a && fc -ln -0 -0)
             }}
 
             ontrops() {{
