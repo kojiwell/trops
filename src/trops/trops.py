@@ -1,4 +1,3 @@
-import distutils.util
 import logging
 import os
 import subprocess
@@ -9,7 +8,7 @@ from pathlib import Path
 from socket import gethostname
 from textwrap import dedent
 
-from .utils import absolute_path
+from .utils import absolute_path, strtobool
 
 
 class Trops:
@@ -68,7 +67,7 @@ class Trops:
                                 '--work-tree=' + self.work_tree]
 
                 try:
-                    self.sudo = distutils.util.strtobool(
+                    self.sudo = strtobool(
                         self.config[self.trops_env]['sudo'])
                     if self.sudo:
                         self.git_cmd = ['sudo'] + self.git_cmd
