@@ -151,7 +151,8 @@ def main():
         'touch',
         'drop',
         'gensid',
-        'check'
+        'check',
+        'tee'
     ]:
         eval(f'add_{ func }_subparsers(subparsers)')
 
