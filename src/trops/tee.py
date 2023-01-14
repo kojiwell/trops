@@ -20,5 +20,5 @@ def add_tee_subparsers(subparsers):
 
     # trops tee
     parser_tee = subparsers.add_parser('tee', help="Trops Tee")
-    parser_tee.add_argument('shell', help='shell [bash/zsh]')
+    parser_tee.add_argument('file', help='file path')
     parser_tee.set_defaults(handler=trops_tee)
