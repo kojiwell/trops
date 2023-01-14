@@ -13,7 +13,7 @@ def tt():
 
 @pytest.fixture
 def setup_tee_args():
-    with patch( "sys.argv", [ "trops", "tee", "bash", "o_var1", "o_var2"] ):
+    with patch( "sys.argv", [ "trops", "tee", "path/to/file"] ):
         parser = argparse.ArgumentParser(prog='trops',description='Trops - Tracking Operations')
         subparsers = parser.add_subparsers()
         add_tee_subparsers(subparsers)
@@ -22,9 +22,11 @@ def setup_tee_args():
 
 def test_trops_dir(monkeypatch, setup_tee_args):
     args, other_args = setup_tee_args
-    tt = TropsTee(args, other_args)
 
-    monkeypatch.setenv("TROPS_DIR", os.path.expanduser('~/trops'))
-    
-    assert tt.hello_world() == "Hello world!"
-    #assert tt.trops_dir ==  os.path.expanduser('~/trops')
+    monkeypatch.setenv("TROPS_DIR", '~/trops')
+    tt1 = TropsTee(args, other_args)
+    assert tt1.trops_dir ==  os.path.expanduser('~/trops')
+
+    monkeypatch.setenv("TROPS_DIR", '$HOME/trops')
+    tt2 = TropsTee(args, other_args)
+    assert tt2.trops_dir ==  os.path.expanduser('~/trops')
