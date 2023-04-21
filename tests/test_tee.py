@@ -1,3 +1,4 @@
+import io
 import os
 import argparse
 import pytest
@@ -26,7 +27,16 @@ def test_trops_dir(monkeypatch, setup_tee_args):
     monkeypatch.setenv("TROPS_DIR", '~/trops')
     tt1 = TropsTee(args, other_args)
     assert tt1.trops_dir ==  os.path.expanduser('~/trops')
+    assert tt1.file_path == 'path/to/file'
 
     monkeypatch.setenv("TROPS_DIR", '$HOME/trops')
     tt2 = TropsTee(args, other_args)
     assert tt2.trops_dir ==  os.path.expanduser('~/trops')
+
+def test_sys_stdin_read(monkeypatch, setup_tee_args):
+    args, other_args = setup_tee_args
+
+    monkeypatch.setattr('sys.stdin', io.StringIO('Test input'))
+
+    tt = TropsTee(args, other_args)
+    assert tt.read_output_via_pipe() == 'Test input'
