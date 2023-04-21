@@ -5,6 +5,29 @@ from datetime import datetime
 from random import randint
 
 
+
+def strtobool(value):
+
+    _MAP = {
+        'y': True,
+        'yes': True,
+        't': True,
+        'true': True,
+        'on': True,
+        '1': True,
+        'n': False,
+        'no': False,
+        'f': False,
+        'false': False,
+        'off': False,
+        '0': False
+    }
+
+    try:
+        return _MAP[str(value).lower()]
+    except KeyError:
+        raise ValueError('"{}" is not a valid bool value'.format(value))
+
 def absolute_path(dir_path):
     """Return absolute path"""
     return os.path.abspath(os.path.expanduser(os.path.expandvars(dir_path)))
