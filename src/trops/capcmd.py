@@ -40,11 +40,13 @@ class TropsCapCmd(Trops):
         if os.path.isfile(last_cmd):
             with open(last_cmd, mode='r') as f:
                 if time_and_cmd == f.read():
+                    self.print_header()
                     exit(0)
         with open(last_cmd, mode='w') as f:
             f.write(time_and_cmd)
 
         if self.ignore_cmds and executed_cmd[0] in self.ignore_cmds:
+            self.print_header()
             exit(0)
 
         message = 'CM ' + ' '.join(executed_cmd) + \
@@ -63,6 +65,9 @@ class TropsCapCmd(Trops):
         self._apt_log(executed_cmd)
         self._update_files(executed_cmd)
 
+        self.print_header()
+
+    def print_header(self):
         # Print -= trops|env|sid|tags =-
         print('\n-= ' + '|'.join(self.trops_header) + ' =-')
 
