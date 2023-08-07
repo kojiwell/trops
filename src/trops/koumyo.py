@@ -7,6 +7,7 @@ from textwrap import dedent
 
 from .trops import TropsMain
 
+
 class TropsKoumyo(TropsMain):
 
     def __init__(self, args, other_args):
@@ -129,7 +130,7 @@ class TropsKoumyo(TropsMain):
                     elif 'TROPS_TAGS=' in n:
                         formatted_log[i] = n.replace(
                             'TROPS_TAGS=', '').rstrip(',')
-                
+
                 while len(formatted_log) < 10:
                     formatted_log.append('-')
             elif 'FL' in splitted_log:
@@ -226,7 +227,8 @@ class TropsKoumyo(TropsMain):
             elif primary_tag[0] == '!':
                 file_name = repo_name + primary_tag.replace('!', '__c') + '.md'
             else:
-                file_name = primary_tag.replace('#', '__i').replace('!', '__c') + '.md'
+                file_name = primary_tag.replace(
+                    '#', '__i').replace('!', '__c') + '.md'
 
         file_path = km_dir + '/' + file_name
 
