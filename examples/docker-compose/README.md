@@ -1,9 +1,9 @@
-# test/docker-compose
+# Examples using Docker Compose
 
 ## Setup the host
 
 ```
-cd test/docker-compose
+cd examples/docker-compose
 offtrops
 export TROPS_DIR=$PWD/shared/trops
 trops env create host
@@ -15,7 +15,7 @@ make all
 ttags \#1
 ```
 
-## Setup example1 - Normal user accout with sudo
+## Setup example1 - Normal user with sudo
 
 ```
 make login_example1
@@ -23,7 +23,7 @@ trops env create --sudo=True --git-remote=<remote_repo> example1
 ontrops example1
 ```
 
-## Setup example2 and example3 - root access
+## Setup example2 and example3 - root user
 
 ```
 # Example2
