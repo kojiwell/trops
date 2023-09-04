@@ -1,12 +1,10 @@
-import distutils.util
 import os
 import subprocess
 
-from configparser import ConfigParser
 from textwrap import dedent
 
 from .trops import Trops
-from .utils import absolute_path
+from .utils import absolute_path, strtobool
 
 
 class TropsFile(Trops):
@@ -32,7 +30,7 @@ class TropsFile(Trops):
                 self.git_cmd = ['git', '--git-dir=' + self.git_dir,
                                 '--work-tree=' + self.work_tree]
 
-                sudo_true = distutils.util.strtobool(
+                sudo_true = strtobool(
                     self.config[self.trops_env]['sudo'])
                 if sudo_true:
                     self.git_cmd = ['sudo'] + self.git_cmd
