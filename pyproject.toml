@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "trops"
-version = '0.2.18'
+version = '0.2.19'
 description = "Track operations on Linux"
 authors = ["Koji Tanaka <kojiwelly@gmail.com>"]
 license = "MIT"
