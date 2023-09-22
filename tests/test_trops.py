@@ -9,7 +9,9 @@ from trops.init import TropsInit, add_init_subparsers
 
 
 @pytest.fixture
-def setup_trops_args():
+def setup_trops_args(monkeypatch):
+    monkeypatch.setenv("TROPS_DIR", '/tmp/trops')
+    monkeypatch.setenv("TROPS_ENV", 'test')
     with patch("sys.argv", ["trops", "init", "bash", "o_var1", "o_var2"]):
         parser = argparse.ArgumentParser(
             prog='trops', description='Trops - Tracking Operations')
@@ -31,5 +33,10 @@ def test_trops_dir(monkeypatch, setup_trops_args):
     tb2 = Trops(args, other_args)
     assert tb2.trops_dir == os.path.expanduser('~/trops')
 
-    monkeypatch.setenv("TROPS_DIR", '/tmp/trops')
+def test_trops_vars(monkeypatch, setup_trops_args):
+    args, other_args = setup_trops_args
+
     tm = TropsMain(args, other_args)
+
+    assert tm.trops_dir == '/tmp/trops'
+    assert tm.trops_env == 'test'

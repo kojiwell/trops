@@ -18,12 +18,14 @@ class TropsCapCmd(Trops):
         self.trops_header = ['trops']
         if self.trops_env:
             self.trops_header.append(self.trops_env)
+
         if self.trops_sid:
             self.trops_header.append(self.trops_sid)
-        try:
+
+        if self.trops_tags:
             self.trops_header.append(self.trops_tags)
-        except AttributeError:
-            pass
+        else:
+            self.trops_header.append('')
 
     def capture_cmd(self):
         """Caputure the command"""
