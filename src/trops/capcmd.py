@@ -66,6 +66,7 @@ class TropsCapCmd(Trops):
         self._yum_log(executed_cmd)
         self._apt_log(executed_cmd)
         self._update_files(executed_cmd)
+        self._add_tee_output_file(executed_cmd)
 
         self.print_header()
 
@@ -190,6 +191,14 @@ class TropsCapCmd(Trops):
         if executed_cmd[0] in editors:
             # Add the edited file in trops git
             self._add_file_in_git_repo(executed_cmd, 1)
+
+    def _add_tee_output_file(self, executed_cmd):
+
+        if '|' in executed_cmd:
+            n = executed_cmd.index('|')
+            if executed_cmd[n+1] == 'tee':
+                n += 1
+                self._add_file_in_git_repo(executed_cmd, n)
 
 def capture_cmd(args, other_args):
 
