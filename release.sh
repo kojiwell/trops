@@ -2,6 +2,8 @@
 #
 # release.sh - update files for new release
 
+set -eux
+
 if [ $# -ne 1 ]; then
     echo "Usage: ./release.sh <version>"
 fi
