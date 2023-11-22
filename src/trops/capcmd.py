@@ -24,8 +24,6 @@ class TropsCapCmd(Trops):
 
         if self.trops_tags:
             self.trops_header.append(self.trops_tags)
-        else:
-            self.trops_header.append('')
 
     def capture_cmd(self):
         """Caputure the command"""
