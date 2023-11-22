@@ -121,19 +121,9 @@ class TropsCapCmd(Trops):
 
         self.add_and_commit_file(pkg_list_file)
 
-    def _update_files(self, executed_cmd):
-        """Add a file or directory in the git repo"""
+    def _add_file_in_git_repo(self, executed_cmd, n):
 
-        # Remove sudo from executed_cmd
-        if 'sudo' == executed_cmd[0]:
-            executed_cmd.pop(0)
-        # TODO: Pop Sudo options such as -u and -E
-
-        # Check if editor is launched
-        editors = ['vim', 'vi', 'emacs', 'nano']
-        if executed_cmd[0] in editors:
-            # Add the edited file in trops git
-            for ii in executed_cmd[1:]:
+            for ii in executed_cmd[n:]:
                 ii_path = absolute_path(ii)
                 if os.path.isfile(ii_path):
                     # Ignore the file if it is under a git repository
@@ -187,6 +177,19 @@ class TropsCapCmd(Trops):
                     else:
                         print('No update')
 
+    def _update_files(self, executed_cmd):
+        """Add a file or directory in the git repo"""
+
+        # Remove sudo from executed_cmd
+        if 'sudo' == executed_cmd[0]:
+            executed_cmd.pop(0)
+        # TODO: Pop Sudo options such as -u and -E
+
+        # Check if editor is launched
+        editors = ['vim', 'vi', 'emacs', 'nano']
+        if executed_cmd[0] in editors:
+            # Add the edited file in trops git
+            self._add_file_in_git_repo(executed_cmd, 1)
 
 def capture_cmd(args, other_args):
 
