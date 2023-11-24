@@ -9,7 +9,6 @@ from .koumyo import add_koumyo_subparsers
 from .log import add_log_subparsers
 from .release import __version__
 from .repo import add_repo_subparsers
-from .tee import add_tee_subparsers
 from .trops import TropsMain
 from .utils import generate_sid
 
@@ -152,7 +151,6 @@ def main():
         'log',
         'repo',
         'show',
-        'tee',
         'touch'
     ]:
         eval(f'add_{ func }_subparsers(subparsers)')

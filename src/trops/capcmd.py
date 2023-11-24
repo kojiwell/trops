@@ -199,6 +199,9 @@ class TropsCapCmd(Trops):
             if executed_cmd[n+1] == 'tee':
                 n += 1
                 self._add_file_in_git_repo(executed_cmd, n)
+        elif '|tee' in executed_cmd:
+            n = executed_cmd.index('|tee')
+            self._add_file_in_git_repo(executed_cmd, n)
 
 def capture_cmd(args, other_args):
 
