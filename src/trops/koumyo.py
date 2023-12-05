@@ -6,7 +6,7 @@ from tabulate import tabulate
 from textwrap import dedent
 
 from .trops import TropsMain
-
+from .utils import pick_out_repo_name_from_git_remote
 
 class TropsKoumyo(TropsMain):
 
@@ -202,6 +202,7 @@ class TropsKoumyo(TropsMain):
         else:
             print(tabulate(formatted_logs, headers))
 
+
     def _save(self, kmout):
 
         km_dir = self.trops_dir + '/km'
@@ -210,7 +211,7 @@ class TropsKoumyo(TropsMain):
             os.mkdir(km_dir)
 
         if hasattr(self, 'git_remote'):
-            repo_name = self.git_remote.split('/')[-1].rstrip('.git')
+            repo_name = pick_out_repo_name_from_git_remote(self.git_remote)
 
         if self.args.name:
             file_name = self.args.name.replace(' ', '_') + '.md'

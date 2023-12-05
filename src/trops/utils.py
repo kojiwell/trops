@@ -42,6 +42,23 @@ def yes_or_no(question):
         if reply in ['n', 'no']:
             return False
 
+def pick_out_repo_name_from_git_remote(git_remote):
+    # git@github.com:<user>/<repo_name>.git -> <repo_name>.git
+    _ = git_remote.split('/')[-1]
+    # <repo_name>.git -> <repo_name>
+    return '.'.join(_.split('.')[0:-1])
+
+def generate_sid(args, other_args):
+    """Generate a session ID"""
+    s = that()
+    # Three and seven are magic numbers
+    hlen = 3
+    tlen = 4
+    n = randint(0, len(s)-hlen)
+    now = datetime.now().isoformat()
+    head = ''.join(list(s)[n:n+hlen]).lower()
+    tail = hashlib.sha256(bytes(now, 'utf-8')).hexdigest()[0:tlen]
+    print(head + tail)
 
 def that():
     """Tribute to this.py and Laozi"""
@@ -65,16 +82,3 @@ def that():
             d[chr(i+c)] = chr((i+13) % 26 + c)
 
     return "".join([d.get(c, c) for c in s if c.isalnum()])
-
-
-def generate_sid(args, other_args):
-    """Generate a session ID"""
-    s = that()
-    # Three and seven are magic numbers
-    hlen = 3
-    tlen = 4
-    n = randint(0, len(s)-hlen)
-    now = datetime.now().isoformat()
-    head = ''.join(list(s)[n:n+hlen]).lower()
-    tail = hashlib.sha256(bytes(now, 'utf-8')).hexdigest()[0:tlen]
-    print(head + tail)
