@@ -64,6 +64,10 @@ class TropsKoumyo(TropsMain):
     def _ignore_cmd(self, cmd):
         """Return True when the command(cmd) should be ignored"""
 
+        # Ingore if cmd is empty
+        if not cmd:
+            return True
+
         # If any of '|', '>', and '<' is in the command,
         # it shouldn't be ignored, except `trops log` and `history`.
         if (cmd[0:2] != ['trops', 'log'] and cmd[0] != 'history') and \

@@ -35,5 +35,12 @@ def test_sys_stdin_read(monkeypatch, setup_koumyo_args):
     assert all([a == b for a, b in zip(tk.logs, list_test_logs)])
 
 
-def test_ignore_cmd(monkeypatch, setup_koumyo_args):
+def test_ignore_empty_cmd(monkeypatch, setup_koumyo_args):
     args, other_args = setup_koumyo_args
+
+    list_test_logs = TEST_LOGS.splitlines()
+
+    monkeypatch.setattr('sys.stdin', io.StringIO(TEST_LOGS))
+
+    tk = TropsKoumyo(args, other_args)
+    tk._ignore_cmd([])
