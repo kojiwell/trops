@@ -1,5 +1,5 @@
 ******************************
-Trops tracks system operations
+Trops (TRacks system OPerationS)
 ******************************
 
 .. image:: https://img.shields.io/pypi/v/trops
@@ -10,8 +10,7 @@ Trops tracks system operations
    :target: LICENSE
    :alt: Repository License
 
-Trops is a command-line tool for tracking Linux system operations in an easy-to-use workflow. 
-It helps you interactively develop Ansible roles, Dockerfile, and etc.
+Trops is a command-line tool crafted for tracking operations of destributed Linux systems in an easy-to-use workflow. It keeps a log of executed commands and modified files to help develop Ansible roles, Dockerfiles, and similar tasks, facilitating an interactive approach to these processes.
 
 Prerequisites
 =============
@@ -19,19 +18,20 @@ Prerequisites
 - OS: Linux
 - Shell: Bash or Zsh
 - Python: 3.8 or higher
-- Git: 2.X
+- Git: 2.28 or higher
 
 Installation
 ============
 
 Ubuntu::
 
-    apt install python3 python3-pip git
-    pip3 install trops
+    sudo apt install python3 python3-pip git
+    sudo pip3.11 install trops
 
-CentOS
+Rocky::
 
-CentOS's default Git and Python3 versions might be older than the prerequisites, but you can use Miniconda as shown below.
+    sudo dnf install python3.11 python3.11-pip git
+    sudo pip3.11 install trops
 
 Miniconda::
 
@@ -71,10 +71,9 @@ Turn on/off background tracking::
     # Turn off
     offtrops
 
-If you turn it on, every command will be logged, and editing a file will be commited to a bare git repo.
-So try installing or compiling some application, and then type trops log command::
+If you turn it on, every command will be logged, and editing a file will be commited to its git repo ($TROPS_DIR/repo/<env>.git). So try installing or compiling some application, and then type trops log command::
 
-    # Do some work, and then check log
+    # Get your work done, and then check log
     trops log
 
     # Or pass the output to Trops KouMyo(km), 
@@ -98,8 +97,8 @@ on your Trops like this::
     # repo_name#<number>
     ttags repo_name#1
 
-    # or \#<number>
-    ttags \#1
+    # or '#<number>'
+    ttags '#1'
 
 Once your work is done, try this::
 
@@ -118,13 +117,6 @@ Salt, Chef, Puppet, or whatever tools down the line.
 So, Trops helps you easily try new things, and you don't have to worry about forgetting what
 you've done. And then, once you've got used to it, it will actually help you organize your 
 day-to-day multitasking, which is probably something that a lot of system admins cannot avoid.
-
-Inspiration
-===========
-
-Trops is inspired by the idea on this link.
-
-- `The best way to store your dotfiles: A bare Git repository <https://www.atlassian.com/git/tutorials/dotfiles>`_
 
 Contributing
 ============

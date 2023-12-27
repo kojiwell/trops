@@ -17,7 +17,8 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.21...HEAD
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.22...HEAD
+.. _v0.2.21: https://github.com/kojiwell/trops/compare/v0.2.21...v0.2.22
 .. _v0.2.21: https://github.com/kojiwell/trops/compare/v0.2.20...v0.2.21
 .. _v0.2.20: https://github.com/kojiwell/trops/compare/v0.2.19...v0.2.20
 .. _v0.2.19: https://github.com/kojiwell/trops/compare/v0.2.18...v0.2.19
