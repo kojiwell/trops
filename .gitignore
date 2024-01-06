@@ -139,3 +139,6 @@ test/docker-compose/example2/root/.ssh/*
 test/docker-compose/example3/root/.ssh/*
 # vscode
 .vscode
+
+# macOS
+**/.DS_Store
