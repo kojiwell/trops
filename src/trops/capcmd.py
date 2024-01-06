@@ -128,12 +128,7 @@ class TropsCapCmd(Trops):
                 ii_path = absolute_path(ii)
                 if os.path.isfile(ii_path):
                     # Ignore the file if it is under a git repository
-                    ii_parent_dir = os.path.dirname(ii_path)
-                    if ii_parent_dir != '':
-                        os.chdir(ii_parent_dir)
-                    cmd = ['git', 'rev-parse', '--is-inside-work-tree']
-                    result = subprocess.run(cmd, capture_output=True)
-                    if result.returncode == 0:
+                    if file_is_in_a_git_repo(ii_path):
                         self.logger.info(
                             f"FL { ii_path } is under a git repository #> PWD=*, EXIT=*, TROPS_SID={ self.trops_sid }, TROPS_ENV={ self.trops_env }")
                         exit(0)
@@ -208,7 +203,6 @@ def capture_cmd(args, other_args):
     tc = TropsCapCmd(args, other_args)
     tc.capture_cmd()
 
-
 def add_capture_cmd_subparsers(subparsers):
 
     parser_capture_cmd = subparsers.add_parser(
@@ -216,3 +210,15 @@ def add_capture_cmd_subparsers(subparsers):
     parser_capture_cmd.add_argument(
         'return_code', type=int, help='return code')
     parser_capture_cmd.set_defaults(handler=capture_cmd)
+
+def file_is_in_a_git_repo(file_path):
+
+    parent_dir = os.path.dirname(file_path)
+    if parent_dir != '':
+        os.chdir(parent_dir)
+    cmd = ['git', 'rev-parse', '--is-inside-work-tree']
+    result = subprocess.run(cmd, capture_output=True)
+    if result.returncode == 0:
+        return True
+    else:
+        return False
