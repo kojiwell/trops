@@ -80,6 +80,8 @@ def add_log_subparsers(subparsers):
 
     parser_log = subparsers.add_parser('log', help='show log')
     parser_log.add_argument(
+        '-s', '--save', action='store_true', help='save log')
+    parser_log.add_argument(
         '-t', '--tail', type=int, help='set number of lines to show')
     parser_log.add_argument(
         '-f', '--follow', action='store_true', help='follow log interactively')

@@ -24,3 +24,12 @@ def test_log(monkeypatch, setup_log_args):
     monkeypatch.setenv("TROPS_ENV", 'testenv')
     monkeypatch.setenv("TROPS_TAGS", '#123,TEST')
     tl = TropsLog(args, other_args)
+
+def test_log_save(monkeypatch, setup_log_args):
+    args, other_args = setup_log_args
+    monkeypatch.setattr(args, 'save', True, raising=False)
+
+    assert args.save == True
+
+    tl = TropsLog(args, other_args)
+    assert tl.trops_logfile == '/home/devuser/trops/log/trops.log'
