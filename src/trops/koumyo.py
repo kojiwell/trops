@@ -269,7 +269,7 @@ def add_koumyo_subparsers(subparsers):
         help='all items in the log')
     parser_koumyo.add_argument(
         '-s', '--save', action='store_true',
-        help='markdown table format')
+        help='save the km log')
     parser_koumyo.add_argument(
         '--name', help='with --save, you can specify the name')
     group = parser_koumyo.add_mutually_exclusive_group()
