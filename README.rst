@@ -61,7 +61,7 @@ Activate trops::
 
 Create a trops environment(e.g. myenv)::
 
-    trops env create --sudo=true myenv
+    trops env create myenv
 
 Turn on/off background tracking::
 
@@ -88,17 +88,17 @@ You can link your Trops' bare git repository to a remote git repository by this:
 
     # or update
     ontrops myenv
-    trops env update --git-remote=git@github.com:username/repo_name.git
+    trops env update --git-remote=git@github.com:username/repository_name.git
 
 Now you can make your system operation as an issue-driven project. So create an issue on your 
 Github/GitLab Issue -- like "Install barfoo #1" -- and then set the issue number as a tag 
 on your Trops like this::
 
+    # '#<issue number>'
+    ttags '#1'
+
     # repo_name#<number>
     ttags repo_name#1
-
-    # or '#<number>'
-    ttags '#1'
 
 Once your work is done, try this::
 
