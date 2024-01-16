@@ -38,26 +38,43 @@ class TropsLog(Trops):
     def log(self):
         """Print trops log"""
 
-        log_file = self.trops_logfile
+        input_log_file = self.trops_logfile
 
-        with open(log_file) as ff:
+        with open(input_log_file) as ff:
             if self.args.tail:
                 lines = ff.readlines()[-self.args.tail:]
             else:
                 lines = ff.readlines()
-            for line in lines:
-                if self.args.all:
-                    print(line, end='')
-                elif self.trops_tags:
-                    if f'TROPS_TAGS={self.trops_tags}' in line:
-                        print(line, end='')
-                elif hasattr(self, 'trops_sid') and f'TROPS_SID={self.trops_sid}' in line:
-                    print(line, end='')
-                else:
-                    pass
+            # strip \n in items
+            lines = list(map(lambda x:x.strip(),lines))
+
+            if self.args.all:
+                target_lines = lines
+            elif self.trops_tags:
+                keyword = f'TROPS_TAGS={self.trops_tags}'
+                target_lines = [line for line in lines if keyword in line]
+            elif hasattr(self, 'trops_sid'):
+                keyword = f'TROPS_SID={self.trops_sid}'
+                target_lines = [line for line in lines if keyword in line]
+
+        if self.args.save:
+            print('save the target_lines')
+        else:
+            print(*target_lines, sep='\n')
+
+            #for line in lines:
+            #    if self.args.all:
+            #        print(line, end='')
+            #    elif self.trops_tags:
+            #        if f'TROPS_TAGS={self.trops_tags}' in line:
+            #            print(line, end='')
+            #    elif hasattr(self, 'trops_sid') and f'TROPS_SID={self.trops_sid}' in line:
+            #        print(line, end='')
+            #    else:
+            #        pass
 
         if self.args.follow:
-            ff = open(log_file, "r")
+            ff = open(input_log_file, "r")
             try:
                 lines = self._follow(ff)
                 for line in lines:
@@ -81,6 +98,8 @@ def add_log_subparsers(subparsers):
     parser_log = subparsers.add_parser('log', help='show log')
     parser_log.add_argument(
         '-s', '--save', action='store_true', help='save log')
+    parser_log.add_argument(
+    '--name', help='with --save, you can specify the name')
     parser_log.add_argument(
         '-t', '--tail', type=int, help='set number of lines to show')
     parser_log.add_argument(
