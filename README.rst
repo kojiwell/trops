@@ -16,7 +16,7 @@ It aims for solving these challenges:
 
 - Keeping track of when and what has been done on which host (for which issue)
 - Note-taking for solo system administrators of destributed systems
-- "Potentially" bridging the gap between between Dev and Ops
+- "Potentially" bridging the gap between Dev and Ops
 
 Prerequisites
 =============
