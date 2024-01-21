@@ -211,7 +211,9 @@ class TropsKoumyo(TropsMain):
             os.mkdir(km_dir)
 
         if hasattr(self, 'git_remote'):
-            repo_name = pick_out_repo_name_from_git_remote(self.git_remote)
+            file_prefix = pick_out_repo_name_from_git_remote(self.git_remote) + '_' + self.trops_env
+        else:
+            file_prefix = self.trops_env
 
         if self.args.name:
             file_name = self.args.name.replace(' ', '_') + '.md'
@@ -228,9 +230,9 @@ class TropsKoumyo(TropsMain):
                 primary_tag = self.trops_tags
 
             if primary_tag[0] == '#':
-                file_name = repo_name + primary_tag.replace('#', '__i') + '.md'
+                file_name = file_prefix + primary_tag.replace('#', '__i') + '.md'
             elif primary_tag[0] == '!':
-                file_name = repo_name + primary_tag.replace('!', '__c') + '.md'
+                file_name = file_prefix + primary_tag.replace('!', '__c') + '.md'
             else:
                 file_name = primary_tag.replace(
                     '#', '__i').replace('!', '__c') + '.md'
