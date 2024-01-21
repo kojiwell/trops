@@ -4,9 +4,10 @@ import time
 from configparser import ConfigParser
 from textwrap import dedent
 
-from .trops import Trops
+from .trops import TropsMain
+from .utils import pick_out_repo_name_from_git_remote
 
-class TropsLog(Trops):
+class TropsLog(TropsMain):
 
     def __init__(self, args, other_args):
         super().__init__(args, other_args)
@@ -58,20 +59,9 @@ class TropsLog(Trops):
                 target_lines = [line for line in lines if keyword in line]
 
         if self.args.save:
-            print('save the target_lines')
+            self._save_log(target_lines)
         else:
             print(*target_lines, sep='\n')
-
-            #for line in lines:
-            #    if self.args.all:
-            #        print(line, end='')
-            #    elif self.trops_tags:
-            #        if f'TROPS_TAGS={self.trops_tags}' in line:
-            #            print(line, end='')
-            #    elif hasattr(self, 'trops_sid') and f'TROPS_SID={self.trops_sid}' in line:
-            #        print(line, end='')
-            #    else:
-            #        pass
 
         if self.args.follow:
             ff = open(input_log_file, "r")
@@ -86,6 +76,45 @@ class TropsLog(Trops):
             except KeyboardInterrupt:
                 print('\nClosing trops log...')
 
+    def _save_log(self, target_lines):
+        '''Save log'''
+        log_dir = self.trops_dir + '/log'
+
+        if not os.path.isdir(log_dir):
+            os.mkdir(log_dir)
+
+        if hasattr(self, 'git_remote'):
+            file_prefix = pick_out_repo_name_from_git_remote(self.git_remote) + '_' + self.trops_env
+        else:
+            file_prefix = self.trops_env
+
+        if self.args.name:
+            file_name = self.args.name.replace(' ', '_') + '.log'
+        elif not self.trops_tags:
+            print("You don't have a tag. Please set a tag or add --name <name> option")
+            exit(1)
+        else:
+            if ',' in self.trops_tags:
+                primary_tag = self.trops_tags.split(',')[0]
+            elif ';' in self.trops_tags:
+                primary_tag = self.trops_tags.split(';')[0]
+            else:
+                primary_tag = self.trops_tags
+
+            if primary_tag[0] == '#':
+                file_name = file_prefix + primary_tag.replace('#', '__i') + '.log'
+            elif primary_tag[0] == '!':
+                file_name = file_prefix + primary_tag.replace('!', '__c') + '.log'
+            else:
+                file_name = primary_tag.replace(
+                    '#', '__i').replace('!', '__c') + '.log'
+
+        file_path = log_dir + '/' + file_name
+
+        with open(file_path, mode='w') as f:
+            f.writelines(s + '\n' for s in target_lines)
+
+        self._touch_file(file_path)
 
 def trops_log(args, other_args):
 
