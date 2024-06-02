@@ -30,20 +30,20 @@ class TropsCapCmd(Trops):
 
         rc = self.args.return_code
 
-        now = str(datetime.now().hour) + '-' + str(datetime.now().minute)
+        now = datetime.now().strftime("%H-%M")
         executed_cmd = self.other_args
-        time_and_cmd = now + ' ' + ' '.join(executed_cmd)
+        time_and_cmd = f"{now} {' '.join(executed_cmd)}"
         # Create trops_dir/tmp directory
-        tmp_dir = self.trops_dir + '/tmp'
-        if not os.path.isdir(tmp_dir):
-            os.mkdir(tmp_dir)
+        tmp_dir = os.path.join(self.trops_dir, 'tmp')
+        os.makedirs(tmp_dir, exist_ok=True)
         # Compare the executed_cmd if last_cmd exists
-        last_cmd = tmp_dir + '/last_cmd'
+        last_cmd = os.path.join(tmp_dir, 'last_cmd')
         if os.path.isfile(last_cmd):
             with open(last_cmd, mode='r') as f:
                 if time_and_cmd == f.read():
                     self.print_header()
                     exit(0)
+
         with open(last_cmd, mode='w') as f:
             f.write(time_and_cmd)
 
@@ -51,18 +51,20 @@ class TropsCapCmd(Trops):
             self.print_header()
             exit(0)
 
-        message = 'CM ' + ' '.join(executed_cmd) + \
-            f"  #> PWD={ os.environ['PWD'] }, EXIT={ rc }"
-        if 'TROPS_SID' in os.environ:
-            message = message + ', TROPS_SID=' + os.environ['TROPS_SID']
-        if 'TROPS_ENV' in os.environ:
-            message = message + ', TROPS_ENV=' + os.environ['TROPS_ENV']
-        if self.trops_tags:
-            message = message + f" TROPS_TAGS={self.trops_tags}"
+        message_parts = [
+            f"CM {' '.join(executed_cmd)} #> PWD={os.getenv('PWD')}",
+            f"EXIT={rc}",
+            f"TROPS_SID={os.getenv('TROPS_SID')}" if os.getenv('TROPS_SID') else None,
+            f"TROPS_ENV={os.getenv('TROPS_ENV')}" if os.getenv('TROPS_ENV') else None,
+            f"TROPS_TAGS={self.trops_tags}" if self.trops_tags else None,
+        ]
+        message = ', '.join(part for part in message_parts if part is not None)
+
         if rc == 0:
             self.logger.info(message)
         else:
             self.logger.warning(message)
+
         self._yum_log(executed_cmd)
         self._apt_log(executed_cmd)
         self._update_files(executed_cmd)
@@ -72,37 +74,27 @@ class TropsCapCmd(Trops):
 
     def print_header(self):
         # Print -= trops|env|sid|tags =-
-        print('\n-= ' + '|'.join(self.trops_header) + ' =-')
+        print(f'\n-= {"|".join(self.trops_header)} =-')
 
     def _yum_log(self, executed_cmd):
 
         # Check if sudo is used
-        if 'sudo' == executed_cmd[0]:
-            executed_cmd.pop(0)
+        executed_cmd = executed_cmd[1:] if executed_cmd[0] == 'sudo' else executed_cmd
 
-        if executed_cmd[0] in ['yum', 'dnf'] and ('install' in executed_cmd
-                                                  or 'update' in executed_cmd
-                                                  or 'remove' in executed_cmd):
+        if executed_cmd[0] in ['yum', 'dnf'] and any(x in executed_cmd for x in ['install', 'update', 'remove']):
             cmd = ['rpm', '-qa']
-            result = subprocess.run(cmd, capture_output=True)
+            result = subprocess.run(cmd, capture_output=True, check=True)
             pkg_list = result.stdout.decode('utf-8').splitlines()
             pkg_list.sort()
 
-            pkg_list_file = self.trops_dir + \
-                f'/log/rpm_pkg_list.{ self.hostname }'
-            f = open(pkg_list_file, 'w')
-            f.write('\n'.join(pkg_list))
-            f.close()
+            pkg_list_file = os.path.join(self.trops_dir, f'log/rpm_pkg_list.{self.hostname}')
+            with open(pkg_list_file, 'w') as f:
+                f.write('\n'.join(pkg_list))
 
             self.add_and_commit_file(pkg_list_file)
 
     def _apt_log(self, executed_cmd):
-
-        if 'apt' in executed_cmd and ('upgrade' in executed_cmd
-                                      or 'install' in executed_cmd
-                                      or 'update' in executed_cmd
-                                      or 'remove' in executed_cmd
-                                      or 'autoremove' in executed_cmd):
+        if 'apt' in executed_cmd and any(x in executed_cmd for x in ['upgrade', 'install', 'update', 'remove', 'autoremove']):
             self._update_pkg_list(' '.join(executed_cmd))
         # TODO: Add log trops git show hex
 
