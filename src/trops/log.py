@@ -54,6 +54,8 @@ class TropsLog(TropsMain):
             elif self.trops_tags:
                 keyword = f'TROPS_TAGS={self.trops_tags}'
                 target_lines = [line for line in lines if keyword in line]
+                #target_lines = [line for line in lines if check_tags(self.trops_tags, line)]
+
             elif hasattr(self, 'trops_sid'):
                 keyword = f'TROPS_SID={self.trops_sid}'
                 target_lines = [line for line in lines if keyword in line]
@@ -115,6 +117,10 @@ class TropsLog(TropsMain):
             f.writelines(s + '\n' for s in target_lines)
 
         self._touch_file(file_path)
+
+def check_tags(tag, line):
+
+    pass
 
 def trops_log(args, other_args):
 
