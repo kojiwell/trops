@@ -1,13 +1,13 @@
 import logging
 import os
 import subprocess
-from typing import Any, List
 
 from configparser import ConfigParser
 from getpass import getuser
 from pathlib import Path
 from socket import gethostname
 from textwrap import dedent
+from typing import Any, List
 
 from .utils import absolute_path, strtobool
 
@@ -16,6 +16,7 @@ class Trops:
     """Trops Class"""
 
     def __init__(self, args: Any, other_args: List[str]) -> None:
+        """Initialize the Trops class"""
 
         # Make args sharable among functions
         self.args = args
@@ -27,8 +28,8 @@ class Trops:
         self.trops_dir = absolute_path(os.getenv('TROPS_DIR'))
 
         # Create the log directory
-        self.trops_log_dir = self.trops_dir + '/log'
-        self.trops_logfile = self.trops_log_dir + '/trops.log'
+        self.trops_log_dir = os.path.join(self.trops_dir, 'log')
+        self.trops_logfile = os.path.join(self.trops_log_dir, 'trops.log')
         os.makedirs(self.trops_log_dir, exist_ok=True)
 
         # Set trops_env
