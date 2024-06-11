@@ -1,6 +1,7 @@
 import logging
 import os
 import subprocess
+from typing import Any, List
 
 from configparser import ConfigParser
 from getpass import getuser
@@ -14,7 +15,7 @@ from .utils import absolute_path, strtobool
 class Trops:
     """Trops Class"""
 
-    def __init__(self, args, other_args):
+    def __init__(self, args: Any, other_args: List[str]) -> None:
 
         # Make args sharable among functions
         self.args = args
@@ -103,7 +104,7 @@ class Trops:
                                 level=logging.DEBUG)
             self.logger = logging.getLogger()
 
-    def add_and_commit_file(self, file_path):
+    def add_and_commit_file(self, file_path) -> None:
 
         cmd = self.git_cmd + ['ls-files', file_path]
         result = subprocess.run(cmd, capture_output=True)
@@ -146,17 +147,18 @@ class Trops:
 
 
 class TropsMain(Trops):
+    """TropsMain Class"""
 
-    def __init__(self, args, other_args):
+    def __init__(self, args: Any, other_args: List[str]) -> None:
+        """Initialize the TropsMain class"""
         super().__init__(args, other_args)
 
-    def git(self):
+    def git(self) -> None:
         """Git wrapper command"""
-
         cmd = self.git_cmd + self.other_args
-        subprocess.call(cmd)
+        subprocess.run(cmd, check=True)
 
-    def glab(self):
+    def glab(self) -> None:
         """Glab wrapper command"""
 
         if self.other_args == ['auth', 'login']:
@@ -167,13 +169,13 @@ class TropsMain(Trops):
             cmd = self.glab_cmd + self.other_args
         subprocess.call(cmd)
 
-    def check(self):
+    def check(self) -> None:
         """Git status wrapper command"""
 
         cmd = self.git_cmd + ['status']
         subprocess.call(cmd)
 
-    def ll(self):
+    def ll(self) -> None:
         """Shows the list of git-tracked files"""
 
         if os.getenv('TROPS_ENV') == None:
@@ -189,19 +191,19 @@ class TropsMain(Trops):
                     cmd = ['ls', '-al', f]
                     subprocess.call(cmd)
 
-    def show(self):
+    def show(self) -> None:
         """trops show hash[:path]"""
 
         cmd = self.git_cmd + ['show', self.args.commit]
         subprocess.call(cmd)
 
-    def touch(self):
+    def touch(self) -> None:
 
         for file_path in self.args.paths:
 
             self._touch_file(file_path)
 
-    def _touch_file(self, file_path):
+    def _touch_file(self, file_path) -> None:
         """Add a file or directory in the git repo"""
 
         file_path = absolute_path(file_path)
@@ -257,13 +259,13 @@ class TropsMain(Trops):
                 message = message + f" TROPS_TAGS={self.trops_tags}"
             self.logger.info(message)
 
-    def drop(self):
+    def drop(self) -> None:
 
         for file_path in self.args.paths:
 
             self._drop_file(file_path)
 
-    def _drop_file(self, file_path):
+    def _drop_file(self, file_path) -> None:
         """Remove a file from the git repo"""
 
         file_path = absolute_path(file_path)
