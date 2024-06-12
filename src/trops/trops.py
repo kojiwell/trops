@@ -33,21 +33,13 @@ class Trops:
         os.makedirs(self.trops_log_dir, exist_ok=True)
 
         # Set trops_env
-        if hasattr(args, 'env') and args.env:
-            self.trops_env = args.env
-        elif os.getenv('TROPS_ENV'):
-            self.trops_env = os.getenv('TROPS_ENV')
-        else:
-            self.trops_env = False
+        self.trops_env = args.env if hasattr(args, 'env') and args.env else os.getenv('TROPS_ENV', False)
 
         # Set trops_sid
-        if os.getenv('TROPS_SID'):
-            self.trops_sid = os.getenv('TROPS_SID')
-        else:
-            self.trops_sid = False
+        self.trops_sid = os.getenv('TROPS_SID', False)
 
         self.config = ConfigParser()
-        self.conf_file = self.trops_dir + '/trops.cfg'
+        self.conf_file = os.path.join(self.trops_dir, 'trops.cfg')
         if os.path.isfile(self.conf_file):
             self.config.read(self.conf_file)
 
