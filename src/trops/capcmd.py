@@ -41,7 +41,8 @@ class TropsCapCmd(Trops):
         if os.path.isfile(last_cmd):
             with open(last_cmd, mode='r') as f:
                 if time_and_cmd == f.read():
-                    self.print_header()
+                    if not self.disable_header:
+                        self.print_header()
                     exit(0)
 
         with open(last_cmd, mode='w') as f:
@@ -70,7 +71,8 @@ class TropsCapCmd(Trops):
         self._update_files(executed_cmd)
         self._add_tee_output_file(executed_cmd)
 
-        self.print_header()
+        if not self.disable_header:
+            self.print_header()
 
     def print_header(self):
         # Print -= trops|env|sid|tags =-

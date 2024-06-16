@@ -231,6 +231,8 @@ class TropsEnv:
             config[self.trops_env]['sudo'] = self.args.sudo
         if self.args.tags == '':
             config.remove_option(self.trops_env, 'tags')
+        if self.args.disable_header:
+            config[self.trops_env]['disable_header'] = self.args.disable_header
 
         with open(self.trops_conf, mode='w') as configfile:
             config.write(configfile)
@@ -369,6 +371,8 @@ def add_env_subparsers(subparsers):
         '--git-remote', help='Remote git repository')
     parser_env_update.add_argument(
         '--sudo', default='False', help='Use sudo? (default: %(default)s')
+    parser_env_update.add_argument(
+        '--disable-header', default='False', help='Disable header? (default: %(default)s')
     parser_env_update.add_argument(
         '--logfile', help='Path of log file')
     parser_env_update.add_argument(

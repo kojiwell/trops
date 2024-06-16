@@ -72,6 +72,12 @@ class Trops:
                     self.trops_logfile = absolute_path(
                         self.config[self.trops_env]['logfile'])
 
+                if 'disable_header' in self.config[self.trops_env]:
+                    self.disable_header = strtobool(
+                        self.config[self.trops_env]['disable_header'])
+                else:
+                    self.disable_header = False
+
                 if 'ignore_cmds' in self.config[self.trops_env]:
                     self.ignore_cmds = self.config[self.trops_env]['ignore_cmds'].split(
                         ',')
