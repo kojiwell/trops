@@ -21,8 +21,8 @@ It aims for solving these challenges:
 Prerequisites
 =============
 
-- OS: Linux
-- Shell: Bash or Zsh
+- OS: Linux, MacOS
+- Shell: Bash, Zsh
 - Python: 3.8 or higher
 - Git: 2.28 or higher
 
@@ -77,17 +77,16 @@ Turn on/off background tracking::
     # Turn off
     offtrops
 
-If you turn it on, every command will be logged, and editing a file will be commited to its git repo ($TROPS_DIR/repo/<env>.git). So try installing or compiling some application, and then type trops log command::
+If you turn it on, every command will be logged, and edited file will be commited to its Git repository ($TROPS_DIR/repo/<env>.git). So try getting some work done, like installing or compiling an application, and then execute `trops log` command to check the log::
 
     # Get your work done, and then check log
     trops log
 
-    # Or pass the output to Trops KouMyo(km), 
-    # which unclutters and shows log as a table
+    # You can also pass the output to Trops KouMyo(km), 
+    # which unclutters and shows log in a table
     trops log | trops km
 
-If you want to use Github or GitLab as a remote private repository, I think it is a good idea.
-You can link your Trops' bare git repository to a remote git repository by this::
+If you want to use GitHub or GitLab as a remote private repository, which is a good idea, you can link your Trops Git repository to a remote Git repository using this command::
 
     # At creation
     trops env create --git-remote=git@github.com:username/repository_name.git myenv
@@ -96,9 +95,7 @@ You can link your Trops' bare git repository to a remote git repository by this:
     ontrops myenv
     trops env update --git-remote=git@github.com:username/repository_name.git
 
-Now you can make your system operation as an issue-driven project. So create an issue on your 
-Github/GitLab Issue -- like "Install barfoo #1" -- and then set the issue number as a tag 
-on your Trops like this::
+Now, Trops should be able to make your system operation a sort of issue-driven project. You can create an issue on the GitHub/GitLab repository, such as "Install barfoo #1," and then set the issue number as a tag in Trops like this::
 
     # '#<issue number>'
     ttags '#1'
@@ -106,7 +103,7 @@ on your Trops like this::
     # repo_name#<number>
     ttags repo_name#1
 
-Once your work is done, try this::
+Once your work is done, you can save and push the log::
 
     # Save the log as a markdown table
     trops log | trops km --save
@@ -114,8 +111,7 @@ Once your work is done, try this::
     # And then, push your trops' commits to the remote repository
     trops repo push
 
-As you can see on your issue page, what you've done is linked to the issue you tagged.
-And you can find the markdown table from that page.
+As you can see on the issue page, what you've done is linked to the issue you tagged. You should also be able to find the markdown table from that page.
 
 And now, you can start working on automating what you've interactively done by using Ansible,
 Salt, Chef, Puppet, or whatever tools down the line.
