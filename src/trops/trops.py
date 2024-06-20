@@ -44,39 +44,17 @@ class Trops:
             self.config.read(self.conf_file)
 
             if self.config.has_section(self.trops_env):
-                try:
-                    self.git_dir = absolute_path(
-                        self.config[self.trops_env]['git_dir'])
-                except KeyError:
-                    print('git_dir does not exist in your configuration file')
-                    exit(1)
-                try:
-                    self.work_tree = absolute_path(
-                        self.config[self.trops_env]['work_tree'])
-                except KeyError:
-                    print('work_tree does not exist in your configuration file')
-                    exit(1)
+                self.git_dir = absolute_path(self.get_config_value('git_dir'))
+                self.work_tree = absolute_path(self.get_config_value('work_tree'))
+                self.git_cmd = ['git', f'--git-dir={self.git_dir}', f'--work-tree={self.work_tree}']
 
-                self.git_cmd = ['git', '--git-dir=' + self.git_dir,
-                                '--work-tree=' + self.work_tree]
+                self.sudo = strtobool(self.get_config_value('sudo', default='False'))
+                if self.sudo:
+                    self.git_cmd = ['sudo'] + self.git_cmd
 
-                try:
-                    self.sudo = strtobool(
-                        self.config[self.trops_env]['sudo'])
-                    if self.sudo:
-                        self.git_cmd = ['sudo'] + self.git_cmd
-                except KeyError:
-                    pass
+                self.trops_logfile = absolute_path(self.get_config_value('logfile', default=self.trops_logfile))
 
-                if 'logfile' in self.config[self.trops_env]:
-                    self.trops_logfile = absolute_path(
-                        self.config[self.trops_env]['logfile'])
-
-                if 'disable_header' in self.config[self.trops_env]:
-                    self.disable_header = strtobool(
-                        self.config[self.trops_env]['disable_header'])
-                else:
-                    self.disable_header = False
+                self.disable_header = strtobool(self.get_config_value('disable_header', default='False'))
 
                 if 'ignore_cmds' in self.config[self.trops_env]:
                     self.ignore_cmds = self.config[self.trops_env]['ignore_cmds'].split(
@@ -103,6 +81,16 @@ class Trops:
                                 level=logging.DEBUG)
             self.logger = logging.getLogger()
 
+    def get_config_value(self, key: str, default: str = None) -> str:
+        """Get a value from the configuration file."""
+        try:
+            return self.config[self.trops_env][key]
+        except KeyError:
+            if default is not None:
+                return default
+            print(f'{key} does not exist in your configuration file')
+            exit(1)
+        
     def add_and_commit_file(self, file_path) -> None:
 
         cmd = self.git_cmd + ['ls-files', file_path]
