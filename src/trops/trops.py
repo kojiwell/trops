@@ -56,30 +56,26 @@ class Trops:
 
                 self.disable_header = strtobool(self.get_config_value('disable_header', default='False'))
 
-                if 'ignore_cmds' in self.config[self.trops_env]:
-                    self.ignore_cmds = self.config[self.trops_env]['ignore_cmds'].split(
-                        ',')
-                else:
-                    self.ignore_cmds = False
+                self.ignore_cmds = self.get_config_value('ignore_cmds', default='').split(',')
 
-                if 'git_remote' in self.config[self.trops_env]:
-                    self.git_remote = self.config[self.trops_env]['git_remote']
+                self.git_remote = self.get_config_value('git_remote', default=False)
+                if self.git_remote:
                     self.glab_cmd = ['glab', '-R', self.git_remote]
 
-                if os.getenv('TROPS_TAGS'):
-                    self.trops_tags = os.getenv('TROPS_TAGS')
-                elif 'tags' in self.config[self.trops_env]:
-                    self.trops_tags = self.config[self.trops_env]['tags'].replace(
-                        ' ', '')
-                else:
-                    self.trops_tags = False
+                self.trops_tags = os.getenv('TROPS_TAGS', self.get_config_value('tags', default=False))
+                if self.trops_tags:
+                    self.trops_tags = self.trops_tags.replace(' ', '')
+
 
         if self.trops_logfile:
-            logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
-                                datefmt='%Y-%m-%d %H:%M:%S',
-                                filename=self.trops_logfile,
-                                level=logging.DEBUG)
-            self.logger = logging.getLogger()
+            self.setup_logging()
+
+    def setup_logging(self) -> None:
+        logging.basicConfig(format=f'%(asctime)s { self.username }@{ self.hostname } %(levelname)s %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S',
+                            filename=self.trops_logfile,
+                            level=logging.DEBUG)
+        self.logger = logging.getLogger()
 
     def get_config_value(self, key: str, default: str = None) -> str:
         """Get a value from the configuration file."""

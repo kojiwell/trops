@@ -48,7 +48,7 @@ class TropsCapCmd(Trops):
         with open(last_cmd, mode='w') as f:
             f.write(time_and_cmd)
 
-        if self.ignore_cmds and executed_cmd[0] in self.ignore_cmds:
+        if executed_cmd[0] in self.ignore_cmds:
             self.print_header()
             exit(0)
 
