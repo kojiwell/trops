@@ -43,6 +43,18 @@ def trops_show(args, other_args):
     tr.show()
 
 
+def trops_branch(args, other_args):
+
+    tr = TropsMain(args, other_args)
+    tr.branch()
+
+
+def trops_fetch(args, other_args):
+
+    tr = TropsMain(args, other_args)
+    tr.fetch()
+
+
 def trops_log(args, other_args):
 
     tr = TropsMain(args, other_args)
@@ -84,6 +96,19 @@ def add_show_subparsers(subparsers):
     parser_show.add_argument('-e', '--env', help="environment name")
     parser_show.add_argument('commit', help='Set commit[:path]')
     parser_show.set_defaults(handler=trops_show)
+
+def add_branch_subparsers(subparsers):
+
+    parser_branch = subparsers.add_parser(
+        'branch', help='trops branch')
+    parser_branch.set_defaults(handler=trops_branch)
+
+
+def add_fetch_subparsers(subparsers):
+
+    parser_fetch = subparsers.add_parser(
+        'fetch', help='trops fetch')
+    parser_fetch.set_defaults(handler=trops_fetch)
 
 
 def add_ll_subparsers(subparsers):
@@ -137,10 +162,12 @@ def main():
                         version=f'%(prog)s {__version__}')
 
     for func in [
+        'branch',
         'capture_cmd',
         'check',
         'drop',
         'env',
+        'fetch',
         'file',
         'gensid',
         'git',

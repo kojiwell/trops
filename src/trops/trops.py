@@ -180,6 +180,18 @@ class TropsMain(Trops):
         cmd = self.git_cmd + ['show', self.args.commit]
         subprocess.call(cmd)
 
+    def branch(self) -> None:
+        """trops branch"""
+
+        cmd = self.git_cmd + ['branch', '-a']
+        subprocess.call(cmd)
+
+    def fetch(self) -> None:
+        """trops fetch"""
+
+        cmd = self.git_cmd + ['fetch', '-a']
+        subprocess.call(cmd)
+
     def touch(self) -> None:
 
         for file_path in self.args.paths:
