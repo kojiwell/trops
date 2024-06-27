@@ -7,7 +7,7 @@ from random import randint
 
 
 def strtobool(value):
-
+    """Converts a string representation of truth to True or False"""
     _MAP = {
         'y': True,
         'yes': True,
@@ -26,27 +26,37 @@ def strtobool(value):
     try:
         return _MAP[str(value).lower()]
     except KeyError:
-        raise ValueError('"{}" is not a valid bool value'.format(value))
+        raise ValueError(f'"{value}" is not a valid bool value')
 
-def absolute_path(dir_path):
-    """Return absolute path"""
-    return os.path.abspath(os.path.expanduser(os.path.expandvars(dir_path)))
-
+def absolute_path(dir_path: str) -> str:
+    """Returns absolute path"""
+    if not dir_path:
+        raise ValueError("The directory path cannot be None or an empty string.")
+    
+    try:
+        return os.path.abspath(os.path.expanduser(os.path.expandvars(dir_path)))
+    except Exception as e:
+        raise ValueError(f"Error resolving path: {e}")
 
 def yes_or_no(question):
-    """Prompt for yes/no question"""
+    """Prompts for a yes/no question and return True for yes and False for no"""
     while True:
         reply = str(input(question+' (y/n): ')).lower().strip()
         if reply in ['y', 'yes']:
             return True
-        if reply in ['n', 'no']:
+        elif reply in ['n', 'no']:
             return False
+        else:
+            print("Please answer with 'y' or 'n'.")
+            exit(1)
 
-def pick_out_repo_name_from_git_remote(git_remote):
-    # git@github.com:<user>/<repo_name>.git -> <repo_name>.git
-    _ = git_remote.split('/')[-1]
-    # <repo_name>.git -> <repo_name>
-    return '.'.join(_.split('.')[0:-1])
+def pick_out_repo_name_from_git_remote(git_remote: str) -> str:
+    """Extracts the repository name from a git remote URL"""
+    # Extract the last part after '/' which includes <repo_name>.git
+    repo_with_suffix = git_remote.split('/')[-1]
+    # Remove the '.git' suffix to get the repository name
+    repo_name = repo_with_suffix[:-4] if repo_with_suffix.endswith('.git') else repo_with_suffix
+    return repo_name
 
 def generate_sid(args, other_args):
     """Generate a session ID"""
