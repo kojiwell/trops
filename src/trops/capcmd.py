@@ -15,27 +15,21 @@ class TropsCapCmd(Trops):
         super().__init__(args, other_args)
 
         # Start setting the header
-        self.trops_header = ['trops']
-        if self.trops_env:
-            self.trops_header.append(self.trops_env)
-
-        if self.trops_sid:
-            self.trops_header.append(self.trops_sid)
-
-        if self.trops_tags:
-            self.trops_header.append(self.trops_tags)
+        attributes = ['trops_env', 'trops_sid', 'trops_tags']
+        self.trops_header = ['trops'] + [getattr(self, attr) for attr in attributes if getattr(self, attr, None)]
 
     def capture_cmd(self):
-        """Caputure the command"""
+        """Capture the command"""
 
         rc = self.args.return_code
-
         now = datetime.now().strftime("%H-%M")
         executed_cmd = self.other_args
         time_and_cmd = f"{now} {' '.join(executed_cmd)}"
+
         # Create trops_dir/tmp directory
         tmp_dir = os.path.join(self.trops_dir, 'tmp')
         os.makedirs(tmp_dir, exist_ok=True)
+
         # Compare the executed_cmd if last_cmd exists
         last_cmd = os.path.join(tmp_dir, 'last_cmd')
         if os.path.isfile(last_cmd):
@@ -155,7 +149,7 @@ class TropsCapCmd(Trops):
                             mode = oct(os.stat(ii_path).st_mode)[-4:]
                             owner = Path(ii_path).owner()
                             group = Path(ii_path).group()
-                            message = f"FL trops show -e { self.trops_env } { output[0] }:{ absolute_path(ii_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }"
+                            message = f"FL trops show { output[0] }:{ absolute_path(ii_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }"
                             if self.trops_sid:
                                 message = f"{ message } TROPS_SID={ self.trops_sid }"
                             message = f"{ message } TROPS_ENV={ self.trops_env }"

@@ -251,7 +251,7 @@ class TropsEnv:
 
     def show(self):
 
-        print('ENV')
+        print('ENV:')
         # Environment variables
         print_env_or_config('TROPS_DIR', os.getenv('TROPS_DIR'))
         trops_env = os.getenv('TROPS_ENV', 'default')
@@ -262,7 +262,7 @@ class TropsEnv:
         # Configuration options
         config = ConfigParser()
         config.read(self.trops_conf)
-        print('Git')
+        print('Config:')
         git_options = ['git_dir', 'work_tree', 'git_remote', 'logfile', 'sudo', 'tags']
         for option in git_options:
             value = config.get(trops_env, option) if config.has_option(trops_env, option) else None
