@@ -5,6 +5,9 @@ Changelog
 `Unreleased`_
 =============
 
+`v0.2.25`_ - 2024-07-01
+=======================
+
 `v0.2.24`_ - 2024-06-16
 =======================
 
@@ -26,7 +29,8 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.24...develop
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.25...develop
+.. _v0.2.25: https://github.com/kojiwell/trops/compare/v0.2.24...v0.2.25
 .. _v0.2.24: https://github.com/kojiwell/trops/compare/v0.2.23...v0.2.24
 .. _v0.2.23: https://github.com/kojiwell/trops/compare/v0.2.22...v0.2.23
 .. _v0.2.22: https://github.com/kojiwell/trops/compare/v0.2.21...v0.2.22
