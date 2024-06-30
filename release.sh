@@ -15,4 +15,6 @@ sed -i "s/^version =.*/version = '$1'/" pyproject.toml
 
 python3 setup.py sdist
 python3 setup.py bdist_wheel
-#twine upload --repository pypi dist/trops-${1}.tar.gz
+
+echo "Execute the twine upload where you have access to the pypi repository."
+echo  > twine upload --repository pypi dist/trops-${1}.tar.gz
