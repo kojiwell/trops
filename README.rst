@@ -34,9 +34,9 @@ Ubuntu::
     sudo apt install pipx git
     pipx install trops
 
-Rocky 8/9::
+Rocky::
 
-    sudo dnf install epel-release git # for Rocky 8
+    sudo dnf install epel-release git
     sudo dnf install python3.12-pip
     pip3.12 install --user pipx
     pipx install trops
