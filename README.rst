@@ -31,13 +31,15 @@ Installation
 
 Ubuntu::
 
-    sudo apt install python3 python3-pip git
-    sudo pip3.11 install trops
+    sudo apt install pipx git
+    pipx install trops
 
-Rocky::
+Rocky 8/9::
 
-    sudo dnf install python3.11 python3.11-pip git
-    sudo pip3.11 install trops
+    sudo dnf install epel-release git # for Rocky 8
+    sudo dnf install python3.12-pip
+    pip3.12 install --user pipx
+    pipx install trops
 
 Miniconda::
 
