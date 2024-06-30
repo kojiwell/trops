@@ -252,41 +252,28 @@ class TropsEnv:
     def show(self):
 
         print('ENV')
-        try:
-            print(f"  {'TROPS_DIR '.ljust(11)} = {os.getenv('TROPS_DIR')}")
-        except KeyError:
-            print(f"  {'TROPS_DIR '.ljust(11)} = None")
-            exit(1)
-        try:
-            print(f"  {'TROPS_ENV'.ljust(11)} = {os.environ['TROPS_ENV']}")
-            trops_env = os.environ['TROPS_ENV']
-        except KeyError:
-            print(f"  {'TROPS_ENV'.ljust(11)} = None")
-            trops_env = 'default'
-        try:
-            print(f"  {'TROPS_SID'.ljust(11)} = {os.environ['TROPS_SID']}")
-        except KeyError:
-            print(f"  {'TROPS_SID'.ljust(11)} = None")
+        # Environment variables
+        print_env_or_config('TROPS_DIR', os.getenv('TROPS_DIR'))
+        trops_env = os.getenv('TROPS_ENV', 'default')
+        print_env_or_config('TROPS_ENV', trops_env)
+        print_env_or_config('TROPS_SID', os.getenv('TROPS_SID'))
+        print_env_or_config('TROPS_TAGS', os.getenv('TROPS_TAGS'))
 
-        if os.getenv('TROPS_TAGS'):
-            print(f"  {'TROPS_TAGS'.ljust(11)} = { os.getenv('TROPS_TAGS') }")
-
+        # Configuration options
         config = ConfigParser()
         config.read(self.trops_conf)
         print('Git')
-        if config.has_option(trops_env, 'git_dir'):
-            print(f"  {'git-dir'.ljust(11)} = { config.get(trops_env, 'git_dir') }")
-        if config.has_option(trops_env, 'work_tree'):
-            print(
-                f"  {'work-tree'.ljust(11)} = { config.get(trops_env, 'work_tree') }")
-        if config.has_option(trops_env, 'git_remote'):
-            print(
-                f"  {'git-remote'.ljust(11)} = { config.get(trops_env, 'git_remote') }")
-        if config.has_option(trops_env, 'logfile'):
-            print(f"  {'logfile'.ljust(11)} = { config.get(trops_env, 'logfile') }")
-        else:
-            print(f"  {'logfile'.ljust(11)} = $TROPS_DIR/log/trops.log")
+        git_options = ['git_dir', 'work_tree', 'git_remote', 'logfile', 'sudo', 'tags']
+        for option in git_options:
+            value = config.get(trops_env, option) if config.has_option(trops_env, option) else None
+            if option == 'logfile' and value is None:
+                value = f"$TROPS_DIR/log/trops.log"
+            print_env_or_config(option.replace('_', '-'), value)
 
+
+def print_env_or_config(label, value, default='None'):
+    """Helper function to print environment variables and configuration options."""
+    print(f"  {label.ljust(11)} = {value if value is not None else default}")
 
 def env_create(args, other_args):
     """Setup trops project"""
