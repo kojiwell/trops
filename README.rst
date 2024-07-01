@@ -10,7 +10,7 @@ Trops
    :target: LICENSE
    :alt: Repository License
 
-Trops is a command-line tool designed for tracking system operations on destributed Linux systems. It keeps a log of executed commands and modified files, being helpful for developing Ansible roles, Dockerfiles, and similar tasks.
+Trops is a command-line tool designed for tracking system operations on destributed Linux systems. It keeps a log of executed commands and modified files, being helpful for developing Ansible roles, Dockerfiles, and similar tasks. It is portable and easy to use, and it can be used in a variety of environments, such as local, remote, and containerized environments. You can put your log on a Git repository, and you can also link your log to an issue on GitHub or GitLab.
 
 It aims for solving these challenges:
 
@@ -57,7 +57,7 @@ Miniconda::
     cd $HOME/bin
     ln -s ../miniconda3/bin/git git
     ln -s ../miniconda3/bin/trops trops
-    export PATH=$HOME/bin:$PATH # Add this line to your .bashrc
+    export PATH=$HOME/bin:$PATH # Add this line in your .bashrc
 
 Quickstart
 ==========
@@ -76,15 +76,15 @@ Create a trops environment(e.g. myenv)::
 
     trops env create myenv
 
-Turn on/off background tracking::
+Activate or deactivate background tracking::
 
-    # Turn on
+    # Activate
     ontrops myenv
 
-    # Turn off
+    # Deactivate
     offtrops
 
-If you turn it on, every command will be logged, and edited file will be commited to its Git repository ($TROPS_DIR/repo/<env>.git). So try getting some work done, like installing or compiling an application, and then execute `trops log` command to check the log::
+When activated, every command is logged in a log file located at $TROPS_DIR/log/trops.log, and any modified file is committed to its designated Git repository ($TROPS_DIR/repo/<env>.git). To see this in action, perform tasks such as installing or compiling an application, and then use the trops log command to review the log::
 
     # Get your work done, and then check log
     trops log
@@ -102,7 +102,7 @@ If you want to use GitHub or GitLab as a remote private repository, which is a g
     ontrops myenv
     trops env update --git-remote=git@github.com:username/repository_name.git
 
-Now, Trops should be able to make your system operation a sort of issue-driven project. You can create an issue on the GitHub/GitLab repository, such as "Install barfoo #1," and then set the issue number as a tag in Trops like this::
+Trops now transforms your system operations into an issue-driven project. Create an issue on the GitHub/GitLab repository, for example, "Install foobar #1," and then set the issue number as a tag in Trops like this::
 
     # '#<issue number>'
     ttags '#1'
@@ -118,14 +118,11 @@ Once your work is done, you can save and push the log::
     # And then, push your trops' commits to the remote repository
     trops repo push
 
-As you can see on the issue page, what you've done is linked to the issue you tagged. You should also be able to find the markdown table from that page.
+On the issue page, you can find the log in a markdown table format, which is useful for reviewing and sharing your work with your team members.
 
-And now, you can start working on automating what you've interactively done by using Ansible,
-Salt, Chef, Puppet, or whatever tools down the line.
+Now, you can update the tasks and recipes in your Ansible roles, Dockerfiles, and so on, based on the log. You can also use the log as a reference for troubleshooting.
 
-So, Trops helps you easily try new things, and you don't have to worry about forgetting what
-you've done. And then, once you've got used to it, it will actually help you organize your 
-day-to-day multitasking, which is probably something that a lot of system admins cannot avoid.
+Trops helps you easily try new things, and you don't have to worry about forgetting what you've done. And then, once you've got used to it, it will actually help you organize your day-to-day multitasking, which is probably something that a lot of system admins cannot avoid.
 
 Contributing
 ============
