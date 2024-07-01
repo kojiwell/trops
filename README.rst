@@ -10,7 +10,7 @@ Trops
    :target: LICENSE
    :alt: Repository License
 
-Trops is a command-line tool designed for tracking system operations on destributed Linux systems. It keeps a log of executed commands and modified files, being helpful for developing Ansible roles, Dockerfiles, and similar tasks. It is portable and easy to use, and it can be used in a variety of environments, such as local, remote, and containerized environments. You can put your log on a Git repository, and you can also link your log to an issue on GitHub or GitLab.
+Trops is a command-line tool designed for tracking system operations on destributed Linux systems. It keeps a log of executed commands and modified files, being helpful for developing Ansible roles, Dockerfiles, and similar tasks. It is portable and easy to use, and it can be used in a variety of environments, such as local, remote, and containerized environments. You can store your log on a private, internal Git repository (not public) and link it to issues in tools such as GitLab and Redmine.
 
 It aims for solving these challenges:
 
