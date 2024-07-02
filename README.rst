@@ -96,11 +96,11 @@ When activated, every command is logged in a log file located at $TROPS_DIR/log/
 If you use tools such as GitLab and Redmine as an internal, remote, private repository for your Trops, you can set it by `--git-remote` option like this::
 
     # At creation
-    trops env create --git-remote=git@github.com:username/repository_name.git myenv
+    trops env create --git-remote=git@gitlab.example.local:username/repository_name.git myenv
 
     # or update
     ontrops myenv
-    trops env update --git-remote=git@github.com:username/repository_name.git
+    trops env update --git-remote=git@gitlab.example.local:username/repository_name.git
 
 Trops now transforms your system operations into an issue-driven project. Create an issue on the GitHub/GitLab repository, for example, "Install foobar #1," and then set the issue number as a tag in Trops like this::
 
