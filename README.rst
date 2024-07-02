@@ -93,7 +93,7 @@ When activated, every command is logged in a log file located at $TROPS_DIR/log/
     # which unclutters and shows log in a table
     trops log | trops km
 
-If you want to use GitHub or GitLab as a remote private repository, which is a good idea, you can link your Trops Git repository to a remote Git repository using this command::
+If you use tools such as GitLab and Redmine as an internal, remote, private repository for your Trops, you can set it by `--git-remote` option like this::
 
     # At creation
     trops env create --git-remote=git@github.com:username/repository_name.git myenv
