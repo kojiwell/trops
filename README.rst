@@ -102,7 +102,7 @@ If you use tools such as GitLab and Redmine as an internal, remote, private repo
     ontrops myenv
     trops env update --git-remote=git@gitlab.example.local:username/repository_name.git
 
-Trops now transforms your system operations into an issue-driven project. Create an issue on the GitHub/GitLab repository, for example, "Install foobar #1," and then set the issue number as a tag in Trops like this::
+Trops now transforms your system operations into an issue-driven project. Create an issue on your private repository, for example, "Install foobar #1," and then set the issue number as a tag in Trops like this::
 
     # '#<issue number>'
     ttags '#1'
