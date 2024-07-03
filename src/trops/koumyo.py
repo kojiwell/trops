@@ -81,7 +81,8 @@ class TropsKoumyo(TropsMain):
             'echo',
             'sl',
             'cd',
-            'history'
+            'history',
+            'ttags'
         ]:
             return True
         # These trops commands should be ignored
@@ -109,8 +110,8 @@ class TropsKoumyo(TropsMain):
                         self._ignore_cmd(self._split_pipe_in_cmd(splitted_cmd)):
                     continue
                 if self.args.markdown or self.args.save:
-                    formatted_log.append(
-                        ' '.join(splitted_log[cmd_start_idx:cmd_end_idx]).replace('|', '\|'))
+                    command_text = ' '.join(splitted_log[cmd_start_idx:cmd_end_idx])
+                    formatted_log.append(escape_special_characters(command_text))
                 else:
                     formatted_log.append(
                         ' '.join(splitted_log[cmd_start_idx:cmd_end_idx]))
@@ -248,6 +249,9 @@ class TropsKoumyo(TropsMain):
 
         self._format()
 
+def escape_special_characters(text):
+    """Escape special characters for Markdown."""
+    return text.replace('|', r'\|').replace('$', r'\$')
 
 def run(args, other_args):
 
