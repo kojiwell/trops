@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 
 from datetime import datetime
 from pathlib import Path
@@ -19,32 +20,33 @@ class TropsCapCmd(Trops):
         self.trops_header = ['trops'] + [getattr(self, attr) for attr in attributes if getattr(self, attr, None)]
 
     def capture_cmd(self):
-        """Capture the command"""
+        """Capture and log the executed command"""
 
         rc = self.args.return_code
         now = datetime.now().strftime("%H-%M")
         executed_cmd = self.other_args
         time_and_cmd = f"{now} {' '.join(executed_cmd)}"
 
-        # Create trops_dir/tmp directory
+        # Ensure tmp directory exists
         tmp_dir = os.path.join(self.trops_dir, 'tmp')
         os.makedirs(tmp_dir, exist_ok=True)
 
-        # Compare the executed_cmd if last_cmd exists
-        last_cmd = os.path.join(tmp_dir, 'last_cmd')
-        if os.path.isfile(last_cmd):
-            with open(last_cmd, mode='r') as f:
-                if time_and_cmd == f.read():
-                    if not self.disable_header:
-                        self.print_header()
-                    exit(0)
+        # Path to the file storing the last executed command
+        last_cmd_path = os.path.join(tmp_dir, 'last_cmd')
 
-        with open(last_cmd, mode='w') as f:
-            f.write(time_and_cmd)
+        # Check if the current command matches the last executed command
+        if self._is_repeat_command(last_cmd_path, time_and_cmd):
+            if not self.disable_header:
+                self.print_header()
+            sys.exit(0)
 
+        # Save the current command as the last executed command
+        self._save_last_command(last_cmd_path, time_and_cmd)
+
+        # Skip logging if the command is in the ignore list
         if executed_cmd[0] in self.ignore_cmds:
             self.print_header()
-            exit(0)
+            sys.exit(0)
 
         message_parts = [
             f"CM {' '.join(executed_cmd)} #> PWD={os.getenv('PWD')}",
@@ -67,6 +69,18 @@ class TropsCapCmd(Trops):
 
         if not self.disable_header:
             self.print_header()
+
+    def _is_repeat_command(self, last_cmd_path, time_and_cmd):
+        """Check if the current command is a repeat of the last command"""
+        if os.path.isfile(last_cmd_path):
+            with open(last_cmd_path, 'r') as f:
+                return time_and_cmd == f.read()
+        return False
+
+    def _save_last_command(self, last_cmd_path, time_and_cmd):
+        """Save the current command as the last executed command"""
+        with open(last_cmd_path, 'w') as f:
+            f.write(time_and_cmd)
 
     def print_header(self):
         # Print -= trops|env|sid|tags =-
@@ -112,54 +126,68 @@ class TropsCapCmd(Trops):
 
     def _add_file_in_git_repo(self, executed_cmd, n):
 
-            for ii in executed_cmd[n:]:
-                ii_path = absolute_path(ii)
-                if os.path.isfile(ii_path):
+            for file_arg in executed_cmd[n:]:
+                file_path = absolute_path(file_arg)
+                if os.path.isfile(file_path):
                     # Ignore the file if it is under a git repository
-                    if file_is_in_a_git_repo(ii_path):
+                    if file_is_in_a_git_repo(file_path):
                         self.logger.info(
-                            f"FL { ii_path } is under a git repository #> PWD=*, EXIT=*, TROPS_SID={ self.trops_sid }, TROPS_ENV={ self.trops_env }")
-                        exit(0)
-                    # Check if the path is in the git repo
-                    cmd = self.git_cmd + ['ls-files', ii_path]
-                    result = subprocess.run(cmd, capture_output=True)
-                    # Set the message based on the output
-                    if result.stdout.decode("utf-8"):
-                        git_msg = f"Update { ii_path }"
-                        log_note = 'UPDATE'
-                    else:
-                        git_msg = f"Add { ii_path }"
-                        log_note = 'ADD'
-                    if self.trops_tags:
-                        git_msg = f"{ git_msg } ({ self.trops_tags })"
-                    # Add the file and commit
-                    cmd = self.git_cmd + ['add', ii_path]
-                    result = subprocess.run(cmd, capture_output=True)
-                    cmd = self.git_cmd + ['commit', '-m', git_msg, ii_path]
-                    result = subprocess.run(cmd, capture_output=True)
+                            f"FL { file_path } is under a git repository #> PWD=*, EXIT=*, TROPS_SID={ self.trops_sid }, TROPS_ENV={ self.trops_env }")
+                        sys.exit(0)
+                    git_msg, log_note = self._generate_git_msg_and_log_note(file_path)
+                    result = self._add_and_commit_file(file_path, git_msg)
                     # If there's an update, log it in the log file
                     if result.returncode == 0:
                         msg = result.stdout.decode('utf-8').splitlines()[0]
                         print(msg)
-                        cmd = self.git_cmd + \
-                            ['log', '--oneline', '-1', ii_path]
-                        output = subprocess.check_output(
-                            cmd).decode("utf-8").split()
-                        if ii_path in output:
-                            mode = oct(os.stat(ii_path).st_mode)[-4:]
-                            owner = Path(ii_path).owner()
-                            group = Path(ii_path).group()
-                            message = f"FL trops show { output[0] }:{ absolute_path(ii_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }"
-                            if self.trops_sid:
-                                message = f"{ message } TROPS_SID={ self.trops_sid }"
-                            message = f"{ message } TROPS_ENV={ self.trops_env }"
-                            if self.trops_tags:
-                                message = message + \
-                                    f" TROPS_TAGS={self.trops_tags}"
-
-                            self.logger.info(message)
+                        self._add_file_log(file_path, log_note)
                     else:
                         print('No update')
+
+    def _add_file_log(self, file_path, log_note):
+        """Add an FL log entry"""
+        cmd = self.git_cmd + \
+            ['log', '--oneline', '-1', file_path]
+        output = subprocess.check_output(
+            cmd).decode("utf-8").split()
+        if file_path in output:
+            mode = oct(os.stat(file_path).st_mode)[-4:]
+            owner = Path(file_path).owner()
+            group = Path(file_path).group()
+            message = f"FL trops show { output[0] }:{ absolute_path(file_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }"
+            if self.trops_sid:
+                message += f" TROPS_SID={ self.trops_sid }"
+            message += f" TROPS_ENV={ self.trops_env }"
+            if self.trops_tags:
+                message += f" TROPS_TAGS={self.trops_tags}"
+
+            self.logger.info(message)
+
+    def _add_and_commit_file(self, file_path, git_msg):
+        """Add a file in the git repo"""
+        # Add the file and commit
+        cmd = self.git_cmd + ['add', file_path]
+        _ = subprocess.run(cmd, capture_output=True)
+        cmd = self.git_cmd + ['commit', '-m', git_msg, file_path]
+        
+        return subprocess.run(cmd, capture_output=True)
+
+    def _generate_git_msg_and_log_note(self, file_path):
+        """Generate the git commit message and log note"""
+        # Check if the path is in the git repo
+        cmd = self.git_cmd + ['ls-files', file_path]
+        result = subprocess.run(cmd, capture_output=True)
+        # Set the message based on the output
+        if result.stdout.decode("utf-8"):
+            git_msg = f"Update { file_path }"
+            log_note = 'UPDATE'
+        else:
+            git_msg = f"Add { file_path }"
+            log_note = 'ADD'
+        if self.trops_tags:
+            git_msg = f"{ git_msg } ({ self.trops_tags })"
+
+        return git_msg, log_note
 
     def _update_files(self, executed_cmd):
         """Add a file or directory in the git repo"""

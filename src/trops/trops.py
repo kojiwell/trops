@@ -18,26 +18,23 @@ class Trops:
     def __init__(self, args: Any, other_args: List[str]) -> None:
         """Initialize the Trops class"""
 
-        # Make args sharable among functions
+        # Initialize basic attributes
         self.args = args
         self.other_args = other_args
-        # Set username and hostname
         self.username = getuser()
         self.hostname = gethostname().split('.')[0]
-        # Set trops_dir
-        self.trops_dir = absolute_path(os.getenv('TROPS_DIR'))
 
-        # Create the log directory
+        # Set directories and files
+        self.trops_dir = absolute_path(os.getenv('TROPS_DIR'))
         self.trops_log_dir = os.path.join(self.trops_dir, 'log')
         self.trops_logfile = os.path.join(self.trops_log_dir, 'trops.log')
         os.makedirs(self.trops_log_dir, exist_ok=True)
 
-        # Set trops_env
+        # Environment and session ID
         self.trops_env = args.env if hasattr(args, 'env') and args.env else os.getenv('TROPS_ENV', False)
-
-        # Set trops_sid
         self.trops_sid = os.getenv('TROPS_SID', False)
 
+        # Configuration handling
         self.config = ConfigParser()
         self.conf_file = os.path.join(self.trops_dir, 'trops.cfg')
         if os.path.isfile(self.conf_file):
@@ -56,7 +53,7 @@ class Trops:
 
                 self.disable_header = strtobool(self.get_config_value('disable_header', default='False'))
 
-                self.ignore_cmds = self.get_config_value('ignore_cmds', default='').split(',')
+                self.ignore_cmds = [item.strip() for item in self.get_config_value('ignore_cmds', default='ttags').split(',')]
 
                 self.git_remote = self.get_config_value('git_remote', default=False)
                 if self.git_remote:
