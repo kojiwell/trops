@@ -24,7 +24,13 @@ class TropsCapCmd(Trops):
 
         rc = self.args.return_code
         now = datetime.now().strftime("%H-%M")
-        executed_cmd = self.other_args
+
+        if self.other_args == []:
+            self.print_header()
+            sys.exit(0)
+        else:
+            executed_cmd = self.other_args
+
         time_and_cmd = f"{now} {' '.join(executed_cmd)}"
 
         # Ensure tmp directory exists
