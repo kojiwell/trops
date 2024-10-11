@@ -46,17 +46,16 @@ MacOS::
     brew install pipx git
     pipx install trops
 
-Miniconda::
+Conda-forge::
 
-    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    chmod +x Miniconda3-latest-Linux-x86_64.sh
-    ./Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda3
-    $HOME//miniconda3/bin/conda install git
-    $HOME/miniconda3/bin/pip install trops
+    wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+    bash Miniforge3-Linux-x86_64.sh -b -p $HOME/miniforge3
+    $HOME/miniforge3/bin/conda install git
+    $HOME/miniforge3/bin/pip install trops
     mkdir $HOME/bin
     cd $HOME/bin
-    ln -s ../miniconda3/bin/git git
-    ln -s ../miniconda3/bin/trops trops
+    ln -s ../miniforge3/bin/git git
+    ln -s ../miniforge3/bin/trops trops
     export PATH=$HOME/bin:$PATH # Add this line in your .bashrc
 
 Quickstart
