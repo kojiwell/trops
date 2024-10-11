@@ -48,10 +48,6 @@ class TropsInit(Trops):
                 tmux rename-window "$TROPS_TAGS"
             fi
             }}
-
-            alias teetrops="tee $TROPS_DIR/log/tee.log"
-            alias teetropsadd="tee -a $TROPS_DIR/log/tee.log"
-            alias teetropscat="cat $TROPS_DIR/log/tee.log"
             """
 
         return dedent(zsh_lines)
@@ -88,10 +84,6 @@ class TropsInit(Trops):
                 tmux rename-window "$TROPS_TAGS"
             fi
             }}
-
-            alias teetrops="tee $TROPS_DIR/log/tee.log"
-            alias teetropsadd="tee -a $TROPS_DIR/log/tee.log"
-            alias teetropscat="cat $TROPS_DIR/log/tee.log"
             """
 
         return dedent(bash_lines)
