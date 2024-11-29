@@ -1,8 +1,6 @@
 import os
 import sys
 
-from .utils import yes_or_no
-
 # Check Python version
 required_python_version = (3, 8)
 if sys.version_info < required_python_version:
