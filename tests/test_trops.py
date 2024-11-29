@@ -5,7 +5,7 @@ import pytest
 from unittest.mock import patch
 
 from trops.trops import Trops, TropsMain
-from trops.init import TropsInit, add_init_subparsers
+from trops.init import add_init_subparsers
 
 
 @pytest.fixture
