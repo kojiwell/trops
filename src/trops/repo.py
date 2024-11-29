@@ -100,17 +100,23 @@ def add_repo_subparsers(subparsers):
     # trops repo
     parser_repo = subparsers.add_parser(
         'repo', help='track file operations')
-    parser_repo.add_argument(
-        '-e', '--env', help='Set environment name')
+    #parser_repo.add_argument(
+    #    '-e', '--env', help='Set environment name')
     repo_subparsers = parser_repo.add_subparsers()
     # trops repo push
     parser_repo_push = repo_subparsers.add_parser(
         'push', help='push repo')
+    parser_repo_push.add_argument(
+        'env', default=os.getenv('TROPS_ENV'), nargs='?', help='Set environment name (default: %(default)s)')
     parser_repo_push.set_defaults(handler=repo_push)
+    ###############################################
     # trops repo pull
-    parser_repo_pull = repo_subparsers.add_parser(
-        'pull', help='pull repo')
-    parser_repo_pull.set_defaults(handler=repo_pull)
+    # TODO: Reconsider if pull is really needed. 
+    #       trops fetch is probably good enough. 
+    #parser_repo_pull = repo_subparsers.add_parser(
+    #    'pull', help='pull repo')
+    #parser_repo_pull.set_defaults(handler=repo_pull)
+    ###############################################
     # trops file push
     parser_repo_clone = repo_subparsers.add_parser(
         'clone', help='clone repo')
