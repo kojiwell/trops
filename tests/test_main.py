@@ -115,6 +115,30 @@ class TestMainFunction:
         # Verify that the gensid handler was called
         mock_handle_gensid.assert_called_once()
 
+    def test_main_version_short_flag(self, capsys):
+        """Test main() with -v flag shows version."""
+        with patch.object(sys, 'argv', ['main.py', '-v']):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            # argparse exits with 0 for version
+            assert exc_info.value.code == 0
+
+        captured = capsys.readouterr()
+        output = captured.out
+        assert "trops 0.3.1" in output
+
+    def test_main_version_long_flag(self, capsys):
+        """Test main() with --version flag shows version."""
+        with patch.object(sys, 'argv', ['main.py', '--version']):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            # argparse exits with 0 for version
+            assert exc_info.value.code == 0
+
+        captured = capsys.readouterr()
+        output = captured.out
+        assert "trops 0.3.1" in output
+
 
 class TestCLIParser:
     """Test cases for the CLI parser setup."""
@@ -172,6 +196,10 @@ class TestCLIParser:
         assert "Capture command execution" in help_output
         assert "Initialize trops for a specific shell" in help_output
         assert "Generate a session ID" in help_output
+        
+        # Check for version flag
+        assert "-v, --version" in help_output
+        assert "show program's version number and exit" in help_output
 
     def test_subcommand_help(self, capsys):
         """Test help for individual subcommands."""

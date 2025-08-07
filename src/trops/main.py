@@ -4,6 +4,7 @@ Main module for the project.
 import argparse
 import sys
 
+from trops import __version__
 from trops.capcmd import add_capcmd_parser
 from trops.initialize import add_init_parser
 from trops.utils import add_gensid_parser
@@ -29,6 +30,11 @@ def main() -> None:
         sys.argv.append("--help")
 
     parser = argparse.ArgumentParser(description="Trops command-line tool")
+    parser.add_argument(
+        "-v", "--version",
+        action="version",
+        version=f"trops {__version__}"
+    )
     subparsers = parser.add_subparsers(dest="command", help="Available commands", required=True)
 
     # Hello command
