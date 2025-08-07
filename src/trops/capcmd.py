@@ -17,7 +17,15 @@ def process_command(exit_code: int, executed_command: list) -> str:
     Returns:
         The processed command information.
     """
+    # Join the command parts and clean up line continuation characters
     command_str = " ".join(executed_command)
+    # Remove various forms of line continuation characters (but preserve other backslashes)
+    command_str = command_str.replace('\\\n', '')  # backslash-newline (remove completely)
+    command_str = command_str.replace('\\\r\n', '')  # backslash-carriage return-newline
+    command_str = command_str.replace('\\n', '')  # escaped newline representation
+    command_str = command_str.replace('\n', ' ')  # actual newline (replace with space)
+    # Clean up any extra whitespace
+    command_str = ' '.join(command_str.split())
     return f"Command executed: {command_str} (exit code: {exit_code})"
 
 
