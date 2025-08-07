@@ -67,7 +67,7 @@ def add_capcmd_parser(subparsers: argparse._SubParsersAction) -> None:
     )
     capcmd_parser.add_argument(
         "executed_command",
-        nargs="+",
-        help="The command that was executed (one or more arguments)",
+        nargs=argparse.REMAINDER,
+        help="The command that was executed (all remaining arguments)",
     )
     capcmd_parser.set_defaults(func=handle_capcmd) 
