@@ -6,6 +6,7 @@ import sys
 
 from trops.capcmd import add_capcmd_parser
 from trops.initialize import add_init_parser
+from trops.utils import add_gensid_parser
 
 
 def hello(name: str = "World") -> str:
@@ -45,6 +46,9 @@ def main() -> None:
 
     # Add init subcommand
     add_init_parser(subparsers)
+
+    # Add gensid subcommand
+    add_gensid_parser(subparsers)
 
     args = parser.parse_args()
     args.func(args)
