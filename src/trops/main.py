@@ -4,7 +4,7 @@ Main module for the project.
 import argparse
 import sys
 
-from trops3.capcmd import add_capcmd_parser
+from trops.capcmd import add_capcmd_parser
 
 
 def hello(name: str = "World") -> str:
@@ -26,7 +26,7 @@ def main() -> None:
     if len(sys.argv) == 1:
         sys.argv.append("--help")
 
-    parser = argparse.ArgumentParser(description="Trops3 command-line tool")
+    parser = argparse.ArgumentParser(description="Trops command-line tool")
     subparsers = parser.add_subparsers(dest="command", help="Available commands", required=True)
 
     # Hello command

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="trops3",
+    name="trops",
     version="0.1.0",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
@@ -18,7 +18,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "trops=trops3.main:main",
+            "trops=trops.main:main",
         ],
     },
 ) 

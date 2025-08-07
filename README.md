@@ -1,6 +1,6 @@
-# Trops3
+# Trops
 
-Trops3 is a command line tool that allows 
+Trops is a command line tool that allows 
 
 ## Setup
 
@@ -30,7 +30,7 @@ pip install -r requirements.txt
 ├── README.md
 ├── requirements.txt
 ├── src/
-│   └── trops3/
+│   └── trops/
 │       ├── __init__.py
 │       └── main.py
 └── tests/

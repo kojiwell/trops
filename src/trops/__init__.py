@@ -1,5 +1,5 @@
 """
-Trops3 package.
+Trops package.
 """
 
 __version__ = "0.1.0" 

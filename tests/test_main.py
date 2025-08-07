@@ -2,7 +2,7 @@
 Tests for the main module.
 """
 
-from trops3.main import hello
+from trops.main import hello
 
 
 def test_hello_default():
