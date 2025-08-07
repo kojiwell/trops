@@ -67,7 +67,7 @@ def handle_init(args: argparse.Namespace) -> None:
                 else
                     export TROPS_ENV=$1
                     _tr_capcmd() {
-                        trops capcmd $? "$(fc -ln -1 -1)"
+                        trops capcmd $? $(fc -ln -1 -1)
                     }
                     add-zsh-hook precmd _tr_capcmd
                 fi
