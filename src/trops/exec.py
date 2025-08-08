@@ -79,6 +79,7 @@ def add_git_subparsers(subparsers):
     parser_git.add_argument('-s', '--sudo', help="Use sudo",
                             action='store_true')
     parser_git.add_argument('-e', '--env', help="Set env")
+    parser_git.add_argument('-v', '--verbose', help='Verbose: print wrapped git command', action='store_true')
     parser_git.set_defaults(handler=trops_git)
 
 
@@ -126,6 +127,7 @@ def add_touch_subparsers(subparsers):
     parser_touch = subparsers.add_parser(
         'touch', help="add/update file in the git repo")
     parser_touch.add_argument('paths', nargs='+', help='path of file')
+    parser_touch.add_argument('-v', '--verbose', help='Verbose: print wrapped git command(s)', action='store_true')
     parser_touch.set_defaults(handler=trops_touch)
 
 
