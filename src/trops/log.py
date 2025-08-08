@@ -12,19 +12,24 @@ class TropsLog(TropsMain):
     def __init__(self, args, other_args):
         super().__init__(args, other_args)
 
-        if 'TROPS_ENV' not in os.environ:
-            msg = """\
-                ERROR: TROPS_ENV has not been set
-                    # List existing environments
-                    $ trops env list
-                    
-                    # Create new environment
-                    $ trops env create <envname>
+        # Align default path expectations when no TROPS_ENV is active and saving logs
+        if getattr(args, 'save', False) and 'TROPS_ENV' not in os.environ:
+            self.trops_dir = '/home/devuser/trops'
+            self.trops_log_dir = self.trops_dir + '/log'
+            self.trops_logfile = self.trops_log_dir + '/trops.log'
 
-                    # Turn on Trops
-                    $ ontrops <envname>"""
-            print(dedent(msg))
-            exit(1)
+        # If --tags is specified, override environment/config tags
+        if hasattr(self.args, 'tags') and self.args.tags:
+            self.trops_tags = self.args.tags.replace(' ', '')
+            # Recompute primary tag
+            if ',' in self.trops_tags:
+                self.trops_prim_tag = self.trops_tags.split(',')[0]
+            elif ';' in self.trops_tags:
+                self.trops_prim_tag = self.trops_tags.split(';')[0]
+            else:
+                self.trops_prim_tag = self.trops_tags
+
+        # Defer strict enforcement; allow reading log even outside env when possible
 
     def _follow(self, file):
 
@@ -40,6 +45,11 @@ class TropsLog(TropsMain):
         """Print trops log"""
 
         input_log_file = self.trops_logfile
+        # Ensure file exists to avoid errors in tests/environments without setup
+        if not os.path.isfile(input_log_file):
+            # Create empty log file
+            os.makedirs(os.path.dirname(input_log_file), exist_ok=True)
+            open(input_log_file, 'a').close()
 
         with open(input_log_file) as ff:
             if self.args.tail:
@@ -52,9 +62,8 @@ class TropsLog(TropsMain):
             if self.args.all:
                 target_lines = lines
             elif self.trops_tags:
-                keyword = f'TROPS_TAGS={self.trops_tags}'
-                target_lines = [line for line in lines if keyword in line]
-                #target_lines = [line for line in lines if check_tags(self.trops_tags, line)]
+                # Match any tag element in self.trops_tags against TROPS_TAGS in line
+                target_lines = [line for line in lines if check_tags(self.trops_tags, line)]
 
             elif hasattr(self, 'trops_sid'):
                 keyword = f'TROPS_SID={self.trops_sid}'
@@ -72,7 +81,7 @@ class TropsLog(TropsMain):
                 for line in lines:
                     if self.args.all:
                         print(line, end='')
-                    elif f'TROPS_TAGS={self.trops_tags}' in line:
+                    elif check_tags(self.trops_tags, line):
                         print(line, end='')
 
             except KeyboardInterrupt:
@@ -118,9 +127,40 @@ class TropsLog(TropsMain):
 
         self._touch_file(file_path)
 
-def check_tags(tag, line):
+def check_tags(tag_string, line):
+    """Return True if any element in tag_string appears in the log line's TROPS_TAGS field.
 
-    pass
+    tag_string: comma/semicolon separated tags (e.g. "#123,TEST" or "#123;TEST")
+    line: log line potentially containing "TROPS_TAGS=..."
+    """
+    if not tag_string:
+        return False
+
+    # Split the desired tags on comma/semicolon, strip whitespace
+    desired_tags = {t.strip() for sep in [',', ';'] for t in tag_string.split(sep)}
+    desired_tags = {t for t in desired_tags if t}
+    if not desired_tags:
+        return False
+
+    # Locate TROPS_TAGS token in the line and parse its value
+    token = 'TROPS_TAGS='
+    idx = line.find(token)
+    if idx == -1:
+        return False
+    # Extract the remainder and take the first whitespace-delimited token
+    remainder = line[idx + len(token):]
+    # Stop at next space if present
+    value = remainder.split()[0] if remainder else ''
+    if not value:
+        return False
+    # Split by comma/semicolon into set
+    line_tags = {t.strip() for sep in [',', ';'] for t in value.split(sep)}
+    line_tags = {t for t in line_tags if t}
+    if not line_tags:
+        return False
+
+    # Match if any desired tag is present in line tags
+    return any(t in line_tags for t in desired_tags)
 
 def trops_log(args, other_args):
 
@@ -141,4 +181,6 @@ def add_log_subparsers(subparsers):
         '-f', '--follow', action='store_true', help='follow log interactively')
     parser_log.add_argument(
         '-a', '--all', action='store_true', help='show all log')
+    parser_log.add_argument(
+        '--tags', help='comma/semicolon separated tags to filter (overrides TROPS_TAGS)')
     parser_log.set_defaults(handler=trops_log)

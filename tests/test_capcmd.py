@@ -8,10 +8,9 @@ from trops.capcmd import TropsCapCmd, add_capture_cmd_subparsers
 
 
 @pytest.fixture
-def setup_capcmd_args(monkeypatch):
-    #monkeypatch.setenv("TROPS_DIR", '/tmp/trops')
-    #monkeypatch.setenv("TROPS_ENV", 'test')
-    #monkeypatch.setenv("TROPS_TAGS", '#123,TEST')
+def setup_capcmd_args(monkeypatch, tmp_path):
+    # Ensure TROPS_DIR is set as capcmd strictly requires it
+    monkeypatch.setenv("TROPS_DIR", str(tmp_path / 'trops'))
     with patch("sys.argv", ["trops", "capture-cmd", '0', "echo", "hello", "world"]):
         parser = argparse.ArgumentParser(
             prog='trops', description='Trops - Tracking Operations')
@@ -28,3 +27,14 @@ def test_capcmd(monkeypatch, setup_capcmd_args):
 
     tcc = TropsCapCmd(args, other_args)
     assert tcc.trops_header[3] == '#123,TEST'
+
+
+def test_capcmd_header_positions(monkeypatch, setup_capcmd_args):
+    args, other_args = setup_capcmd_args
+
+    monkeypatch.setenv("TROPS_ENV", 'env1')
+    monkeypatch.setenv("TROPS_SID", 'sid1')
+    monkeypatch.setenv("TROPS_TAGS", '#123,TEST')
+
+    tcc = TropsCapCmd(args, other_args)
+    assert tcc.trops_header == ['trops', 'env1', 'sid1', '#123,TEST']

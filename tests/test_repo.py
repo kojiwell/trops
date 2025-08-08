@@ -2,6 +2,7 @@ import argparse
 import pytest
 
 from unittest.mock import patch
+from socket import gethostname
 
 from trops.repo import TropsRepo, add_repo_subparsers
 
@@ -24,3 +25,4 @@ def test_repo(monkeypatch, setup_repo_args):
     monkeypatch.setenv("TROPS_ENV", 'testenv')
     monkeypatch.setenv("TROPS_TAGS", '#123,TEST')
     tr = TropsRepo(args, other_args)
+    assert tr.hostname == gethostname()

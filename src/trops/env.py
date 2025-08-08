@@ -327,7 +327,7 @@ def add_env_subparsers(subparsers):
     parser_env_create.add_argument(
         '-w', '--work-tree', default='/', help='Set work-tree (default: %(default)s)')
     parser_env_create.add_argument(
-        'env', help='Set environment name (default: %(default)s)')
+        'env', help='Set environment name')
     parser_env_create.add_argument(
         '--git-remote', help='Remote git repository')
     parser_env_create.add_argument(

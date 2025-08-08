@@ -4,8 +4,11 @@ import sys
 
 from datetime import datetime
 from pathlib import Path
+from typing import List, Tuple
+from configparser import ConfigParser
 
 from .trops import Trops
+import re
 from .utils import absolute_path
 
 
@@ -13,68 +16,80 @@ class TropsCapCmd(Trops):
     """Trops Capture Command class"""
 
     def __init__(self, args, other_args):
+        # Enforce TROPS_DIR for capture-cmd only (per project requirement)
+        if 'TROPS_DIR' not in os.environ:
+            raise SystemExit('ERROR: The TROPS_DIR environment variable has not been set.')
         super().__init__(args, other_args)
 
-        # Start setting the header
-        attributes = ['trops_env', 'trops_sid', 'trops_tags']
-        self.trops_header = ['trops'] + [getattr(self, attr) for attr in attributes if getattr(self, attr, None)]
+        # Start setting the header with stable positions: trops|env|sid|tags
+        header_env = getattr(self, 'trops_env', '') or ''
+        header_sid = getattr(self, 'trops_sid', '') or ''
+        header_tags = getattr(self, 'trops_tags', '') or ''
+        self.trops_header = ['trops', header_env, header_sid, header_tags]
 
-    def capture_cmd(self):
+    def capture_cmd(self) -> None:
         """Capture and log the executed command"""
 
-        rc = self.args.return_code
-        now = datetime.now().strftime("%H-%M")
+        return_code = self.args.return_code
+        now_hm = datetime.now().strftime("%H-%M")
 
-        if self.other_args == []:
+        if not self.other_args:
             self.print_header()
             sys.exit(0)
-        else:
-            executed_cmd = self.other_args
 
-        time_and_cmd = f"{now} {' '.join(executed_cmd)}"
+        executed_cmd = self.other_args
+        time_and_cmd = f"{now_hm} {' '.join(executed_cmd)}"
 
         # Ensure tmp directory exists
-        tmp_dir = os.path.join(self.trops_dir, 'tmp')
-        os.makedirs(tmp_dir, exist_ok=True)
+        tmp_dir = Path(self.trops_dir) / 'tmp'
+        tmp_dir.mkdir(parents=True, exist_ok=True)
+        last_cmd_path = tmp_dir / 'last_cmd'
 
-        # Path to the file storing the last executed command
-        last_cmd_path = os.path.join(tmp_dir, 'last_cmd')
+        # Side-effect operations that should happen even if the command is repeated
+        # 1) Update files edited by editors
+        self._update_files(executed_cmd)
+        # 2) Track files written via tee
+        wrote_with_tee = self._add_tee_output_file(executed_cmd)
+        # 3) Try pushing if remote is configured and we actually added/updated files
+        if wrote_with_tee:
+            self._push_if_remote_set()
 
-        # Check if the current command matches the last executed command
-        if self._is_repeat_command(last_cmd_path, time_and_cmd):
+        # Skip if repeated within the same minute (after performing file updates)
+        if self._is_repeat_command(str(last_cmd_path), time_and_cmd):
             if not self.disable_header:
                 self.print_header()
             sys.exit(0)
 
-        # Save the current command as the last executed command
-        self._save_last_command(last_cmd_path, time_and_cmd)
+        # Save last command signature
+        self._save_last_command(str(last_cmd_path), time_and_cmd)
 
-        # Skip logging if the command is in the ignore list
+        # Skip logging if ignored
         if executed_cmd[0] in self.ignore_cmds:
             self.print_header()
             sys.exit(0)
 
-        message_parts = [
-            f"CM {' '.join(executed_cmd)} #> PWD={os.getenv('PWD')}",
-            f"EXIT={rc}",
-            f"TROPS_SID={os.getenv('TROPS_SID')}" if os.getenv('TROPS_SID') else None,
-            f"TROPS_ENV={os.getenv('TROPS_ENV')}" if os.getenv('TROPS_ENV') else None,
-            f"TROPS_TAGS={self.trops_tags}" if self.trops_tags else None,
-        ]
-        message = ', '.join(part for part in message_parts if part is not None)
-
-        if rc == 0:
+        # Log command message
+        message = self._compose_capture_message(executed_cmd, return_code)
+        if return_code == 0:
             self.logger.info(message)
         else:
             self.logger.warning(message)
 
-        self._yum_log(executed_cmd)
-        self._apt_log(executed_cmd)
-        self._update_files(executed_cmd)
-        self._add_tee_output_file(executed_cmd)
-
         if not self.disable_header:
             self.print_header()
+
+    def _compose_capture_message(self, executed_cmd: List[str], return_code: int) -> str:
+        parts: List[str] = [
+            f"CM {' '.join(executed_cmd)} #> PWD={os.getenv('PWD')}",
+            f"EXIT={return_code}",
+        ]
+        if self.trops_sid:
+            parts.append(f"TROPS_SID={self.trops_sid}")
+        if self.trops_env:
+            parts.append(f"TROPS_ENV={self.trops_env}")
+        if self.trops_tags:
+            parts.append(f"TROPS_TAGS={self.trops_tags}")
+        return ', '.join(parts)
 
     def _is_repeat_command(self, last_cmd_path, time_and_cmd):
         """Check if the current command is a repeat of the last command"""
@@ -92,7 +107,7 @@ class TropsCapCmd(Trops):
         # Print -= trops|env|sid|tags =-
         print(f'\n-= {"|".join(self.trops_header)} =-')
 
-    def _yum_log(self, executed_cmd):
+    def _yum_log(self, executed_cmd: List[str]) -> None:
 
         # Check if sudo is used
         executed_cmd = executed_cmd[1:] if executed_cmd[0] == 'sudo' else executed_cmd
@@ -109,12 +124,12 @@ class TropsCapCmd(Trops):
 
             self.add_and_commit_file(pkg_list_file)
 
-    def _apt_log(self, executed_cmd):
+    def _apt_log(self, executed_cmd: List[str]) -> None:
         if 'apt' in executed_cmd and any(x in executed_cmd for x in ['upgrade', 'install', 'update', 'remove', 'autoremove']):
             self._update_pkg_list(' '.join(executed_cmd))
         # TODO: Add log trops git show hex
 
-    def _update_pkg_list(self, args):
+    def _update_pkg_list(self, args: str) -> None:
 
         # Update the pkg_List
         cmd = ['apt', 'list', '--installed']
@@ -124,43 +139,43 @@ class TropsCapCmd(Trops):
 
         pkg_list_file = self.trops_dir + \
             f'/log/apt_pkg_list.{ self.hostname }'
-        f = open(pkg_list_file, 'w')
-        f.write('\n'.join(pkg_list))
-        f.close()
+        with open(pkg_list_file, 'w') as f:
+            f.write('\n'.join(pkg_list))
 
         self.add_and_commit_file(pkg_list_file)
 
-    def _add_file_in_git_repo(self, executed_cmd, n):
+    def _add_file_in_git_repo(self, executed_cmd: List[str], start_index: int) -> None:
+        for file_arg in executed_cmd[start_index:]:
+            file_path = absolute_path(file_arg)
+            if not os.path.isfile(file_path):
+                continue
+            # Ignore if path is already tracked in another repo
+            if file_is_in_a_git_repo(file_path):
+                self.logger.info(
+                    f"FL {file_path} is under a git repository #> PWD=*, EXIT=*, TROPS_SID={self.trops_sid}, TROPS_ENV={self.trops_env}")
+                sys.exit(0)
+            git_msg, log_note = self._generate_git_msg_and_log_note(file_path)
+            result = self._add_and_commit_file(file_path, git_msg)
+            if result.returncode == 0:
+                msg = result.stdout.decode('utf-8').splitlines()[0]
+                print(msg)
+                self._add_file_log(file_path, log_note)
+                # Push immediately after a successful commit if remote is set
+                self._push_if_remote_set()
+            else:
+                print('No update')
 
-            for file_arg in executed_cmd[n:]:
-                file_path = absolute_path(file_arg)
-                if os.path.isfile(file_path):
-                    # Ignore the file if it is under a git repository
-                    if file_is_in_a_git_repo(file_path):
-                        self.logger.info(
-                            f"FL { file_path } is under a git repository #> PWD=*, EXIT=*, TROPS_SID={ self.trops_sid }, TROPS_ENV={ self.trops_env }")
-                        sys.exit(0)
-                    git_msg, log_note = self._generate_git_msg_and_log_note(file_path)
-                    result = self._add_and_commit_file(file_path, git_msg)
-                    # If there's an update, log it in the log file
-                    if result.returncode == 0:
-                        msg = result.stdout.decode('utf-8').splitlines()[0]
-                        print(msg)
-                        self._add_file_log(file_path, log_note)
-                    else:
-                        print('No update')
-
-    def _add_file_log(self, file_path, log_note):
+    def _add_file_log(self, file_path: str, log_note: str) -> None:
         """Add an FL log entry"""
-        cmd = self.git_cmd + \
-            ['log', '--oneline', '-1', file_path]
+        rel_path = os.path.relpath(os.path.realpath(absolute_path(file_path)), start=os.path.realpath(self.work_tree))
+        cmd = self.git_cmd + ['log', '--oneline', '-1', rel_path]
         output = subprocess.check_output(
             cmd).decode("utf-8").split()
-        if file_path in output:
+        if rel_path in output:
             mode = oct(os.stat(file_path).st_mode)[-4:]
             owner = Path(file_path).owner()
             group = Path(file_path).group()
-            message = f"FL trops show { output[0] }:{ absolute_path(file_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }"
+            message = f"FL trops show { output[0] }:{ rel_path }  #> { log_note }, O={ owner },G={ group },M={ mode }"
             if self.trops_sid:
                 message += f" TROPS_SID={ self.trops_sid }"
             message += f" TROPS_ENV={ self.trops_env }"
@@ -169,56 +184,107 @@ class TropsCapCmd(Trops):
 
             self.logger.info(message)
 
-    def _add_and_commit_file(self, file_path, git_msg):
-        """Add a file in the git repo"""
-        # Add the file and commit
-        cmd = self.git_cmd + ['add', file_path]
-        _ = subprocess.run(cmd, capture_output=True)
-        cmd = self.git_cmd + ['commit', '-m', git_msg, file_path]
-        
-        return subprocess.run(cmd, capture_output=True)
+    def _add_and_commit_file(self, file_path: str, git_msg: str) -> subprocess.CompletedProcess:
+        """Add a file in the git repo and commit if changed"""
+        rel_path = os.path.relpath(os.path.realpath(absolute_path(file_path)), start=os.path.realpath(self.work_tree))
+        subprocess.run(self.git_cmd + ['add', rel_path], capture_output=True)
+        return subprocess.run(self.git_cmd + ['commit', '-m', git_msg, rel_path], capture_output=True)
 
-    def _generate_git_msg_and_log_note(self, file_path):
+    def _generate_git_msg_and_log_note(self, file_path: str) -> Tuple[str, str]:
         """Generate the git commit message and log note"""
-        # Check if the path is in the git repo
-        cmd = self.git_cmd + ['ls-files', file_path]
-        result = subprocess.run(cmd, capture_output=True)
-        # Set the message based on the output
-        if result.stdout.decode("utf-8"):
-            git_msg = f"Update { file_path }"
-            log_note = 'UPDATE'
-        else:
-            git_msg = f"Add { file_path }"
-            log_note = 'ADD'
+        rel_path = os.path.relpath(os.path.realpath(absolute_path(file_path)), start=os.path.realpath(self.work_tree))
+        result = subprocess.run(self.git_cmd + ['ls-files', rel_path], capture_output=True)
+        is_tracked = bool(result.stdout.decode('utf-8'))
+        git_msg = f"{'Update' if is_tracked else 'Add'} {rel_path}"
+        log_note = 'UPDATE' if is_tracked else 'ADD'
         if self.trops_tags:
-            git_msg = f"{ git_msg } ({ self.trops_tags })"
-
+            git_msg = f"{git_msg} ({self.trops_tags})"
         return git_msg, log_note
 
-    def _update_files(self, executed_cmd):
+    def _update_files(self, executed_cmd: List[str]) -> None:
         """Add a file or directory in the git repo"""
 
-        # Remove sudo from executed_cmd
-        if 'sudo' == executed_cmd[0]:
-            executed_cmd.pop(0)
-        # TODO: Pop Sudo options such as -u and -E
+        # Remove sudo from executed_cmd (basic case)
+        executed_cmd = self._sanitize_for_sudo(executed_cmd)
 
         # Check if editor is launched
-        editors = ['vim', 'vi', 'emacs', 'nano']
+        editors = ['vim', 'vi', 'nvim', 'emacs', 'nano']
         if executed_cmd[0] in editors:
             # Add the edited file in trops git
             self._add_file_in_git_repo(executed_cmd, 1)
 
-    def _add_tee_output_file(self, executed_cmd):
+    def _add_tee_output_file(self, executed_cmd: List[str]) -> bool:
+        """Detect tee after one or more pipes and add the target file(s).
 
-        if '|' in executed_cmd:
-            n = executed_cmd.index('|')
-            if executed_cmd[n+1] == 'tee':
-                n += 1
-                self._add_file_in_git_repo(executed_cmd, n)
-        elif '|tee' in executed_cmd:
-            n = executed_cmd.index('|tee')
-            self._add_file_in_git_repo(executed_cmd, n)
+        Supported forms:
+          - cmd | tee path/to/file
+          - cmd |tee path/to/file
+          - cmd1 | cmd2 | ... | tee path/to/file
+        """
+        # First normalize tokens so that every '|' is its own token
+        normalized: List[str] = []
+        for tok in executed_cmd:
+            if '|' in tok and tok != '|':
+                parts = re.split(r'(\|)', tok)
+                normalized.extend([p for p in parts if p])
+            else:
+                normalized.append(tok)
+
+        # Scan for the last occurrence of '|' followed by 'tee'
+        last_pipe_tee_index = -1
+        for i in range(len(normalized) - 1):
+            if normalized[i] == '|' and normalized[i + 1] == 'tee':
+                last_pipe_tee_index = i + 1  # index of 'tee'
+
+        if last_pipe_tee_index != -1:
+            # Start collecting path arguments after 'tee'
+            self._add_file_in_git_repo(normalized, last_pipe_tee_index + 1)
+            return True
+        return False
+
+    def _sanitize_for_sudo(self, executed_cmd: List[str]) -> List[str]:
+        """Remove leading sudo if present. TODO: handle sudo options."""
+        if executed_cmd and executed_cmd[0] == 'sudo':
+            return executed_cmd[1:]
+        return executed_cmd
+
+    def _push_if_remote_set(self) -> None:
+        """Push current branch if a git remote is configured.
+
+        This is a no-op when:
+          - no git_remote is configured
+          - git_dir is missing or not a valid directory
+          - git config file does not exist
+        """
+        if not getattr(self, 'git_remote', False):
+            return
+        if not hasattr(self, 'git_dir') or not isinstance(self.git_dir, str):
+            return
+        if not os.path.isdir(self.git_dir):
+            return
+        git_config_path = os.path.join(self.git_dir, 'config')
+        if not os.path.isfile(git_config_path):
+            return
+
+        # Determine current branch
+        result = subprocess.run(self.git_cmd + ['branch', '--show-current'], capture_output=True)
+        current_branch = result.stdout.decode('utf-8').strip() if result.returncode == 0 else ''
+        if not current_branch:
+            return
+
+        git_conf = ConfigParser()
+        git_conf.read(git_config_path)
+
+        # Ensure origin exists
+        if not git_conf.has_option('remote "origin"', 'url'):
+            subprocess.call(self.git_cmd + ['remote', 'add', 'origin', self.git_remote])
+
+        # Set upstream if missing, else regular push
+        if not git_conf.has_option(f'branch "{current_branch}"', 'remote'):
+            cmd = self.git_cmd + ['push', '--set-upstream', 'origin', current_branch]
+        else:
+            cmd = self.git_cmd + ['push']
+        subprocess.call(cmd)
 
 def capture_cmd(args, other_args):
 
@@ -233,14 +299,9 @@ def add_capture_cmd_subparsers(subparsers):
         'return_code', type=int, help='return code')
     parser_capture_cmd.set_defaults(handler=capture_cmd)
 
-def file_is_in_a_git_repo(file_path):
-
+def file_is_in_a_git_repo(file_path: str) -> bool:
     parent_dir = os.path.dirname(file_path)
-    if parent_dir != '':
+    if parent_dir:
         os.chdir(parent_dir)
-    cmd = ['git', 'rev-parse', '--is-inside-work-tree']
-    result = subprocess.run(cmd, capture_output=True)
-    if result.returncode == 0:
-        return True
-    else:
-        return False
+    result = subprocess.run(['git', 'rev-parse', '--is-inside-work-tree'], capture_output=True)
+    return result.returncode == 0
