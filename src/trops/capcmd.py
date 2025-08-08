@@ -49,9 +49,10 @@ class TropsCapCmd(Trops):
         # 1) Update files edited by editors
         self._update_files(executed_cmd)
         # 2) Track files written via tee
-        self._add_tee_output_file(executed_cmd)
-        # 3) Try pushing if remote is configured
-        self._push_if_remote_set()
+        wrote_with_tee = self._add_tee_output_file(executed_cmd)
+        # 3) Try pushing if remote is configured and we actually added/updated files
+        if wrote_with_tee:
+            self._push_if_remote_set()
 
         # Skip if repeated within the same minute (after performing file updates)
         if self._is_repeat_command(str(last_cmd_path), time_and_cmd):
@@ -212,7 +213,7 @@ class TropsCapCmd(Trops):
             # Add the edited file in trops git
             self._add_file_in_git_repo(executed_cmd, 1)
 
-    def _add_tee_output_file(self, executed_cmd: List[str]) -> None:
+    def _add_tee_output_file(self, executed_cmd: List[str]) -> bool:
         """Detect tee after one or more pipes and add the target file(s).
 
         Supported forms:
@@ -238,6 +239,8 @@ class TropsCapCmd(Trops):
         if last_pipe_tee_index != -1:
             # Start collecting path arguments after 'tee'
             self._add_file_in_git_repo(normalized, last_pipe_tee_index + 1)
+            return True
+        return False
 
     def _sanitize_for_sudo(self, executed_cmd: List[str]) -> List[str]:
         """Remove leading sudo if present. TODO: handle sudo options."""
