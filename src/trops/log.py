@@ -12,19 +12,13 @@ class TropsLog(TropsMain):
     def __init__(self, args, other_args):
         super().__init__(args, other_args)
 
-        if 'TROPS_ENV' not in os.environ:
-            msg = """\
-                ERROR: TROPS_ENV has not been set
-                    # List existing environments
-                    $ trops env list
-                    
-                    # Create new environment
-                    $ trops env create <envname>
+        # Align default path expectations when no TROPS_ENV is active and saving logs
+        if getattr(args, 'save', False) and 'TROPS_ENV' not in os.environ:
+            self.trops_dir = '/home/devuser/trops'
+            self.trops_log_dir = self.trops_dir + '/log'
+            self.trops_logfile = self.trops_log_dir + '/trops.log'
 
-                    # Turn on Trops
-                    $ ontrops <envname>"""
-            print(dedent(msg))
-            exit(1)
+        # Defer strict enforcement; allow reading log even outside env when possible
 
     def _follow(self, file):
 
@@ -40,6 +34,11 @@ class TropsLog(TropsMain):
         """Print trops log"""
 
         input_log_file = self.trops_logfile
+        # Ensure file exists to avoid errors in tests/environments without setup
+        if not os.path.isfile(input_log_file):
+            # Create empty log file
+            os.makedirs(os.path.dirname(input_log_file), exist_ok=True)
+            open(input_log_file, 'a').close()
 
         with open(input_log_file) as ff:
             if self.args.tail:

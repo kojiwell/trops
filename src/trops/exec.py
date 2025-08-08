@@ -161,26 +161,24 @@ def main():
     parser.add_argument('-v', '--version', action='version',
                         version=f'%(prog)s {__version__}')
 
-    for func in [
-        'branch',
-        'capture_cmd',
-        'check',
-        'drop',
-        'env',
-        'fetch',
-        'file',
-        'gensid',
-        'git',
-        'glab',
-        'init',
-        'koumyo',
-        'll',
-        'log',
-        'repo',
-        'show',
-        'touch'
-    ]:
-        eval(f'add_{ func }_subparsers(subparsers)')
+    # Avoid eval for safety; keep mapping explicit
+    add_branch_subparsers(subparsers)
+    add_capture_cmd_subparsers(subparsers)
+    add_check_subparsers(subparsers)
+    add_drop_subparsers(subparsers)
+    add_env_subparsers(subparsers)
+    add_fetch_subparsers(subparsers)
+    add_file_subparsers(subparsers)
+    add_gensid_subparsers(subparsers)
+    add_git_subparsers(subparsers)
+    add_glab_subparsers(subparsers)
+    add_init_subparsers(subparsers)
+    add_koumyo_subparsers(subparsers)
+    add_ll_subparsers(subparsers)
+    add_log_subparsers(subparsers)
+    add_repo_subparsers(subparsers)
+    add_show_subparsers(subparsers)
+    add_touch_subparsers(subparsers)
 
     # Pass args and other args to the hander
     args, other_args = parser.parse_known_args()

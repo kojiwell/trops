@@ -10,8 +10,8 @@ from trops.env import TropsEnv, add_env_subparsers
 @pytest.fixture
 def setup_env_args(monkeypatch, tmp_path):
   
-    trops_dir = tmp_path + '/trops'
-    monkeypatch.setenv("TROPS_DIR", trops_dir)
+    trops_dir = tmp_path / 'trops'
+    monkeypatch.setenv("TROPS_DIR", str(trops_dir))
     monkeypatch.setenv("TROPS_TAGS", '#123,TEST')
 
     with patch("sys.argv", ["trops", "env", "create", "testenv"]):

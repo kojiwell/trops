@@ -13,11 +13,16 @@ class TropsCapCmd(Trops):
     """Trops Capture Command class"""
 
     def __init__(self, args, other_args):
+        # Enforce TROPS_DIR for capture-cmd only (per project requirement)
+        if 'TROPS_DIR' not in os.environ:
+            raise SystemExit('ERROR: The TROPS_DIR environment variable has not been set.')
         super().__init__(args, other_args)
 
-        # Start setting the header
-        attributes = ['trops_env', 'trops_sid', 'trops_tags']
-        self.trops_header = ['trops'] + [getattr(self, attr) for attr in attributes if getattr(self, attr, None)]
+        # Start setting the header with stable positions: trops|env|sid|tags
+        header_env = getattr(self, 'trops_env', '') or ''
+        header_sid = getattr(self, 'trops_sid', '') or ''
+        header_tags = getattr(self, 'trops_tags', '') or ''
+        self.trops_header = ['trops', header_env, header_sid, header_tags]
 
     def capture_cmd(self):
         """Capture and log the executed command"""
