@@ -272,6 +272,44 @@ class TropsMain(Trops):
             return any(flag in joined for flag in flags)
         return False
 
+    def _push_if_remote_set(self) -> None:
+        """Push current branch if a git remote is configured.
+
+        This is a no-op when:
+          - no git_remote is configured
+          - git_dir is missing or not a valid directory
+          - git config file does not exist
+        """
+        if not getattr(self, 'git_remote', False):
+            return
+        if not hasattr(self, 'git_dir') or not isinstance(self.git_dir, str):
+            return
+        if not os.path.isdir(self.git_dir):
+            return
+        git_config_path = os.path.join(self.git_dir, 'config')
+        if not os.path.isfile(git_config_path):
+            return
+
+        # Determine current branch
+        result = subprocess.run(self.git_cmd + ['branch', '--show-current'], capture_output=True)
+        current_branch = result.stdout.decode('utf-8').strip() if result.returncode == 0 else ''
+        if not current_branch:
+            return
+
+        git_conf = ConfigParser()
+        git_conf.read(git_config_path)
+
+        # Ensure origin exists
+        if not git_conf.has_option('remote "origin"', 'url'):
+            subprocess.call(self.git_cmd + ['remote', 'add', 'origin', self.git_remote])
+
+        # Set upstream if missing, else regular push
+        if not git_conf.has_option(f'branch "{current_branch}"', 'remote'):
+            cmd = self.git_cmd + ['push', '--set-upstream', 'origin', current_branch]
+        else:
+            cmd = self.git_cmd + ['push']
+        subprocess.call(cmd)
+
     def _normalize_git_paths(self, args: List[str]) -> List[str]:
         """Convert absolute paths under work_tree to relative pathspecs without
         resolving symlinks, and insert "--" before the first pathspec to avoid

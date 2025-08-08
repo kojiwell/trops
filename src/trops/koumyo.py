@@ -244,6 +244,9 @@ class TropsKoumyo(TropsMain):
             f.write(kmout)
 
         self._touch_file(file_path)
+        # If saved, push to remote when configured
+        if getattr(self, 'git_remote', False):
+            self._push_if_remote_set()
 
     def run(self):
 
