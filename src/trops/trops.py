@@ -42,6 +42,9 @@ class Trops:
         self.trops_sid = os.getenv('TROPS_SID', False)
         # Tags from environment by default
         self.trops_tags = os.getenv('TROPS_TAGS', None)
+        if self.trops_tags:
+            # Normalize: remove spaces
+            self.trops_tags = self.trops_tags.replace(' ', '')
 
         # Configuration handling
         self.config = ConfigParser()
