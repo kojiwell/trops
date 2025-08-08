@@ -5,8 +5,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import List, Tuple
+from configparser import ConfigParser
 
 from .trops import Trops
+import re
 from .utils import absolute_path
 
 
@@ -43,7 +45,15 @@ class TropsCapCmd(Trops):
         tmp_dir.mkdir(parents=True, exist_ok=True)
         last_cmd_path = tmp_dir / 'last_cmd'
 
-        # Skip if repeated within the same minute
+        # Side-effect operations that should happen even if the command is repeated
+        # 1) Update files edited by editors
+        self._update_files(executed_cmd)
+        # 2) Track files written via tee
+        self._add_tee_output_file(executed_cmd)
+        # 3) Try pushing if remote is configured
+        self._push_if_remote_set()
+
+        # Skip if repeated within the same minute (after performing file updates)
         if self._is_repeat_command(str(last_cmd_path), time_and_cmd):
             if not self.disable_header:
                 self.print_header()
@@ -63,12 +73,6 @@ class TropsCapCmd(Trops):
             self.logger.info(message)
         else:
             self.logger.warning(message)
-
-        # Side-effect operations
-        self._yum_log(executed_cmd)
-        self._apt_log(executed_cmd)
-        self._update_files(executed_cmd)
-        self._add_tee_output_file(executed_cmd)
 
         if not self.disable_header:
             self.print_header()
@@ -155,20 +159,22 @@ class TropsCapCmd(Trops):
                 msg = result.stdout.decode('utf-8').splitlines()[0]
                 print(msg)
                 self._add_file_log(file_path, log_note)
+                # Push immediately after a successful commit if remote is set
+                self._push_if_remote_set()
             else:
                 print('No update')
 
     def _add_file_log(self, file_path: str, log_note: str) -> None:
         """Add an FL log entry"""
-        cmd = self.git_cmd + \
-            ['log', '--oneline', '-1', file_path]
+        rel_path = os.path.relpath(os.path.realpath(absolute_path(file_path)), start=os.path.realpath(self.work_tree))
+        cmd = self.git_cmd + ['log', '--oneline', '-1', rel_path]
         output = subprocess.check_output(
             cmd).decode("utf-8").split()
-        if file_path in output:
+        if rel_path in output:
             mode = oct(os.stat(file_path).st_mode)[-4:]
             owner = Path(file_path).owner()
             group = Path(file_path).group()
-            message = f"FL trops show { output[0] }:{ absolute_path(file_path).lstrip(self.work_tree)}  #> { log_note }, O={ owner },G={ group },M={ mode }"
+            message = f"FL trops show { output[0] }:{ rel_path }  #> { log_note }, O={ owner },G={ group },M={ mode }"
             if self.trops_sid:
                 message += f" TROPS_SID={ self.trops_sid }"
             message += f" TROPS_ENV={ self.trops_env }"
@@ -179,14 +185,16 @@ class TropsCapCmd(Trops):
 
     def _add_and_commit_file(self, file_path: str, git_msg: str) -> subprocess.CompletedProcess:
         """Add a file in the git repo and commit if changed"""
-        subprocess.run(self.git_cmd + ['add', file_path], capture_output=True)
-        return subprocess.run(self.git_cmd + ['commit', '-m', git_msg, file_path], capture_output=True)
+        rel_path = os.path.relpath(os.path.realpath(absolute_path(file_path)), start=os.path.realpath(self.work_tree))
+        subprocess.run(self.git_cmd + ['add', rel_path], capture_output=True)
+        return subprocess.run(self.git_cmd + ['commit', '-m', git_msg, rel_path], capture_output=True)
 
     def _generate_git_msg_and_log_note(self, file_path: str) -> Tuple[str, str]:
         """Generate the git commit message and log note"""
-        result = subprocess.run(self.git_cmd + ['ls-files', file_path], capture_output=True)
+        rel_path = os.path.relpath(os.path.realpath(absolute_path(file_path)), start=os.path.realpath(self.work_tree))
+        result = subprocess.run(self.git_cmd + ['ls-files', rel_path], capture_output=True)
         is_tracked = bool(result.stdout.decode('utf-8'))
-        git_msg = f"{'Update' if is_tracked else 'Add'} {file_path}"
+        git_msg = f"{'Update' if is_tracked else 'Add'} {rel_path}"
         log_note = 'UPDATE' if is_tracked else 'ADD'
         if self.trops_tags:
             git_msg = f"{git_msg} ({self.trops_tags})"
@@ -199,26 +207,81 @@ class TropsCapCmd(Trops):
         executed_cmd = self._sanitize_for_sudo(executed_cmd)
 
         # Check if editor is launched
-        editors = ['vim', 'vi', 'emacs', 'nano']
+        editors = ['vim', 'vi', 'nvim', 'emacs', 'nano']
         if executed_cmd[0] in editors:
             # Add the edited file in trops git
             self._add_file_in_git_repo(executed_cmd, 1)
 
     def _add_tee_output_file(self, executed_cmd: List[str]) -> None:
-        # Handle "| tee" and "|tee" forms
-        if '|' in executed_cmd:
-            pipe_index = executed_cmd.index('|')
-            if len(executed_cmd) > pipe_index + 1 and executed_cmd[pipe_index + 1] == 'tee':
-                self._add_file_in_git_repo(executed_cmd, pipe_index + 1)
-        elif '|tee' in executed_cmd:
-            pipe_index = executed_cmd.index('|tee')
-            self._add_file_in_git_repo(executed_cmd, pipe_index)
+        """Detect tee after one or more pipes and add the target file(s).
+
+        Supported forms:
+          - cmd | tee path/to/file
+          - cmd |tee path/to/file
+          - cmd1 | cmd2 | ... | tee path/to/file
+        """
+        # First normalize tokens so that every '|' is its own token
+        normalized: List[str] = []
+        for tok in executed_cmd:
+            if '|' in tok and tok != '|':
+                parts = re.split(r'(\|)', tok)
+                normalized.extend([p for p in parts if p])
+            else:
+                normalized.append(tok)
+
+        # Scan for the last occurrence of '|' followed by 'tee'
+        last_pipe_tee_index = -1
+        for i in range(len(normalized) - 1):
+            if normalized[i] == '|' and normalized[i + 1] == 'tee':
+                last_pipe_tee_index = i + 1  # index of 'tee'
+
+        if last_pipe_tee_index != -1:
+            # Start collecting path arguments after 'tee'
+            self._add_file_in_git_repo(normalized, last_pipe_tee_index + 1)
 
     def _sanitize_for_sudo(self, executed_cmd: List[str]) -> List[str]:
         """Remove leading sudo if present. TODO: handle sudo options."""
         if executed_cmd and executed_cmd[0] == 'sudo':
             return executed_cmd[1:]
         return executed_cmd
+
+    def _push_if_remote_set(self) -> None:
+        """Push current branch if a git remote is configured.
+
+        This is a no-op when:
+          - no git_remote is configured
+          - git_dir is missing or not a valid directory
+          - git config file does not exist
+        """
+        if not getattr(self, 'git_remote', False):
+            return
+        if not hasattr(self, 'git_dir') or not isinstance(self.git_dir, str):
+            return
+        if not os.path.isdir(self.git_dir):
+            return
+        git_config_path = os.path.join(self.git_dir, 'config')
+        if not os.path.isfile(git_config_path):
+            return
+
+        # Determine current branch
+        result = subprocess.run(self.git_cmd + ['branch', '--show-current'], capture_output=True)
+        current_branch = result.stdout.decode('utf-8').strip() if result.returncode == 0 else ''
+        if not current_branch:
+            return
+
+        git_conf = ConfigParser()
+        git_conf.read(git_config_path)
+
+        # Ensure origin exists
+        if not git_conf.has_option('remote "origin"', 'url'):
+            subprocess.call(self.git_cmd + ['remote', 'add', 'origin', self.git_remote])
+
+        # Set upstream if missing, else regular push
+        if not git_conf.has_option(f'branch "{current_branch}"', 'remote'):
+            cmd = self.git_cmd + ['push', '--set-upstream', 'origin', current_branch]
+        else:
+            cmd = self.git_cmd + ['push']
+        subprocess.call(cmd)
 
 def capture_cmd(args, other_args):
 
