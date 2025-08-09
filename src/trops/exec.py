@@ -11,6 +11,7 @@ from .release import __version__
 from .repo import add_repo_subparsers
 from .trops import TropsMain
 from .utils import generate_sid
+from .view import add_view_subparsers
 
 
 def trops_git(args, other_args):
@@ -179,6 +180,7 @@ def main():
     add_ll_subparsers(subparsers)
     add_log_subparsers(subparsers)
     add_repo_subparsers(subparsers)
+    add_view_subparsers(subparsers)
     add_show_subparsers(subparsers)
     add_touch_subparsers(subparsers)
 
