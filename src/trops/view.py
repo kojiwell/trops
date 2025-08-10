@@ -147,7 +147,8 @@ class TropsView(TropsMain):
                     .sidebar h2 {{ margin: 16px; font-size: 16px; }}
                     .sidebar ul {{ list-style:none; padding:0 8px 16px 16px; margin:0; }}
                     .sidebar li {{ margin: 6px 0; }}
-                    .sidebar a {{ color:#0366d6; text-decoration:none; }}
+                    /* Links: keep color same as text, underline only */
+                    .sidebar a {{ color: inherit; text-decoration: underline; }}
                     .content {{ flex:1; padding:20px; overflow:auto; }}
                     pre {{ background:#f6f8fa; padding: 12px; overflow:auto; }}
                     code {{ background:#f6f8fa; padding: 2px 4px; }}
@@ -155,6 +156,8 @@ class TropsView(TropsMain):
                     #content table {{ border-collapse: collapse; width: 100%; }}
                     #content table, #content th, #content td {{ border: 1px solid #e1e4e8; }}
                     #content th, #content td {{ padding: 6px 8px; }}
+                    /* content links follow same style */
+                    #content a {{ color: inherit; text-decoration: underline; }}
                     /* modal */
                     .modal {{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); }}
                     .modal-inner {{ position:absolute; top:5%; left:50%; transform:translateX(-50%); width:80%; max-height:90%; background:#fff; border-radius:6px; box-shadow:0 10px 40px rgba(0,0,0,.3); display:flex; flex-direction:column; }}
