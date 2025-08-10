@@ -86,6 +86,17 @@ class TropsView(TropsMain):
                     try:
                         with open(file_path, 'r', encoding='utf-8') as f:
                             content = f.read()
+                        # YAML front matter (--- ... ---) を先頭に持つ場合は無視
+                        if content.startswith('---'):
+                            lines = content.splitlines()
+                            if lines and lines[0].strip() == '---':
+                                end_idx = -1
+                                for i in range(1, len(lines)):
+                                    if lines[i].strip() == '---':
+                                        end_idx = i
+                                        break
+                                if end_idx != -1:
+                                    content = '\n'.join(lines[end_idx+1:]).lstrip('\n')
                         self._send(200, content, 'text/plain; charset=utf-8')
                     except Exception as e:
                         self._send(500, f'Error: {e}', 'text/plain; charset=utf-8')
