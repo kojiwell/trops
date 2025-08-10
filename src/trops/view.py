@@ -1,5 +1,6 @@
 import os
 import subprocess
+import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -32,6 +33,7 @@ class TropsView(TropsMain):
             exit(1)
 
         self.web = getattr(args, 'web', False)
+        self.no_browser = getattr(args, 'no_browser', False)
         self.target_path = absolute_path(args.file)
         self.commit = getattr(args, 'commit', None) or 'HEAD'
 
@@ -60,7 +62,8 @@ class TropsView(TropsMain):
         md_files = [f for f in os.listdir(folder) if f.endswith('.md')]
         md_files.sort()
 
-        git_cmd = self.git_cmd  # capture for handler
+        git_cmd = ['git']  # use current directory's repo, not trops repo
+        repo_cwd = os.getcwd()  # set current directory as git directory for web app
 
         class Handler(BaseHTTPRequestHandler):
             def _send(self, code: int, body: str, content_type: str = 'text/html; charset=utf-8'):
@@ -99,7 +102,7 @@ class TropsView(TropsMain):
                             cmd = git_cmd + ['show', f'{hashv}:{pathv}']
                         else:
                             cmd = git_cmd + ['show', hashv]
-                        result = subprocess.run(cmd, capture_output=True)
+                        result = subprocess.run(cmd, capture_output=True, cwd=repo_cwd)
                         if result.returncode != 0:
                             self._send(500, result.stderr.decode('utf-8') or 'git show failed', 'text/plain; charset=utf-8')
                         else:
@@ -137,6 +140,10 @@ class TropsView(TropsMain):
                     .content {{ flex:1; padding:20px; overflow:auto; }}
                     pre {{ background:#f6f8fa; padding: 12px; overflow:auto; }}
                     code {{ background:#f6f8fa; padding: 2px 4px; }}
+                    /* table borders */
+                    #content table {{ border-collapse: collapse; width: 100%; }}
+                    #content table, #content th, #content td {{ border: 1px solid #e1e4e8; }}
+                    #content th, #content td {{ padding: 6px 8px; }}
                     /* modal */
                     .modal {{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); }}
                     .modal-inner {{ position:absolute; top:5%; left:50%; transform:translateX(-50%); width:80%; max-height:90%; background:#fff; border-radius:6px; box-shadow:0 10px 40px rgba(0,0,0,.3); display:flex; flex-direction:column; }}
@@ -216,6 +223,12 @@ class TropsView(TropsMain):
 
         httpd = HTTPServer(('127.0.0.1', 8001), Handler)
         print('Serving trops view on http://localhost:8001 (Ctrl+C to stop)')
+        # Optionally open browser
+        if not self.no_browser:
+            try:
+                webbrowser.open('http://localhost:8001', new=2)
+            except Exception:
+                pass
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
@@ -234,6 +247,7 @@ def add_view_subparsers(subparsers):
     parser_view.add_argument('-e', '--env', help='Set environment name')
     parser_view.add_argument('--commit', help='Commit-ish (default: HEAD)')
     parser_view.add_argument('--web', action='store_true', help='Start a local web viewer for a folder of .md files')
+    parser_view.add_argument('--no-browser', action='store_true', help='Do not open the browser automatically')
     parser_view.add_argument('file', help='Absolute path to file (or folder with --web) in work tree')
     parser_view.set_defaults(handler=run)
 
