@@ -144,11 +144,25 @@ class TropsCapCmd(Trops):
 
         self.add_and_commit_file(pkg_list_file)
 
-    def _add_file_in_git_repo(self, executed_cmd: List[str], start_index: int) -> None:
+    def _add_file_in_git_repo(self, executed_cmd: List[str], start_index: int, first_line_comment: str = None) -> None:
         for file_arg in executed_cmd[start_index:]:
             file_path = absolute_path(file_arg)
             if not os.path.isfile(file_path):
                 continue
+            # Optionally prepend a comment line describing the source command (for tee outputs)
+            if first_line_comment:
+                try:
+                    with open(file_path, 'r+', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()
+                        if not content.startswith(first_line_comment):
+                            f.seek(0)
+                            f.write(first_line_comment + "\n" + content)
+                except Exception:
+                    try:
+                        with open(file_path, 'w', encoding='utf-8', errors='ignore') as f:
+                            f.write(first_line_comment + "\n")
+                    except Exception:
+                        pass
             # Ignore if path is already tracked in another repo
             if file_is_in_a_git_repo(file_path):
                 self.logger.info(
@@ -231,14 +245,19 @@ class TropsCapCmd(Trops):
                 normalized.append(tok)
 
         # Scan for the last occurrence of '|' followed by 'tee'
-        last_pipe_tee_index = -1
+        last_pipe_index = -1
         for i in range(len(normalized) - 1):
             if normalized[i] == '|' and normalized[i + 1] == 'tee':
-                last_pipe_tee_index = i + 1  # index of 'tee'
+                last_pipe_index = i  # index of '|' just before tee
 
-        if last_pipe_tee_index != -1:
+        if last_pipe_index != -1:
+            # Determine the left-hand command (before the last pipe that precedes tee)
+            left_cmd_tokens = normalized[:last_pipe_index]
+            left_cmd = ' '.join(left_cmd_tokens).strip()
+            comment = f"# {left_cmd}" if left_cmd else None
             # Start collecting path arguments after 'tee'
-            self._add_file_in_git_repo(normalized, last_pipe_tee_index + 1)
+            tee_index = last_pipe_index + 1  # 'tee'
+            self._add_file_in_git_repo(normalized, tee_index + 1, first_line_comment=comment)
             return True
         return False
 
