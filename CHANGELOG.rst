@@ -5,6 +5,28 @@ Changelog
 `Unreleased`_
 =============
 
+`v0.2.27`_ - 2025-08-10
+=======================
+- Add trops view command with:
+  - Single file viewing from repo: `trops view <file> [--commit <rev>]`
+  - Web viewer: `trops view --web <folder>` serving at http://localhost:8001
+  - Clickable "trops show <hash>[:<path>]" links in Markdown to open modal with git show outputs
+  - Optional `--no-browser` to suppress auto opening browser
+  - Markdown tables render with borders in web viewer
+  - Improved modern styling and search filter
+  - Diff syntax highlighting for git show output
+-. Editor/tee capture-cmd improvements:
+  - Detect files edited even when command is repeated
+  - Auto-push only when files were added/updated
+  - Handle chained pipelines and `|tee` variations
+-. Git wrapper improvements:
+  - Normalize absolute paths to work-tree relative pathspecs
+  - Use `-C <work_tree>` and `--` separator for safety
+  - `-v/--verbose` to print wrapped git/touch commands
+-. Tags and log improvements:
+  - Filter log by any tag element; `--tags` override at runtime
+  - Primary tag extraction and normalization
+
 `v0.2.26`_ - 2025-08-08
 =======================
 
@@ -32,7 +54,8 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.26...develop
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.27...develop
+.. _v0.2.27: https://github.com/kojiwell/trops/compare/v0.2.26...v0.2.27
 .. _v0.2.26: https://github.com/kojiwell/trops/compare/v0.2.25...v0.2.26
 .. _v0.2.25: https://github.com/kojiwell/trops/compare/v0.2.24...v0.2.25
 .. _v0.2.24: https://github.com/kojiwell/trops/compare/v0.2.23...v0.2.24
