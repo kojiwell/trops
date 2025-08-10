@@ -139,7 +139,7 @@ class Trops:
                 mode = oct(os.stat(file_path).st_mode)[-4:]
                 owner = Path(file_path).owner()
                 group = Path(file_path).group()
-                message = f"FL trops show -e { self.trops_env } { output[0] }:{ rel_path }  #> { log_note } O={ owner },G={ group },M={ mode }"
+                message = f"FL trops show { output[0] }:{ rel_path }  #> { log_note } O={ owner },G={ group },M={ mode }"
                 if self.trops_sid:
                     message = f"{ message } TROPS_SID={ self.trops_sid }"
                 message = f"{ message } TROPS_ENV={ self.trops_env }"
@@ -419,7 +419,7 @@ class TropsMain(Trops):
             mode = oct(os.stat(file_path).st_mode)[-4:]
             owner = Path(file_path).owner()
             group = Path(file_path).group()
-            message = f"FL trops show -e { env } { commit }:{ path }  #> { log_note } O={ owner },G={ group },M={ mode }"
+            message = f"FL trops show { commit }:{ path }  #> { log_note } O={ owner },G={ group },M={ mode }"
             if self.trops_sid:
                 message = message + f" TROPS_SID={ self.trops_sid }"
             message = message + f" TROPS_ENV={ env }"
@@ -468,7 +468,7 @@ class TropsMain(Trops):
             exit(1)
         cmd = self.git_cmd + ['log', '--oneline', '-1', '--', rel_path]
         output = subprocess.check_output(cmd).decode("utf-8").split()
-        message = f"FL trops show -e { self.trops_env } { output[0] }:{ rel_path }  #> BYE BYE"
+        message = f"FL trops show { output[0] }:{ rel_path }  #> BYE BYE"
         if self.trops_sid:
             message = message + f" TROPS_SID={ self.trops_sid }"
         message = message + f" TROPS_ENV={ self.trops_env }"
