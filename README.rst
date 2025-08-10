@@ -123,6 +123,41 @@ Now, you can update the tasks and recipes in your Ansible roles, Dockerfiles, an
 
 Trops helps you easily try new things, and you don't have to worry about forgetting what you've done. And then, once you've got used to it, it will actually help you organize your day-to-day multitasking, which is probably something that a lot of system admins cannot avoid.
 
+Sharing trops tags among hosts and sudoers
+==========================================
+
+Add SendEnv TROPS_TAGS to ~/.ssh/config::
+
+    SendEnv TROPS_TAGS
+
+Add TROPS_TAGS to AcceptEnv in /etc/ssh/sshd_config::
+
+    AcceptEnv TROPS_TAGS
+
+Add TROPS_TAGS to /etc/sudoers::
+
+    Defaults    env_keep += "TROPS_TAGS"
+
+Check TROPS_TAGS in environment variables and actiavate trops::
+
+    if [[ -n "${TROPS_TAGS}" ]]; then
+        . /path/to/trops/tropsrc
+    fi
+
+The tropsrc looks like this::
+
+    export TROPS_DIR="/path/to/trops"
+    test -d $TROPS_DIR || mkdir -p $TROPS_DIR
+
+    # for Bash
+    eval "$(trops init bash)"
+ 
+    if [ ! -d "$TROPS_DIR/repo/$(hostname -s).git" ]; then
+        trops env create $(hostname -s)
+    fi
+
+    ontrops $(hostname -s)
+
 Contributing
 ============
 

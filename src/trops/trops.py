@@ -229,15 +229,22 @@ class TropsMain(Trops):
         if os.getenv('TROPS_ENV') == None:
             raise SystemExit("You're not under any trops environment")
 
-        dirs = self.args.dirs
-        for dir in dirs:
-            if os.path.isdir(dir):
-                os.chdir(dir)
-                cmd = self.git_cmd + ['ls-files']
-                output = subprocess.check_output(cmd)
-                for f in output.decode("utf-8").splitlines():
-                    cmd = ['ls', '-al', f]
-                    subprocess.call(cmd)
+        # Normalize directory arguments using shared helper
+        rel_dirs = self.normalize_paths_for_work_tree(self.args.dirs)
+
+        # Build git ls-files command
+        if rel_dirs:
+            cmd = self.git_cmd + ['ls-files', '--'] + rel_dirs
+        else:
+            cmd = self.git_cmd + ['ls-files']
+
+        output = subprocess.check_output(cmd)
+
+        # For each tracked file (relative to work_tree), show its absolute file metadata
+        abs_work_tree = os.path.realpath(self.work_tree)
+        for rel_path in output.decode("utf-8").splitlines():
+            abs_path = os.path.join(abs_work_tree, rel_path.lstrip('/'))
+            subprocess.call(['ls', '-al', abs_path])
 
     def show(self) -> None:
         """trops show hash[:path]"""
@@ -338,21 +345,15 @@ class TropsMain(Trops):
                 if i + 1 < len(args):
                     skip_next = True
                 continue
-            # Transform absolute path under work_tree into rel path
+            # Transform absolute or relative file path tokens into work-tree-relative
             maybe_token = token
-            if os.path.isabs(token):
-                # Resolve symlinks to place files under their actual paths
-                abs_work_tree = os.path.realpath(self.work_tree)
-                abs_token = os.path.realpath(token)
-                try:
-                    rel = os.path.relpath(abs_token, start=abs_work_tree)
-                    # Only replace if rel does not start with '..'
-                    if not rel.startswith('..'):
-                        maybe_token = rel
-                        if first_path_index == -1:
-                            first_path_index = len(result_args)
-                except Exception:
-                    pass
+            # Skip tokens that look like revision:path and don't exist as a path
+            if not (':' in token and not os.path.exists(token)):
+                rel_list = self.normalize_paths_for_work_tree([token])
+                if rel_list:
+                    maybe_token = rel_list[0]
+                    if first_path_index == -1:
+                        first_path_index = len(result_args)
             result_args.append(maybe_token)
 
         # Insert "--" before the first pathspec if applicable and not already present
@@ -485,3 +486,26 @@ class TropsMain(Trops):
         real_work_tree = os.path.realpath(self.work_tree)
         real_file_path = os.path.realpath(absolute_path(file_path))
         return os.path.relpath(real_file_path, start=real_work_tree)
+
+    def normalize_paths_for_work_tree(self, paths: List[str]) -> List[str]:
+        """Given a list of paths (absolute or relative), return those within
+        the work tree as paths relative to the work tree. Paths outside are filtered out.
+
+        This centralizes path normalization logic for commands like git wrapper
+        and `trops ll`.
+        """
+        normalized: List[str] = []
+        abs_work_tree = os.path.realpath(self.work_tree)
+        for p in paths:
+            try:
+                abs_p = os.path.realpath(absolute_path(p))
+            except Exception:
+                continue
+            try:
+                rel = os.path.relpath(abs_p, start=abs_work_tree)
+            except Exception:
+                continue
+            if rel.startswith('..'):
+                continue
+            normalized.append(rel)
+        return normalized
