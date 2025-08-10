@@ -4,6 +4,7 @@ version = '0.2.27'
 description = "Track operations of distributed Linux systems"
 authors = ["Koji Tanaka <kojiwelly@gmail.com>"]
 license = "MIT"
+readme = "README.rst"
 
 [tool.poetry.scripts]
 trops = "trops.exec:main"
