@@ -21,6 +21,21 @@ class TropsCapCmd(Trops):
             raise SystemExit('ERROR: The TROPS_DIR environment variable has not been set.')
         super().__init__(args, other_args)
 
+        # If TROPS_ENV is specified but missing in config, error out early with a clear message
+        conf_path = os.path.join(self.trops_dir, 'trops.cfg')
+        if self.trops_env and os.path.isfile(conf_path):
+            config = ConfigParser()
+            config.read(conf_path)
+            if not config.has_section(self.trops_env):
+                raise SystemExit(f"ERROR: TROPS_ENV '{self.trops_env}' does not exist in your configuration at {conf_path}.")
+
+        # Ensure attributes exist even when no config section is present
+        # This avoids AttributeError later and provides sane defaults
+        if not hasattr(self, 'ignore_cmds'):
+            self.ignore_cmds = ['ttags']
+        if not hasattr(self, 'disable_header'):
+            self.disable_header = False
+
         # Start setting the header with stable positions: trops|env|sid|tags
         header_env = getattr(self, 'trops_env', '') or ''
         header_sid = getattr(self, 'trops_sid', '') or ''
@@ -64,7 +79,7 @@ class TropsCapCmd(Trops):
         self._save_last_command(str(last_cmd_path), time_and_cmd)
 
         # Skip logging if ignored
-        if executed_cmd[0] in self.ignore_cmds:
+        if self.ignore_cmds and executed_cmd[0] in self.ignore_cmds:
             self.print_header()
             sys.exit(0)
 
