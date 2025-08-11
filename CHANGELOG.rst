@@ -5,6 +5,15 @@ Changelog
 `Unreleased`_
 =============
 
+`v0.2.28`_ - 2025-08-10
+=======================
+- capture-cmd: `| tee <file>` で追加されるファイルの先頭行に元コマンド（`# <command>`）を自動付与
+- view --web: フロントマター(YAML, `---`〜`---`)をスキップして本文のみ表示
+- view --web: ハイパーリンクの色を変えず、下線のみ表示に調整
+- trops git: 相対パスやCWD基準のパスをwork-tree相対に正規化し、`--` を適切に挿入
+- trops ll: ディレクトリ引数をwork-tree相対に正規化して表示
+- 共通: パス正規化ロジックをユーティリティ化し重複を削減
+
 `v0.2.27`_ - 2025-08-10
 =======================
 - Add trops view command with:
@@ -15,15 +24,15 @@ Changelog
   - Markdown tables render with borders in web viewer
   - Improved modern styling and search filter
   - Diff syntax highlighting for git show output
--. Editor/tee capture-cmd improvements:
+- Editor/tee capture-cmd improvements:
   - Detect files edited even when command is repeated
   - Auto-push only when files were added/updated
   - Handle chained pipelines and `|tee` variations
--. Git wrapper improvements:
+- Git wrapper improvements:
   - Normalize absolute paths to work-tree relative pathspecs
   - Use `-C <work_tree>` and `--` separator for safety
   - `-v/--verbose` to print wrapped git/touch commands
--. Tags and log improvements:
+- Tags and log improvements:
   - Filter log by any tag element; `--tags` override at runtime
   - Primary tag extraction and normalization
 
@@ -54,7 +63,8 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.27...develop
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.28...develop
+.. _v0.2.28: https://github.com/kojiwell/trops/compare/v0.2.27...v0.2.28
 .. _v0.2.27: https://github.com/kojiwell/trops/compare/v0.2.26...v0.2.27
 .. _v0.2.26: https://github.com/kojiwell/trops/compare/v0.2.25...v0.2.26
 .. _v0.2.25: https://github.com/kojiwell/trops/compare/v0.2.24...v0.2.25
