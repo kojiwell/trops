@@ -7,12 +7,12 @@ Changelog
 
 `v0.2.28`_ - 2025-08-10
 =======================
-- capture-cmd: `| tee <file>` で追加されるファイルの先頭行に元コマンド（`# <command>`）を自動付与
-- view --web: フロントマター(YAML, `---`〜`---`)をスキップして本文のみ表示
-- view --web: ハイパーリンクの色を変えず、下線のみ表示に調整
-- trops git: 相対パスやCWD基準のパスをwork-tree相対に正規化し、`--` を適切に挿入
-- trops ll: ディレクトリ引数をwork-tree相対に正規化して表示
-- 共通: パス正規化ロジックをユーティリティ化し重複を削減
+- capture-cmd: Automatically add the original command (`# <command>`) to the first line of files added with `| tee <file>`.
+- view --web: Skip the front matter (YAML, `---` to `---`) and display only the main content.
+- view --web: Adjust to display hyperlinks with underlines only, without changing their color.
+- trops git: Normalize relative paths or CWD-based paths to work-tree relative paths and appropriately insert `--`.
+- trops ll: Normalize directory arguments to work-tree relative paths for display.
+- Common: Utility-ize path normalization logic to reduce duplication.
 
 `v0.2.27`_ - 2025-08-10
 =======================
