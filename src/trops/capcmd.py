@@ -55,6 +55,12 @@ class TropsCapCmd(Trops):
         executed_cmd = self.other_args
         time_and_cmd = f"{now_hm} {' '.join(executed_cmd)}"
 
+        # Fast-path: skip early if command is in ignore list (performance)
+        sanitized_for_ignore = self._sanitize_for_sudo(executed_cmd)
+        if self.ignore_cmds and sanitized_for_ignore and sanitized_for_ignore[0] in self.ignore_cmds:
+            self.print_header()
+            sys.exit(0)
+
         # Ensure tmp directory exists
         tmp_dir = Path(self.trops_dir) / 'tmp'
         tmp_dir.mkdir(parents=True, exist_ok=True)
@@ -78,7 +84,7 @@ class TropsCapCmd(Trops):
         # Save last command signature
         self._save_last_command(str(last_cmd_path), time_and_cmd)
 
-        # Skip logging if ignored (consider 'sudo <cmd>' forms)
+        # (kept for clarity; normally unreachable due to early fast-path above)
         sanitized_for_ignore = self._sanitize_for_sudo(executed_cmd)
         if self.ignore_cmds and sanitized_for_ignore and sanitized_for_ignore[0] in self.ignore_cmds:
             self.print_header()

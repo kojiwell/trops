@@ -144,3 +144,42 @@ def test_file_is_in_git_repo_avoids_chdir(monkeypatch, tmp_path):
 
     # Ensure no chdir was used
     assert chdir_called["used"] is False
+
+
+def test_capcmd_ignore_skips_side_effects(monkeypatch, tmp_path, capsys):
+    # TROPS_DIR is required
+    trops_dir = tmp_path / 'trops'
+    trops_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("TROPS_DIR", str(trops_dir))
+
+    from unittest.mock import patch
+    import argparse
+    from trops.capcmd import add_capture_cmd_subparsers, capture_cmd, TropsCapCmd
+
+    called = {"track": False, "tee": False}
+
+    def fake_track(self, executed_cmd):
+        called["track"] = True
+
+    def fake_tee(self, executed_cmd):
+        called["tee"] = True
+        return False
+
+    monkeypatch.setattr(TropsCapCmd, '_track_editor_files', fake_track, raising=True)
+    monkeypatch.setattr(TropsCapCmd, '_add_tee_output_file', fake_tee, raising=True)
+
+    # Build args simulating: trops capture-cmd 0 ttags (ignored)
+    with patch("sys.argv", ["trops", "capture-cmd", '0', "ttags"]):
+        parser = argparse.ArgumentParser(prog='trops', description='Trops - Tracking Operations')
+        subparsers = parser.add_subparsers()
+        add_capture_cmd_subparsers(subparsers)
+        args, other_args = parser.parse_known_args()
+
+    import pytest
+    with pytest.raises(SystemExit) as exc:
+        capture_cmd(args, other_args)
+
+    assert exc.value.code == 0
+    # Ensure side-effect methods were not called
+    assert called["track"] is False
+    assert called["tee"] is False
