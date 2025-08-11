@@ -82,9 +82,17 @@ class TropsLog(TropsMain):
             try:
                 lines = self._follow(ff)
                 for line in lines:
-                    if self.args.all:
+                    if getattr(self.args, 'all', False):
                         print(line, end='')
-                    elif check_tags(self.trops_tags, line):
+                    elif getattr(self, 'trops_tags', None):
+                        if check_tags(self.trops_tags, line):
+                            print(line, end='')
+                    elif getattr(self, 'trops_sid', None):
+                        keyword = f'TROPS_SID={self.trops_sid}'
+                        if keyword in line:
+                            print(line, end='')
+                    else:
+                        # No filters provided -> print all lines
                         print(line, end='')
 
             except KeyboardInterrupt:

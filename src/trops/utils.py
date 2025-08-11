@@ -60,7 +60,7 @@ def pick_out_repo_name_from_git_remote(git_remote: str) -> str:
 
 def generate_sid(args, other_args):
     """Generate a session ID"""
-    s = that()
+    s = sid_seed_text()
     # Three and seven are magic numbers
     hlen = 3
     tlen = 4
@@ -70,8 +70,12 @@ def generate_sid(args, other_args):
     tail = hashlib.sha256(bytes(now, 'utf-8')).hexdigest()[0:tlen]
     print(head + tail)
 
-def that():
-    """Tribute to this.py and Laozi"""
+def sid_seed_text():
+    """Return an alphanumeric seed text used for SID generation.
+
+    Previously named `that`, which was unclear. This function provides
+    a deterministic, alphanumeric-only text used to derive the SID prefix.
+    """
     s = """Tao Te Ching / Chapter 45
     Great support seems deficient,
     Employed it will not collapse;

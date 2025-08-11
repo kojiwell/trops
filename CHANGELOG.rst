@@ -5,6 +5,15 @@ Changelog
 `Unreleased`_
 =============
 
+`v0.2.29`_ - 2025-08-11
+=======================
+- capcmd performance: early fast-path ignore for commands like `ttags` (skip side-effects),
+  avoid `os.chdir` by using `git -C`, and use a set for `ignore_cmds` membership checks.
+- log: default to printing all lines when no filters are specified; apply same logic in follow mode.
+- capcmd: clearer error when `TROPS_ENV` is set but missing in config; safer defaults for attributes.
+- utils: rename unclear `that` to `sid_seed_text` and add tests for SID format.
+- capcmd: rename `_update_files` to `_track_editor_files` for clarity and add test.
+
 `v0.2.28`_ - 2025-08-10
 =======================
 - capture-cmd: Automatically add the original command (`# <command>`) to the first line of files added with `| tee <file>`.
@@ -63,7 +72,8 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.28...develop
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.29...develop
+.. _v0.2.29: https://github.com/kojiwell/trops/compare/v0.2.28...v0.2.29
 .. _v0.2.28: https://github.com/kojiwell/trops/compare/v0.2.27...v0.2.28
 .. _v0.2.27: https://github.com/kojiwell/trops/compare/v0.2.26...v0.2.27
 .. _v0.2.26: https://github.com/kojiwell/trops/compare/v0.2.25...v0.2.26

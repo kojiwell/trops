@@ -32,7 +32,7 @@ class TropsCapCmd(Trops):
         # Ensure attributes exist even when no config section is present
         # This avoids AttributeError later and provides sane defaults
         if not hasattr(self, 'ignore_cmds'):
-            self.ignore_cmds = ['ttags']
+            self.ignore_cmds = {'ttags'}
         if not hasattr(self, 'disable_header'):
             self.disable_header = False
 
@@ -55,14 +55,20 @@ class TropsCapCmd(Trops):
         executed_cmd = self.other_args
         time_and_cmd = f"{now_hm} {' '.join(executed_cmd)}"
 
+        # Fast-path: skip early if command is in ignore list (performance)
+        sanitized_for_ignore = self._sanitize_for_sudo(executed_cmd)
+        if self.ignore_cmds and sanitized_for_ignore and sanitized_for_ignore[0] in self.ignore_cmds:
+            self.print_header()
+            sys.exit(0)
+
         # Ensure tmp directory exists
         tmp_dir = Path(self.trops_dir) / 'tmp'
         tmp_dir.mkdir(parents=True, exist_ok=True)
         last_cmd_path = tmp_dir / 'last_cmd'
 
         # Side-effect operations that should happen even if the command is repeated
-        # 1) Update files edited by editors
-        self._update_files(executed_cmd)
+        # 1) Track files edited by common editors
+        self._track_editor_files(executed_cmd)
         # 2) Track files written via tee
         wrote_with_tee = self._add_tee_output_file(executed_cmd)
         # 3) Try pushing if remote is configured and we actually added/updated files
@@ -78,8 +84,9 @@ class TropsCapCmd(Trops):
         # Save last command signature
         self._save_last_command(str(last_cmd_path), time_and_cmd)
 
-        # Skip logging if ignored
-        if self.ignore_cmds and executed_cmd[0] in self.ignore_cmds:
+        # (kept for clarity; normally unreachable due to early fast-path above)
+        sanitized_for_ignore = self._sanitize_for_sudo(executed_cmd)
+        if self.ignore_cmds and sanitized_for_ignore and sanitized_for_ignore[0] in self.ignore_cmds:
             self.print_header()
             sys.exit(0)
 
@@ -230,8 +237,8 @@ class TropsCapCmd(Trops):
             git_msg = f"{git_msg} ({self.trops_tags})"
         return git_msg, log_note
 
-    def _update_files(self, executed_cmd: List[str]) -> None:
-        """Add a file or directory in the git repo"""
+    def _track_editor_files(self, executed_cmd: List[str]) -> None:
+        """Detect common editors and add the edited file(s) to the repo if present."""
 
         # Remove sudo from executed_cmd (basic case)
         executed_cmd = self._sanitize_for_sudo(executed_cmd)
@@ -334,8 +341,7 @@ def add_capture_cmd_subparsers(subparsers):
     parser_capture_cmd.set_defaults(handler=capture_cmd)
 
 def file_is_in_a_git_repo(file_path: str) -> bool:
-    parent_dir = os.path.dirname(file_path)
-    if parent_dir:
-        os.chdir(parent_dir)
-    result = subprocess.run(['git', 'rev-parse', '--is-inside-work-tree'], capture_output=True)
+    parent_dir = os.path.dirname(file_path) or '.'
+    # Use git -C to avoid changing global working directory
+    result = subprocess.run(['git', '-C', parent_dir, 'rev-parse', '--is-inside-work-tree'], capture_output=True)
     return result.returncode == 0
