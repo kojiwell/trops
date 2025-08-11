@@ -78,8 +78,9 @@ class TropsCapCmd(Trops):
         # Save last command signature
         self._save_last_command(str(last_cmd_path), time_and_cmd)
 
-        # Skip logging if ignored
-        if self.ignore_cmds and executed_cmd[0] in self.ignore_cmds:
+        # Skip logging if ignored (consider 'sudo <cmd>' forms)
+        sanitized_for_ignore = self._sanitize_for_sudo(executed_cmd)
+        if self.ignore_cmds and sanitized_for_ignore and sanitized_for_ignore[0] in self.ignore_cmds:
             self.print_header()
             sys.exit(0)
 

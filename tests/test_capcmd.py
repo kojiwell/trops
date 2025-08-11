@@ -65,3 +65,30 @@ def test_capcmd_errors_when_trops_env_not_in_config(monkeypatch, tmp_path):
         capture_cmd(args, other_args)
 
     assert "TROPS_ENV 'missingenv' does not exist in your configuration" in str(exc.value)
+
+
+def test_capcmd_ignores_sudo_ttags(monkeypatch, tmp_path, capsys):
+    # TROPS_DIR is required
+    trops_dir = tmp_path / 'trops'
+    trops_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("TROPS_DIR", str(trops_dir))
+
+    from unittest.mock import patch
+    import argparse
+    from trops.capcmd import add_capture_cmd_subparsers, capture_cmd
+
+    # Build args simulating: trops capture-cmd 0 sudo ttags
+    with patch("sys.argv", ["trops", "capture-cmd", '0', "sudo", "ttags"]):
+        parser = argparse.ArgumentParser(prog='trops', description='Trops - Tracking Operations')
+        subparsers = parser.add_subparsers()
+        add_capture_cmd_subparsers(subparsers)
+        args, other_args = parser.parse_known_args()
+
+    import pytest
+    with pytest.raises(SystemExit) as exc:
+        capture_cmd(args, other_args)
+
+    out = capsys.readouterr().out
+    # Should exit with code 0 after printing header
+    assert exc.value.code == 0
+    assert "-= trops|||- =-" in out or "-= trops" in out
