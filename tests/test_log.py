@@ -54,3 +54,31 @@ def test_check_tags_any_match():
     assert check_tags('tag1', line) is True
     assert check_tags('tag1,tag3', line) is True
     assert check_tags('tag3', line) is True
+
+
+def test_log_without_filters_prints_all(monkeypatch, tmp_path, setup_log_args, capsys):
+    args, other_args = setup_log_args
+
+    # Ensure no filters
+    if hasattr(args, 'all'):
+        monkeypatch.setattr(args, 'all', False, raising=False)
+    if hasattr(args, 'save'):
+        monkeypatch.setattr(args, 'save', False, raising=False)
+    monkeypatch.delenv('TROPS_TAGS', raising=False)
+    monkeypatch.delenv('TROPS_SID', raising=False)
+
+    # Point TROPS_DIR to a temporary directory and create a log file
+    trops_dir = tmp_path / 'trops'
+    log_dir = trops_dir / 'log'
+    log_dir.mkdir(parents=True)
+    log_file = log_dir / 'trops.log'
+    log_file.write_text('first line\nsecond line\n', encoding='utf-8')
+
+    # Set TROPS_DIR to the trops directory so Trops will read the file we wrote
+    monkeypatch.setenv('TROPS_DIR', str(trops_dir))
+
+    tl = TropsLog(args, other_args)
+    tl.log()
+
+    out = capsys.readouterr().out
+    assert out == 'first line\nsecond line\n'

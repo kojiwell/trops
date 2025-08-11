@@ -5,6 +5,15 @@ Changelog
 `Unreleased`_
 =============
 
+`v0.2.28`_ - 2025-08-10
+=======================
+- capture-cmd: Automatically add the original command (`# <command>`) to the first line of files added with `| tee <file>`.
+- view --web: Skip the front matter (YAML, `---` to `---`) and display only the main content.
+- view --web: Adjust to display hyperlinks with underlines only, without changing their color.
+- trops git: Normalize relative paths or CWD-based paths to work-tree relative paths and appropriately insert `--`.
+- trops ll: Normalize directory arguments to work-tree relative paths for display.
+- Common: Utility-ize path normalization logic to reduce duplication.
+
 `v0.2.27`_ - 2025-08-10
 =======================
 - Add trops view command with:
@@ -15,15 +24,15 @@ Changelog
   - Markdown tables render with borders in web viewer
   - Improved modern styling and search filter
   - Diff syntax highlighting for git show output
--. Editor/tee capture-cmd improvements:
+- Editor/tee capture-cmd improvements:
   - Detect files edited even when command is repeated
   - Auto-push only when files were added/updated
   - Handle chained pipelines and `|tee` variations
--. Git wrapper improvements:
+- Git wrapper improvements:
   - Normalize absolute paths to work-tree relative pathspecs
   - Use `-C <work_tree>` and `--` separator for safety
   - `-v/--verbose` to print wrapped git/touch commands
--. Tags and log improvements:
+- Tags and log improvements:
   - Filter log by any tag element; `--tags` override at runtime
   - Primary tag extraction and normalization
 
@@ -54,7 +63,8 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.27...develop
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.28...develop
+.. _v0.2.28: https://github.com/kojiwell/trops/compare/v0.2.27...v0.2.28
 .. _v0.2.27: https://github.com/kojiwell/trops/compare/v0.2.26...v0.2.27
 .. _v0.2.26: https://github.com/kojiwell/trops/compare/v0.2.25...v0.2.26
 .. _v0.2.25: https://github.com/kojiwell/trops/compare/v0.2.24...v0.2.25
