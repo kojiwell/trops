@@ -32,7 +32,7 @@ class TropsCapCmd(Trops):
         # Ensure attributes exist even when no config section is present
         # This avoids AttributeError later and provides sane defaults
         if not hasattr(self, 'ignore_cmds'):
-            self.ignore_cmds = ['ttags']
+            self.ignore_cmds = {'ttags'}
         if not hasattr(self, 'disable_header'):
             self.disable_header = False
 

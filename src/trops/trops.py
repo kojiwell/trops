@@ -66,7 +66,8 @@ class Trops:
 
                 self.disable_header = strtobool(self.get_config_value('disable_header', default='False'))
 
-                self.ignore_cmds = [item.strip() for item in self.get_config_value('ignore_cmds', default='ttags').split(',')]
+                # Use a set for O(1) membership checks on ignore commands
+                self.ignore_cmds = {item.strip() for item in self.get_config_value('ignore_cmds', default='ttags').split(',') if item.strip()}
 
                 self.git_remote = self.get_config_value('git_remote', default=False)
                 if self.git_remote:

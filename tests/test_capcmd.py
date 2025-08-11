@@ -183,3 +183,24 @@ def test_capcmd_ignore_skips_side_effects(monkeypatch, tmp_path, capsys):
     # Ensure side-effect methods were not called
     assert called["track"] is False
     assert called["tee"] is False
+
+
+def test_ignore_cmds_is_set_for_fast_membership(monkeypatch, tmp_path):
+    # TROPS_DIR is required
+    trops_dir = tmp_path / 'trops'
+    trops_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("TROPS_DIR", str(trops_dir))
+
+    from unittest.mock import patch
+    import argparse
+    from trops.capcmd import add_capture_cmd_subparsers, TropsCapCmd
+
+    with patch("sys.argv", ["trops", "capture-cmd", '0', "echo", "hi"]):
+        parser = argparse.ArgumentParser(prog='trops', description='Trops - Tracking Operations')
+        subparsers = parser.add_subparsers()
+        add_capture_cmd_subparsers(subparsers)
+        args, other_args = parser.parse_known_args()
+
+    tcc = TropsCapCmd(args, other_args)
+    assert isinstance(tcc.ignore_cmds, set)
+    assert 'ttags' in tcc.ignore_cmds
