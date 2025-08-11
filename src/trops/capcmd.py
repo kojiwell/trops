@@ -335,8 +335,7 @@ def add_capture_cmd_subparsers(subparsers):
     parser_capture_cmd.set_defaults(handler=capture_cmd)
 
 def file_is_in_a_git_repo(file_path: str) -> bool:
-    parent_dir = os.path.dirname(file_path)
-    if parent_dir:
-        os.chdir(parent_dir)
-    result = subprocess.run(['git', 'rev-parse', '--is-inside-work-tree'], capture_output=True)
+    parent_dir = os.path.dirname(file_path) or '.'
+    # Use git -C to avoid changing global working directory
+    result = subprocess.run(['git', '-C', parent_dir, 'rev-parse', '--is-inside-work-tree'], capture_output=True)
     return result.returncode == 0

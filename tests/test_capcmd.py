@@ -122,3 +122,25 @@ def test_capcmd_calls_track_editor_files_for_editors(monkeypatch, tmp_path):
     capture_cmd(args, other_args)
 
     assert called_with.get('args') == ["vim", "/tmp/file.txt"]
+
+
+def test_file_is_in_git_repo_avoids_chdir(monkeypatch, tmp_path):
+    import os as _os
+    # Stub os.chdir to detect if it's called
+    chdir_called = {"used": False}
+
+    def fake_chdir(_):
+        chdir_called["used"] = True
+
+    monkeypatch.setattr(_os, 'chdir', fake_chdir, raising=True)
+
+    # Create a dummy file path (not in a git repo)
+    p = tmp_path / 'sub' / 'file.txt'
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text('x', encoding='utf-8')
+
+    from trops.capcmd import file_is_in_a_git_repo
+    _ = file_is_in_a_git_repo(str(p))
+
+    # Ensure no chdir was used
+    assert chdir_called["used"] is False
