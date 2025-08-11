@@ -61,8 +61,8 @@ class TropsCapCmd(Trops):
         last_cmd_path = tmp_dir / 'last_cmd'
 
         # Side-effect operations that should happen even if the command is repeated
-        # 1) Update files edited by editors
-        self._update_files(executed_cmd)
+        # 1) Track files edited by common editors
+        self._track_editor_files(executed_cmd)
         # 2) Track files written via tee
         wrote_with_tee = self._add_tee_output_file(executed_cmd)
         # 3) Try pushing if remote is configured and we actually added/updated files
@@ -231,8 +231,8 @@ class TropsCapCmd(Trops):
             git_msg = f"{git_msg} ({self.trops_tags})"
         return git_msg, log_note
 
-    def _update_files(self, executed_cmd: List[str]) -> None:
-        """Add a file or directory in the git repo"""
+    def _track_editor_files(self, executed_cmd: List[str]) -> None:
+        """Detect common editors and add the edited file(s) to the repo if present."""
 
         # Remove sudo from executed_cmd (basic case)
         executed_cmd = self._sanitize_for_sudo(executed_cmd)

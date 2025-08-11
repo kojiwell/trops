@@ -92,3 +92,33 @@ def test_capcmd_ignores_sudo_ttags(monkeypatch, tmp_path, capsys):
     # Should exit with code 0 after printing header
     assert exc.value.code == 0
     assert "-= trops|||- =-" in out or "-= trops" in out
+
+
+def test_capcmd_calls_track_editor_files_for_editors(monkeypatch, tmp_path):
+    # Ensure TROPS_DIR
+    trops_dir = tmp_path / 'trops'
+    trops_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("TROPS_DIR", str(trops_dir))
+
+    from unittest.mock import patch
+    import argparse
+    from trops.capcmd import add_capture_cmd_subparsers, capture_cmd, TropsCapCmd
+
+    # Stub method to observe call
+    called_with = {}
+    def stub_track(self, executed_cmd):
+        called_with['args'] = executed_cmd
+
+    monkeypatch.setattr(TropsCapCmd, '_track_editor_files', stub_track, raising=True)
+
+    # Simulate: trops capture-cmd 0 vim /tmp/file.txt
+    with patch("sys.argv", ["trops", "capture-cmd", '0', "vim", "/tmp/file.txt"]):
+        parser = argparse.ArgumentParser(prog='trops', description='Trops - Tracking Operations')
+        subparsers = parser.add_subparsers()
+        add_capture_cmd_subparsers(subparsers)
+        args, other_args = parser.parse_known_args()
+
+    # Run; should not raise SystemExit here (not ignored)
+    capture_cmd(args, other_args)
+
+    assert called_with.get('args') == ["vim", "/tmp/file.txt"]
