@@ -82,3 +82,39 @@ def test_log_without_filters_prints_all(monkeypatch, tmp_path, setup_log_args, c
 
     out = capsys.readouterr().out
     assert out == 'first line\nsecond line\n'
+
+
+def test_log_follow_without_filters_prints_lines(monkeypatch, tmp_path, setup_log_args, capsys):
+    args, other_args = setup_log_args
+
+    # Enable follow, ensure no filters
+    monkeypatch.setattr(args, 'follow', True, raising=False)
+    if hasattr(args, 'all'):
+        monkeypatch.setattr(args, 'all', False, raising=False)
+    monkeypatch.delenv('TROPS_TAGS', raising=False)
+    monkeypatch.delenv('TROPS_SID', raising=False)
+
+    # Prepare TROPS_DIR and an empty log file so initial non-follow print prints nothing
+    trops_dir = tmp_path / 'trops'
+    log_dir = trops_dir / 'log'
+    log_dir.mkdir(parents=True)
+    log_file = log_dir / 'trops.log'
+    log_file.write_text('', encoding='utf-8')
+    monkeypatch.setenv('TROPS_DIR', str(trops_dir))
+
+    tl = TropsLog(args, other_args)
+
+    # Mock _follow to yield two lines and then stop via KeyboardInterrupt
+    def fake_follow(self, _f):
+        yield 'first line\n'
+        yield 'second line\n'
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(TropsLog, '_follow', fake_follow, raising=True)
+
+    tl.log()
+
+    out = capsys.readouterr().out
+    # Expect the two lines from follow, then the closing message (which starts with a leading newline)
+    assert 'first line\nsecond line\n' in out
+    assert 'Closing trops log...' in out
