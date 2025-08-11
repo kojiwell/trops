@@ -59,15 +59,18 @@ class TropsLog(TropsMain):
             # strip \n in items
             lines = list(map(lambda x:x.strip(),lines))
 
-            if self.args.all:
+            # Default to all lines when no filters are provided
+            if getattr(self.args, 'all', False):
                 target_lines = lines
-            elif self.trops_tags:
+            elif getattr(self, 'trops_tags', None):
                 # Match any tag element in self.trops_tags against TROPS_TAGS in line
                 target_lines = [line for line in lines if check_tags(self.trops_tags, line)]
-
-            elif hasattr(self, 'trops_sid'):
+            elif getattr(self, 'trops_sid', None):
+                # Only filter by SID when it's truthy
                 keyword = f'TROPS_SID={self.trops_sid}'
                 target_lines = [line for line in lines if keyword in line]
+            else:
+                target_lines = lines
 
         if self.args.save:
             self._save_log(target_lines)
