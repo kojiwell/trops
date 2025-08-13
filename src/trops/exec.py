@@ -12,6 +12,7 @@ from .repo import add_repo_subparsers
 from .trops import TropsMain
 from .utils import generate_sid
 from .view import add_view_subparsers
+from .getkm import add_getkm_subparsers
 
 
 def trops_git(args, other_args):
@@ -179,6 +180,7 @@ def main():
     add_koumyo_subparsers(subparsers)
     add_ll_subparsers(subparsers)
     add_log_subparsers(subparsers)
+    add_getkm_subparsers(subparsers)
     add_repo_subparsers(subparsers)
     add_view_subparsers(subparsers)
     add_show_subparsers(subparsers)
