@@ -22,7 +22,7 @@ copyright = '2022, Koji Tanaka'
 author = 'Koji Tanaka'
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.25'
+release = '0.2.30'
 
 
 # -- General configuration ---------------------------------------------------

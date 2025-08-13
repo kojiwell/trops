@@ -5,6 +5,12 @@ Changelog
 `Unreleased`_
 =============
 
+`v0.2.30`_ - 2025-08-13
+=======================
+- capcmd: defer "trops show <hash>:<path>" file logs until after the actual command log, preserving real-world order (e.g., "vi <path>" then "trops show <hash>:<path>").
+- tests: add a test to assert the command log precedes the file log for editor commands.
+- note: logging deferral is in-memory only; existing log files are not read or rewritten.
+
 `v0.2.29`_ - 2025-08-11
 =======================
 - capcmd performance: early fast-path ignore for commands like `ttags` (skip side-effects),
@@ -72,7 +78,8 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.29...develop
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.30...develop
+.. _v0.2.30: https://github.com/kojiwell/trops/compare/v0.2.29...v0.2.30
 .. _v0.2.29: https://github.com/kojiwell/trops/compare/v0.2.28...v0.2.29
 .. _v0.2.28: https://github.com/kojiwell/trops/compare/v0.2.27...v0.2.28
 .. _v0.2.27: https://github.com/kojiwell/trops/compare/v0.2.26...v0.2.27
