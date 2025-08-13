@@ -204,3 +204,69 @@ def test_ignore_cmds_is_set_for_fast_membership(monkeypatch, tmp_path):
     tcc = TropsCapCmd(args, other_args)
     assert isinstance(tcc.ignore_cmds, set)
     assert 'ttags' in tcc.ignore_cmds
+
+
+def test_editor_file_log_is_deferred_until_after_command(monkeypatch, tmp_path, caplog):
+    import logging
+    import subprocess
+    from trops.capcmd import add_capture_cmd_subparsers, capture_cmd
+
+    # Prepare TROPS_DIR and config pointing to an external git_dir and a clean work_tree
+    trops_dir = tmp_path / 'trops'
+    trops_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("TROPS_DIR", str(trops_dir))
+    monkeypatch.setenv("TROPS_ENV", "env1")
+
+    repo_root = tmp_path / 'repo'
+    work_tree = tmp_path / 'work_tree'
+    repo_root.mkdir(parents=True, exist_ok=True)
+    work_tree.mkdir(parents=True, exist_ok=True)
+
+    # Initialize a git repository in repo_root (non-bare) and configure identity
+    subprocess.run(['git', 'init', str(repo_root)], check=True, capture_output=True)
+    git_dir = repo_root / '.git'
+    subprocess.run(['git', f'--git-dir={git_dir}', 'config', 'user.email', 'test@example.com'], check=True)
+    subprocess.run(['git', f'--git-dir={git_dir}', 'config', 'user.name', 'Test User'], check=True)
+
+    # Write trops.cfg
+    cfg = (trops_dir / 'trops.cfg')
+    cfg.write_text(
+        f"""
+[env1]
+git_dir = {git_dir}
+work_tree = {work_tree}
+disable_header = True
+""".strip(),
+        encoding='utf-8'
+    )
+
+    # Create a file to be edited under work_tree
+    edited_file = work_tree / 'dir' / 'file.txt'
+    edited_file.parent.mkdir(parents=True, exist_ok=True)
+    edited_file.write_text('hello', encoding='utf-8')
+
+    # Build args simulating: trops capture-cmd 0 vi <abs_path>
+    from unittest.mock import patch
+    import argparse
+    with patch("sys.argv", ["trops", "capture-cmd", '0', "vi", str(edited_file)]):
+        parser = argparse.ArgumentParser(prog='trops', description='Trops - Tracking Operations')
+        subparsers = parser.add_subparsers()
+        add_capture_cmd_subparsers(subparsers)
+        args, other_args = parser.parse_known_args()
+
+    caplog.set_level(logging.INFO)
+
+    # Execute capture
+    capture_cmd(args, other_args)
+
+    # Collect relevant log messages
+    messages = [rec.getMessage() for rec in caplog.records]
+    cm_indices = [i for i, m in enumerate(messages) if m.startswith('CM vi ')]
+    fl_indices = [i for i, m in enumerate(messages) if m.startswith('FL trops show ')]
+
+    # Ensure both logs are present
+    assert cm_indices, f"No command log found in: {messages}"
+    assert fl_indices, f"No file log found in: {messages}"
+
+    # Verify ordering: command log should appear before file log
+    assert cm_indices[0] < fl_indices[0], f"Expected CM before FL; got order: {[(i, messages[i]) for i in (cm_indices[0], fl_indices[0])]}"

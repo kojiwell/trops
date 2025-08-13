@@ -41,6 +41,17 @@ class TropsCapCmd(Trops):
         header_sid = getattr(self, 'trops_sid', '') or ''
         header_tags = getattr(self, 'trops_tags', '') or ''
         self.trops_header = ['trops', header_env, header_sid, header_tags]
+        # Defer FL logs until after command logging to preserve real-world order
+        self._defer_file_logs = False
+        self._deferred_file_logs = []
+
+    def _flush_deferred_file_logs(self) -> None:
+        """Flush and clear any deferred file logs."""
+        if getattr(self, '_deferred_file_logs', None):
+            for fl_message in self._deferred_file_logs:
+                self.logger.info(fl_message)
+        self._defer_file_logs = False
+        self._deferred_file_logs = []
 
     def capture_cmd(self) -> None:
         """Capture and log the executed command"""
@@ -48,7 +59,13 @@ class TropsCapCmd(Trops):
         return_code = self.args.return_code
         now_hm = datetime.now().strftime("%H-%M")
 
+        # Enable deferring of file logs that may be produced by pre-processing
+        self._defer_file_logs = True
+        self._deferred_file_logs = []
+
         if not self.other_args:
+            # No command to log; flush any deferred logs then exit
+            self._flush_deferred_file_logs()
             self.print_header()
             sys.exit(0)
 
@@ -58,6 +75,8 @@ class TropsCapCmd(Trops):
         # Fast-path: skip early if command is in ignore list (performance)
         sanitized_for_ignore = self._sanitize_for_sudo(executed_cmd)
         if self.ignore_cmds and sanitized_for_ignore and sanitized_for_ignore[0] in self.ignore_cmds:
+            # Ignored command; flush deferred logs to preserve previous behavior
+            self._flush_deferred_file_logs()
             self.print_header()
             sys.exit(0)
 
@@ -78,6 +97,8 @@ class TropsCapCmd(Trops):
         # Skip if repeated within the same minute (after performing file updates)
         if self._is_repeat_command(str(last_cmd_path), time_and_cmd):
             if not self.disable_header:
+                # Repeated command; flush deferred logs to preserve previous behavior
+                self._flush_deferred_file_logs()
                 self.print_header()
             sys.exit(0)
 
@@ -87,6 +108,8 @@ class TropsCapCmd(Trops):
         # (kept for clarity; normally unreachable due to early fast-path above)
         sanitized_for_ignore = self._sanitize_for_sudo(executed_cmd)
         if self.ignore_cmds and sanitized_for_ignore and sanitized_for_ignore[0] in self.ignore_cmds:
+            # Ignored command; flush deferred logs to preserve previous behavior
+            self._flush_deferred_file_logs()
             self.print_header()
             sys.exit(0)
 
@@ -96,6 +119,9 @@ class TropsCapCmd(Trops):
             self.logger.info(message)
         else:
             self.logger.warning(message)
+
+        # Flush any deferred file logs after the command has been logged
+        self._flush_deferred_file_logs()
 
         if not self.disable_header:
             self.print_header()
@@ -217,8 +243,11 @@ class TropsCapCmd(Trops):
             message += f" TROPS_ENV={ self.trops_env }"
             if self.trops_tags:
                 message += f" TROPS_TAGS={self.trops_tags}"
-
-            self.logger.info(message)
+            # Defer logging if requested so that command log comes first
+            if getattr(self, '_defer_file_logs', False):
+                self._deferred_file_logs.append(message)
+            else:
+                self.logger.info(message)
 
     def _add_and_commit_file(self, file_path: str, git_msg: str) -> subprocess.CompletedProcess:
         """Add a file in the git repo and commit if changed"""
