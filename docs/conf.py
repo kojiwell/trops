@@ -44,20 +44,9 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = 'alabaster'
-
-html_theme_options = {
-    "github_user": "kojiwell",
-    "github_repo": "trops",
-    "github_button": True,
-    "travis_button": False,
-    "extra_nav_links": {
-        "View on github": "https://github.com/kojiwell/trops",
-    },
-}
+# Use Furo theme
+html_theme = 'furo'
+html_title = "Trops"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
