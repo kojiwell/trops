@@ -54,9 +54,9 @@ class TropsKoumyo(TropsMain):
         new_cmd = []
         for i in cmd:
             if '|' in i:
-                new_cmd += re.split('(\|+)', i)
+                new_cmd += re.split(r'(\|+)', i)
             elif '>' in i:
-                new_cmd += re.split('(\>+)', i)
+                new_cmd += re.split(r'(>+)', i)
             else:
                 new_cmd += [i]
         return new_cmd
@@ -235,8 +235,8 @@ class TropsKoumyo(TropsMain):
             elif primary_tag[0] == '!':
                 file_name = file_prefix + primary_tag.replace('!', '__c') + '.md'
             else:
-                file_name = primary_tag.replace(
-                    '#', '__i').replace('!', '__c') + '.md'
+                normalized = primary_tag.replace('#', '__i').replace('!', '__c')
+                file_name = f"{file_prefix}_{normalized}.md"
 
         file_path = km_dir + '/' + file_name
 
