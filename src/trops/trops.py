@@ -329,26 +329,46 @@ class TropsMain(Trops):
         result_args: List[str] = []
         first_path_index: int = -1
         skip_next = False
+        found_subcommand = False
+
+        # Git supports some global options before the subcommand (e.g. -c, --version).
+        # We must not insert "--" before the subcommand. Only consider pathspec
+        # normalization AFTER we encounter the subcommand (first non-option token).
+        options_with_value = {'-m', '--message', '-C', '--cwd', '-S', '--gpg-sign', '--author', '-c', '--work-tree', '--git-dir'}
+
         for i, token in enumerate(args):
             if skip_next:
                 result_args.append(token)
                 skip_next = False
                 continue
+
             # Preserve existing separator and copy rest as-is
             if token == '--':
                 result_args.extend(args[i:])
                 has_double_dash = True
                 break
-            # Common options that take a value; don't treat following token as pathspec
-            if token in {'-m', '--message', '-C', '--cwd', '-S', '--gpg-sign', '--author'}:
+
+            # Until we find the subcommand, just pass through options and their values
+            if not found_subcommand:
+                if token.startswith('-'):
+                    result_args.append(token)
+                    if token in options_with_value and i + 1 < len(args):
+                        skip_next = True
+                    continue
+                # First non-option token is treated as the subcommand
+                found_subcommand = True
                 result_args.append(token)
-                # Skip only if next exists
+                continue
+
+            # From here on, we are after the subcommand: consider pathspec normalization
+            if token in options_with_value:
+                result_args.append(token)
                 if i + 1 < len(args):
                     skip_next = True
                 continue
-            # Transform absolute or relative file path tokens into work-tree-relative
+
+            # Do not rewrite probable revision specifiers like "HASH:path"
             maybe_token = token
-            # Skip tokens that look like revision:path and don't exist as a path
             if not (':' in token and not os.path.exists(token)):
                 rel_list = self.normalize_paths_for_work_tree([token])
                 if rel_list:
