@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from trops.trops import Trops, TropsMain
 from trops.init import add_init_subparsers
+from trops.exec import add_git_subparsers
 
 
 @pytest.fixture
@@ -80,3 +81,43 @@ def test_trops_tags_and_primary(monkeypatch, tmp_path):
 
     assert tm.trops_tags == '#123,TEST'
     assert tm.trops_prim_tag == '#123'
+
+
+def test_git_wrapper_does_not_treat_flags_as_paths(monkeypatch, tmp_path, capsys):
+    trops_dir = tmp_path / 'tropsproj3'
+    monkeypatch.setenv('TROPS_DIR', str(trops_dir))
+    monkeypatch.setenv('TROPS_ENV', 'env3')
+
+    # Create minimal config
+    (trops_dir).mkdir(parents=True, exist_ok=True)
+    cfg = trops_dir / 'trops.cfg'
+    cfg.write_text(f"""
+    [env3]
+    git_dir = {tmp_path}/repo/.git
+    work_tree = {tmp_path}/work
+    disable_header = True
+    """.strip(), encoding='utf-8')
+    (tmp_path / 'work').mkdir(parents=True, exist_ok=True)
+    (tmp_path / 'repo' / '.git').mkdir(parents=True, exist_ok=True)
+
+    # Stub subprocess.run to capture command
+    import subprocess as _subprocess
+    captured = {}
+    def fake_run(cmd, *a, **kw):
+        captured['cmd'] = cmd
+        class R: returncode = 0
+        return R()
+    monkeypatch.setattr(_subprocess, 'run', fake_run, raising=True)
+
+    with patch('sys.argv', ['trops', 'git', 'branch', '-ar']):
+        parser = argparse.ArgumentParser(prog='trops')
+        subparsers = parser.add_subparsers()
+        add_git_subparsers(subparsers)
+        args, other_args = parser.parse_known_args()
+
+    from trops.trops import TropsMain
+    tm = TropsMain(args, other_args)
+    tm.git()
+
+    # Ensure '-ar' stays as a flag and not rewritten as a path
+    assert captured['cmd'][-2:] == ['branch', '-ar']

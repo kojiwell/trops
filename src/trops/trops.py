@@ -366,6 +366,10 @@ class TropsMain(Trops):
                 if i + 1 < len(args):
                     skip_next = True
                 continue
+            # Pass through flags (do not treat as paths), including combined flags like -ar
+            if token.startswith('-') and token != '-':
+                result_args.append(token)
+                continue
 
             # Do not rewrite probable revision specifiers like "HASH:path"
             maybe_token = token
