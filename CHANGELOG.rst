@@ -5,6 +5,11 @@ Changelog
 `Unreleased`_
 =============
 
+`v0.2.31`_ - 2025-08-13
+=======================
+- view --web: Use `trops show <hash>[:<path>]` for the web endpoint instead of raw `git show`, so it respects trops configuration.
+- getkm: Create the destination directory automatically if it does not exist. Use `--work-tree=<path>` on checkout-index and strip a leading `/` from `km_dir` when building refs.
+
 `v0.2.30`_ - 2025-08-13
 =======================
 - capcmd: defer "trops show <hash>:<path>" file logs until after the actual command log, preserving real-world order (e.g., "vi <path>" then "trops show <hash>:<path>").
@@ -78,7 +83,8 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.30...develop
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.31...develop
+.. _v0.2.31: https://github.com/kojiwell/trops/compare/v0.2.30...v0.2.31
 .. _v0.2.30: https://github.com/kojiwell/trops/compare/v0.2.29...v0.2.30
 .. _v0.2.29: https://github.com/kojiwell/trops/compare/v0.2.28...v0.2.29
 .. _v0.2.28: https://github.com/kojiwell/trops/compare/v0.2.27...v0.2.28
