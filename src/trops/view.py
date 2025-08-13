@@ -62,8 +62,8 @@ class TropsView(TropsMain):
         md_files = [f for f in os.listdir(folder) if f.endswith('.md')]
         md_files.sort()
 
-        git_cmd = ['git']  # use current directory's repo, not trops repo
-        repo_cwd = os.getcwd()  # set current directory as git directory for web app
+        # Use trops CLI for show operations to respect trops configuration
+        trops_cmd = ['trops']
 
         class Handler(BaseHTTPRequestHandler):
             def _send(self, code: int, body: str, content_type: str = 'text/html; charset=utf-8'):
@@ -110,10 +110,10 @@ class TropsView(TropsMain):
                         return
                     try:
                         if pathv:
-                            cmd = git_cmd + ['show', f'{hashv}:{pathv}']
+                            cmd = trops_cmd + ['show', f'{hashv}:{pathv}']
                         else:
-                            cmd = git_cmd + ['show', hashv]
-                        result = subprocess.run(cmd, capture_output=True, cwd=repo_cwd)
+                            cmd = trops_cmd + ['show', hashv]
+                        result = subprocess.run(cmd, capture_output=True)
                         if result.returncode != 0:
                             self._send(500, result.stderr.decode('utf-8') or 'git show failed', 'text/plain; charset=utf-8')
                         else:
