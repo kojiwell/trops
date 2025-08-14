@@ -3,7 +3,7 @@ import tempfile
 from configparser import ConfigParser
 from textwrap import dedent
 
-from .trops import TropsMain
+import subprocess
 
 
 class TropsGetKm:
@@ -53,17 +53,8 @@ class TropsGetKm:
             self.envs = [env_flag]
 
     def _git_for_env(self, env_name, args_list):
-        # Build a TropsMain instance for the target env to get git_cmd preconfigured
-        class _A:
-            def __init__(self, env):
-                self.env = env
-                self.sudo = False
-                self.verbose = False
-
-        tm = TropsMain(_A(env_name), [])
-        # Call git directly to avoid wrapper normalization of tokens like --prefix=<path>
-        import subprocess as _subprocess
-        result = _subprocess.run(tm.git_cmd + args_list)
+        # Call git directly; do not depend on TropsMain/git_dir/work_tree
+        result = subprocess.run(['git'] + args_list)
         if result.returncode != 0:
             exit(result.returncode)
 
