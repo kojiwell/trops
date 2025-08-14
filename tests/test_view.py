@@ -33,6 +33,13 @@ def test_view_invokes_git_show(monkeypatch, setup_view_args):
         return 0
     monkeypatch.setattr('subprocess.call', fake_call)
 
+    # Ensure the target file exists to pass TropsView file check
+    import os
+    try:
+        open('/tmp/test', 'a').close()
+    except Exception:
+        pass
+
     tv = TropsView(args, other_args)
     tv.view()
 
@@ -58,6 +65,12 @@ def test_view_commit_override(monkeypatch):
         captured['cmd'] = cmd
         return 0
     monkeypatch.setattr('subprocess.call', fake_call)
+
+    # Ensure the target file exists to pass TropsView file check
+    try:
+        open('/tmp/test2', 'a').close()
+    except Exception:
+        pass
 
     tv = TropsView(args, other_args)
     tv.view()
