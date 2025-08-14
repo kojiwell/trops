@@ -130,7 +130,7 @@ class TropsView(TropsMain):
             def _render_index(files):
                 # Use client-side markdown rendering via marked.js CDN
                 items = '\n'.join(
-                    f'<li><a href="#" onclick="loadFile(\'{name}\');return false;">{name}</a></li>'
+                    f'<li data-name="{name.lower()}" data-file="{name}"><a href="#" onclick="loadFile(\'{name}\');return false;">{name}</a></li>'
                     for name in files
                 )
                 first = files[0] if files else ''
@@ -145,6 +145,9 @@ class TropsView(TropsMain):
                     .container {{ display: flex; height: 100vh; }}
                     .sidebar {{ width: 280px; background:#f6f8fa; border-right:1px solid #e1e4e8; overflow:auto; }}
                     .sidebar h2 {{ margin: 16px; font-size: 16px; }}
+                     .sidebar .filter-wrap {{ padding: 0 16px 8px 16px; }}
+                     .sidebar .filter {{ width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #d0d7de; border-radius: 6px; background: #fff; }}
+                     .sidebar .meta {{ margin: 6px 16px 0 16px; color: #57606a; font-size: 12px; }}
                     .sidebar ul {{ list-style:none; padding:0 8px 16px 16px; margin:0; }}
                     .sidebar li {{ margin: 6px 0; }}
                     /* Links: keep color same as text, underline only */
@@ -171,7 +174,11 @@ class TropsView(TropsMain):
                   <div class="container">
                     <div class="sidebar">
                       <h2>Files</h2>
-                      <ul>
+                      <div class="filter-wrap">
+                        <input id="filter" class="filter" type="text" placeholder="Filter files..." oninput="applyFilter()" />
+                        <div id="match-count" class="meta"></div>
+                      </div>
+                      <ul id="file-list">
                         {items}
                       </ul>
                     </div>
@@ -199,6 +206,48 @@ class TropsView(TropsMain):
                       const enhanced = enhanceTropsShow(html);
                       document.getElementById('content').innerHTML = enhanced;
                     }}
+                     function applyFilter() {{
+                       const input = document.getElementById('filter');
+                       const q = (input.value || '').toLowerCase();
+                       const list = document.getElementById('file-list');
+                       const items = list ? list.children : [];
+                       let shown = 0;
+                       for (let i = 0; i < items.length; i++) {{
+                         const li = items[i];
+                         const name = li.getAttribute('data-name') || '';
+                         const visible = !q || name.indexOf(q) !== -1;
+                         li.style.display = visible ? '' : 'none';
+                         if (visible) shown++;
+                       }}
+                       const meta = document.getElementById('match-count');
+                       if (meta) meta.textContent = shown + ' / ' + items.length + ' files';
+                     }}
+                     function openFirstMatch() {{
+                       const list = document.getElementById('file-list');
+                       if (!list) return;
+                       const items = list.children;
+                       for (let i = 0; i < items.length; i++) {{
+                         const li = items[i];
+                         if (li.style.display !== 'none') {{
+                           const fname = li.getAttribute('data-file');
+                           if (fname) loadFile(fname);
+                           return;
+                         }}
+                       }}
+                     }}
+                     // Initialize filter from ?q= if present and wire up Enter to open first match
+                     (function() {{
+                       const params = new URLSearchParams(location.search);
+                       const q = params.get('q');
+                       const input = document.getElementById('filter');
+                       if (q && input) {{ input.value = q; }}
+                       if (input) {{
+                         applyFilter();
+                         input.addEventListener('keydown', function(e) {{
+                           if (e.key === 'Enter') {{ e.preventDefault(); openFirstMatch(); }}
+                         }});
+                       }}
+                     }})();
                     function enhanceTropsShow(html) {{
                       // Replace occurrences of: trops show <hash>[:<path>]
                       const re = /(trops\s+show\s+)([0-9a-fA-F]{{7,}})(?::([^\s<]+))?/g;
