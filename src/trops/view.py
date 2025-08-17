@@ -136,7 +136,7 @@ class TropsView(TropsCLI):
                     for name in files
                 )
                 first = files[0] if files else ''
-                html = f"""
+                html = fr"""
                 <!doctype html>
                 <html>
                 <head>
