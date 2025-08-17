@@ -75,7 +75,7 @@ class TropsInit(TropsBase):
 
             offtrops() {{
                 unset TROPS_ENV TROPS_SID
-                PROMPT_COMMAND=${{PROMPT_COMMAND//_trops_capcmd\;}}
+                PROMPT_COMMAND=${{PROMPT_COMMAND//_trops_capcmd;}}
             }}
 
             ttags() {{
