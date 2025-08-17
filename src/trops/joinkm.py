@@ -3,6 +3,7 @@ from datetime import datetime
 from textwrap import dedent
 
 from .utils import absolute_path
+from .trops import TropsError
 
 
 HEADERS = [
@@ -24,17 +25,14 @@ class TropsJoinKm:
             msg = f"""\
                 Unsupported argments: {', '.join(other_args)}
                 > trops joinkm --help"""
-            print(dedent(msg))
-            exit(1)
+            raise TropsError(dedent(msg))
 
         # Validate inputs
         if not hasattr(args, 'files') or not args.files:
-            print('ERROR: at least one input file is required')
-            exit(1)
+            raise TropsError('ERROR: at least one input file is required')
 
         if not hasattr(args, 'output') or not args.output:
-            print('ERROR: -o/--output is required')
-            exit(1)
+            raise TropsError('ERROR: -o/--output is required')
 
         self.input_files = [absolute_path(p) for p in args.files]
         self.output_path = absolute_path(args.output)
@@ -43,8 +41,7 @@ class TropsJoinKm:
         # Pre-validate input files exist
         missing = [p for p in self.input_files if not os.path.isfile(p)]
         if missing:
-            print('ERROR: input file not found: ' + ', '.join(missing))
-            exit(1)
+            raise TropsError('ERROR: input file not found: ' + ', '.join(missing))
 
     @staticmethod
     def _is_separator_line(line: str) -> bool:
@@ -115,8 +112,7 @@ class TropsJoinKm:
         try:
             all_rows.sort(key=lambda r: self._parse_dt(r[0], r[1]))
         except Exception as e:
-            print(f"ERROR: failed to sort rows by datetime: {e}")
-            exit(1)
+            raise TropsError(f"ERROR: failed to sort rows by datetime: {e}")
 
         # Ensure output directory exists
         out_dir = os.path.dirname(self.output_path)
