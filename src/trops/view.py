@@ -6,7 +6,7 @@ from urllib.parse import urlparse, parse_qs
 
 from textwrap import dedent
 
-from .trops import TropsCLI
+from .trops import TropsCLI, TropsError
 from .utils import absolute_path
 
 
@@ -25,12 +25,10 @@ class TropsView(TropsCLI):
             msg = f"""\
                 Unsupported argments: {', '.join(other_args)}
                 > trops view --help"""
-            print(dedent(msg))
-            exit(1)
+            raise TropsError(dedent(msg))
 
         if not hasattr(args, 'file') or not args.file:
-            print('ERROR: file path is required')
-            exit(1)
+            raise TropsError('ERROR: file path is required')
 
         self.web = getattr(args, 'web', False)
         self.no_browser = getattr(args, 'no_browser', False)
@@ -39,12 +37,10 @@ class TropsView(TropsCLI):
 
         if self.web:
             if not os.path.isdir(self.target_path):
-                print(f"ERROR: '{self.target_path}' is not a directory")
-                exit(1)
+                raise TropsError(f"ERROR: '{self.target_path}' is not a directory")
         else:
             if not os.path.isfile(self.target_path):
-                print(f"ERROR: '{self.target_path}' is not a file")
-                exit(1)
+                raise TropsError(f"ERROR: '{self.target_path}' is not a file")
 
         # Resolve repository-relative path if viewing a single file
         if not self.web:
