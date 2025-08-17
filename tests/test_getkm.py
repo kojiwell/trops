@@ -81,3 +81,36 @@ def test_getkm_invokes_git_with_temp_index_for_env(monkeypatch, tmp_path):
     assert calls[1][1].startswith('--work-tree=')
     assert calls[1][2:] == ['checkout-index', '-a']
 
+
+def test_getkm_overwrite_flag_adds_force(monkeypatch, tmp_path):
+    # Setup TROPS_DIR and config
+    trops_dir = tmp_path / 'trops'
+    trops_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv('TROPS_DIR', str(trops_dir))
+    _write_cfg(trops_dir / 'trops.cfg', "[env1]\nkm_dir=/path/to/km\n")
+
+    # Capture subprocess calls
+    calls = []
+    import subprocess as _subprocess
+    def fake_run(cmd, *args, **kwargs):
+        calls.append(cmd)
+        class R:
+            returncode = 0
+        return R()
+    monkeypatch.setattr(_subprocess, 'run', fake_run, raising=True)
+
+    # Build CLI args with --overwrite and run
+    out_dir = tmp_path / 'out'
+    with patch('sys.argv', ['trops', 'getkm', '-e', 'env1', '-f', str(out_dir)]):
+        parser = argparse.ArgumentParser(prog='trops')
+        subparsers = parser.add_subparsers()
+        add_getkm_subparsers(subparsers)
+        args, other_args = parser.parse_known_args()
+
+    getkm_run(args, other_args)
+
+    # Ensure -f is present in checkout-index command
+    assert calls[1][0] == 'git'
+    assert calls[1][2] == 'checkout-index'
+    assert '-f' in calls[1]
+

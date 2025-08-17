@@ -95,8 +95,10 @@ class TropsGetKm:
                 ]
                 self._git_for_env(env_name, read_tree_args)
 
-                # 2) checkout-index -a with overridden work-tree to target output directory
+                # 2) checkout-index with overridden work-tree to target output directory
                 checkout_args = [f'--work-tree={self.target_prefix}', 'checkout-index', '-a']
+                if getattr(self.args, 'force', False):
+                    checkout_args.append('-f')  # force overwrite
                 self._git_for_env(env_name, checkout_args)
         finally:
             # Cleanup env var and temp file
@@ -121,6 +123,7 @@ def add_getkm_subparsers(subparsers):
     group = parser_getkm.add_mutually_exclusive_group(required=False)
     group.add_argument('-a', '--all', action='store_true', help='process all environments found in config')
     group.add_argument('-e', '--env', help='process a specific environment name')
+    parser_getkm.add_argument('-f', '--force', action='store_true', help='overwrite existing files in the target directory')
     parser_getkm.add_argument('path', help='target directory path to extract files into (used as --prefix)')
     parser_getkm.set_defaults(handler=run)
 
