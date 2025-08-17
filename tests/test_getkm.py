@@ -114,3 +114,31 @@ def test_getkm_overwrite_flag_adds_force(monkeypatch, tmp_path):
     assert calls[1][2] == 'checkout-index'
     assert '-f' in calls[1]
 
+
+def test_getkm_update_runs_fetch(monkeypatch, tmp_path):
+    trops_dir = tmp_path / 'trops'
+    trops_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv('TROPS_DIR', str(trops_dir))
+    _write_cfg(trops_dir / 'trops.cfg', "[env1]\nkm_dir=/km\n")
+
+    # Record trops fetch and git calls
+    run_calls = []
+    import subprocess as _subprocess
+    def fake_run(cmd, *args, **kwargs):
+        run_calls.append(cmd)
+        class R: returncode = 0
+        return R()
+    monkeypatch.setattr(_subprocess, 'run', fake_run, raising=True)
+
+    out_dir = tmp_path / 'out'
+    with patch('sys.argv', ['trops', 'getkm', '-e', 'env1', '-u', str(out_dir)]):
+        parser = argparse.ArgumentParser(prog='trops')
+        subparsers = parser.add_subparsers()
+        add_getkm_subparsers(subparsers)
+        args, other_args = parser.parse_known_args()
+
+    getkm_run(args, other_args)
+
+    # First call should be trops fetch
+    assert run_calls[0][0:2] == ['trops', 'fetch']
+

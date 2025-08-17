@@ -61,6 +61,12 @@ class TropsGetKm:
         self.target_prefix = _abs(self.args.path)
         os.makedirs(self.target_prefix, exist_ok=True)
 
+        # Optionally update repository state via trops fetch before extraction
+        if getattr(self.args, 'update', False):
+            result = subprocess.run(['trops', 'fetch'])
+            if result.returncode != 0:
+                raise TropsError('trops fetch failed')
+
         # Create a temporary index path and ensure it does not exist on disk
         fd, tmp_index_path = tempfile.mkstemp(prefix='trops_idx_')
         try:
@@ -124,6 +130,7 @@ def add_getkm_subparsers(subparsers):
     group.add_argument('-a', '--all', action='store_true', help='process all environments found in config')
     group.add_argument('-e', '--env', help='process a specific environment name')
     parser_getkm.add_argument('-f', '--force', action='store_true', help='overwrite existing files in the target directory')
+    parser_getkm.add_argument('-u', '--update', action='store_true', help='run "trops fetch" before extracting')
     parser_getkm.add_argument('path', help='target directory path to extract files into (used as --prefix)')
     parser_getkm.set_defaults(handler=run)
 
