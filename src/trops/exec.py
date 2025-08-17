@@ -9,7 +9,7 @@ from .koumyo import add_koumyo_subparsers
 from .log import add_log_subparsers
 from .release import __version__
 from .repo import add_repo_subparsers
-from .trops import TropsMain
+from .trops import TropsCLI
 from .utils import generate_sid
 from .view import add_view_subparsers
 from .getkm import add_getkm_subparsers
@@ -18,61 +18,61 @@ from .joinkm import add_joinkm_subparsers
 
 def trops_git(args, other_args):
 
-    tr = TropsMain(args, other_args)
+    tr = TropsCLI(args, other_args)
     tr.git()
 
 
 def trops_glab(args, other_args):
 
-    tr = TropsMain(args, other_args)
+    tr = TropsCLI(args, other_args)
     tr.glab()
 
 
 def trops_check(args, other_args):
 
-    tr = TropsMain(args, other_args)
+    tr = TropsCLI(args, other_args)
     tr.check()
 
 
 def trops_ll(args, other_args):
 
-    tr = TropsMain(args, other_args)
+    tr = TropsCLI(args, other_args)
     tr.ll()
 
 
 def trops_show(args, other_args):
 
-    tr = TropsMain(args, other_args)
+    tr = TropsCLI(args, other_args)
     tr.show()
 
 
 def trops_branch(args, other_args):
 
-    tr = TropsMain(args, other_args)
+    tr = TropsCLI(args, other_args)
     tr.branch()
 
 
 def trops_fetch(args, other_args):
 
-    tr = TropsMain(args, other_args)
+    tr = TropsCLI(args, other_args)
     tr.fetch()
 
 
 def trops_log(args, other_args):
 
-    tr = TropsMain(args, other_args)
+    tr = TropsCLI(args, other_args)
     tr.log()
 
 
 def trops_touch(args, other_args):
 
-    tr = TropsMain(args, other_args)
+    tr = TropsCLI(args, other_args)
     tr.touch()
 
 
 def trops_drop(args, other_args):
 
-    tr = TropsMain(args, other_args)
+    tr = TropsCLI(args, other_args)
     tr.drop()
 
 

@@ -4,10 +4,10 @@ import subprocess
 from configparser import ConfigParser
 from textwrap import dedent
 
-from .trops import Trops
+from .trops import TropsBase
 
 
-class TropsRepo(Trops):
+class TropsRepo(TropsBase):
 
     def __init__(self, args, other_args):
         super().__init__(args, other_args)

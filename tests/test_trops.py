@@ -5,7 +5,7 @@ from pathlib import Path
 
 from unittest.mock import patch
 
-from trops.trops import Trops, TropsMain
+from trops.trops import TropsBase, TropsCLI, Trops, TropsMain
 from trops.init import add_init_subparsers
 from trops.exec import add_git_subparsers
 
@@ -28,17 +28,17 @@ def test_trops_dir(monkeypatch, setup_trops_args):
 
     # Test ~ (tilda) in TROPS_DIR
     monkeypatch.setenv("TROPS_DIR", '~/trops')
-    tb1 = Trops(args, other_args)
+    tb1 = TropsBase(args, other_args)
     assert tb1.trops_dir == os.path.expanduser('~/trops')
     # Test an environment variable (e.g. HOME) in TROPS_DIR
     monkeypatch.setenv("TROPS_DIR", '$HOME/trops')
-    tb2 = Trops(args, other_args)
+    tb2 = TropsBase(args, other_args)
     assert tb2.trops_dir == os.path.expanduser('~/trops')
 
 def test_trops_vars(monkeypatch, setup_trops_args):
     args, other_args = setup_trops_args
 
-    tm = TropsMain(args, other_args)
+    tm = TropsCLI(args, other_args)
 
     assert tm.trops_dir == '/tmp/trops'
     assert tm.trops_env == 'test'
@@ -56,7 +56,7 @@ def test_trops_logfile_path(monkeypatch, tmp_path):
         add_init_subparsers(subparsers)
         args, other_args = parser.parse_known_args()
 
-    tm = TropsMain(args, other_args)
+    tm = TropsCLI(args, other_args)
 
     assert tm.trops_log_dir == os.path.join(str(trops_dir), 'log')
     assert tm.trops_logfile == os.path.join(str(trops_dir), 'log', 'trops.log')
@@ -115,8 +115,8 @@ def test_git_wrapper_does_not_treat_flags_as_paths(monkeypatch, tmp_path, capsys
         add_git_subparsers(subparsers)
         args, other_args = parser.parse_known_args()
 
-    from trops.trops import TropsMain
-    tm = TropsMain(args, other_args)
+    from trops.trops import TropsCLI
+    tm = TropsCLI(args, other_args)
     tm.git()
 
     # Ensure '-ar' stays as a flag and not rewritten as a path

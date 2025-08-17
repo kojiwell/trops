@@ -7,12 +7,12 @@ from pathlib import Path
 from typing import List, Tuple
 from configparser import ConfigParser
 
-from .trops import Trops
+from .trops import TropsBase
 import re
 from .utils import absolute_path
 
 
-class TropsCapCmd(Trops):
+class TropsCapCmd(TropsBase):
     """Trops Capture Command class"""
 
     def __init__(self, args, other_args):

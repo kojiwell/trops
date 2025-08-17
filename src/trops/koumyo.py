@@ -5,10 +5,10 @@ import sys
 from tabulate import tabulate
 from textwrap import dedent
 
-from .trops import TropsMain
+from .trops import TropsCLI
 from .utils import pick_out_repo_name_from_git_remote
 
-class TropsKoumyo(TropsMain):
+class TropsKoumyo(TropsCLI):
 
     def __init__(self, args, other_args):
         super().__init__(args, other_args)

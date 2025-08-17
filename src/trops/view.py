@@ -6,11 +6,11 @@ from urllib.parse import urlparse, parse_qs
 
 from textwrap import dedent
 
-from .trops import TropsMain
+from .trops import TropsCLI
 from .utils import absolute_path
 
 
-class TropsView(TropsMain):
+class TropsView(TropsCLI):
     """View tracked file contents from the repository.
 
     Usage examples:

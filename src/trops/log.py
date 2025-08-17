@@ -4,10 +4,10 @@ import time
 from configparser import ConfigParser
 from textwrap import dedent
 
-from .trops import TropsMain
+from .trops import TropsCLI
 from .utils import pick_out_repo_name_from_git_remote
 
-class TropsLog(TropsMain):
+class TropsLog(TropsCLI):
 
     def __init__(self, args, other_args):
         super().__init__(args, other_args)

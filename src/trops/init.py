@@ -1,9 +1,9 @@
 from textwrap import dedent
 
-from .trops import Trops
+from .trops import TropsBase
 
 
-class TropsInit(Trops):
+class TropsInit(TropsBase):
 
     def __init__(self, args, other_args):
         super().__init__(args, other_args)
@@ -48,6 +48,8 @@ class TropsInit(Trops):
                 tmux rename-window "$TROPS_TAGS"
             fi
             }}
+            
+            alias ttee="tee"
             """
 
         return dedent(zsh_lines)
@@ -84,6 +86,8 @@ class TropsInit(Trops):
                 tmux rename-window "$TROPS_TAGS"
             fi
             }}
+            
+            alias ttee="tee"
             """
 
         return dedent(bash_lines)

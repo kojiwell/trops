@@ -11,12 +11,15 @@ from typing import Any, List
 
 from .utils import absolute_path, strtobool
 
+class TropsBase:
+    """Base context for Trops
 
-class Trops:
-    """Trops Class"""
+    Responsible for environment/config initialization, logging setup,
+    and shared utilities used by CLI command implementations.
+    """
 
     def __init__(self, args: Any, other_args: List[str]) -> None:
-        """Initialize the Trops class"""
+        """Initialize the base context"""
 
         # Initialize basic attributes
         self.args = args
@@ -152,11 +155,14 @@ class Trops:
             print('No update')
 
 
-class TropsMain(Trops):
-    """TropsMain Class"""
+class TropsCLI(TropsBase):
+    """CLI command implementations for Trops
+
+    Builds on top of TropsBase and exposes concrete subcommand behaviors.
+    """
 
     def __init__(self, args: Any, other_args: List[str]) -> None:
-        """Initialize the TropsMain class"""
+        """Initialize the CLI implementation layer"""
         super().__init__(args, other_args)
 
     def git(self) -> None:
@@ -534,3 +540,8 @@ class TropsMain(Trops):
                 continue
             normalized.append(rel)
         return normalized
+
+
+# Backward-compatible aliases (export old names)
+Trops = TropsBase
+TropsMain = TropsCLI

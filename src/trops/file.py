@@ -3,11 +3,11 @@ import subprocess
 
 from textwrap import dedent
 
-from .trops import Trops
+from .trops import TropsBase
 from .utils import absolute_path, strtobool
 
 
-class TropsFile(Trops):
+class TropsFile(TropsBase):
 
     def __init__(self, args, other_args):
         super().__init__(args, other_args)
