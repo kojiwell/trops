@@ -6,6 +6,7 @@ from shutil import rmtree
 from textwrap import dedent
 
 from .utils import absolute_path, yes_or_no
+from .trops import TropsError
 
 
 class TropsEnv:
@@ -16,8 +17,7 @@ class TropsEnv:
             msg = f"""\
                 Unsupported argments: { ', '.join(other_args)}
                 > trops env <subcommand> --help"""
-            print(dedent(msg))
-            exit(1)
+            raise TropsError(dedent(msg))
 
         self.args = args
 
@@ -26,8 +26,7 @@ class TropsEnv:
         elif 'TROPS_DIR' in os.environ:
             self.trops_dir = absolute_path('$TROPS_DIR')
         else:
-            print('TROPS_DIR does not exists')
-            exit(1)
+            raise TropsError('TROPS_DIR does not exist')
 
         if hasattr(args, 'work_tree'):
             self.trops_work_tree = args.work_tree
@@ -40,8 +39,7 @@ class TropsEnv:
         if hasattr(args, 'env') and args.env:
             # Exit if the env name has a space
             if ' ' in args.env:
-                print("You cannot use a space in environment name")
-                exit(1)
+                raise TropsError("You cannot use a space in environment name")
             else:
                 self.trops_env = args.env
         elif os.getenv('TROPS_ENV'):
@@ -90,9 +88,8 @@ class TropsEnv:
         if os.path.isfile(self.trops_conf):
             config.read(self.trops_conf)
             if config.has_section(self.trops_env):
-                print(
+                raise TropsError(
                     f"The '{ self.trops_env }' environment already exists on { self.trops_conf }")
-                exit(1)
 
         config[self.trops_env] = {'git_dir': f'$TROPS_DIR/repo/{ self.trops_env }.git',
                                   'sudo': 'False',
@@ -140,8 +137,8 @@ class TropsEnv:
             if result.returncode == 0:
                 print(result.stdout.decode('utf-8'))
             else:
-                print(result.stderr.decode('utf-8'))
-                exit(result.returncode)
+                stderr = result.stderr.decode('utf-8')
+                raise TropsError(stderr or 'git init --bare failed')
 
         self.setup_git_config(self.trops_git_dir)
 
@@ -206,7 +203,7 @@ class TropsEnv:
                 You're still on the {self.trops_env} environment. Please go off from it before deleting it.
                     > offtrops
                     > trops env delete {self.trops_env}"""
-            raise SystemExit(dedent(msg))
+            raise TropsError(dedent(msg))
 
         self._delete_env_from_conf()
         self._delete_git_dir()
@@ -217,9 +214,8 @@ class TropsEnv:
         if os.path.isfile(self.trops_conf):
             config.read(self.trops_conf)
             if not config.has_section(self.trops_env):
-                print(
-                    f"The '{ self.trops_env }' environment does not exists on { self.trops_conf }")
-                exit(1)
+                raise TropsError(
+                    f"The '{ self.trops_env }' environment does not exist on { self.trops_conf }")
 
         if self.args.git_remote:
             config[self.trops_env]['git_remote'] = self.args.git_remote
