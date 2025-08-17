@@ -13,6 +13,7 @@ from .trops import TropsMain
 from .utils import generate_sid
 from .view import add_view_subparsers
 from .getkm import add_getkm_subparsers
+from .joinkm import add_joinkm_subparsers
 
 
 def trops_git(args, other_args):
@@ -181,6 +182,7 @@ def main():
     add_ll_subparsers(subparsers)
     add_log_subparsers(subparsers)
     add_getkm_subparsers(subparsers)
+    add_joinkm_subparsers(subparsers)
     add_repo_subparsers(subparsers)
     add_view_subparsers(subparsers)
     add_show_subparsers(subparsers)
