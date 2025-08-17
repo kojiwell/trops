@@ -31,6 +31,7 @@ class TropsView(TropsCLI):
             raise TropsError('ERROR: file path is required')
 
         self.web = getattr(args, 'web', False)
+        self.update_km = getattr(args, 'update_km', False)
         self.no_browser = getattr(args, 'no_browser', False)
         self.target_path = absolute_path(args.file)
         self.commit = getattr(args, 'commit', None) or 'HEAD'
@@ -49,6 +50,11 @@ class TropsView(TropsCLI):
     def view(self) -> None:
         """Show file contents from a specific commit (default: HEAD)."""
         if self.web:
+            # Optionally refresh KM content before starting the web viewer
+            if self.update_km:
+                result = subprocess.run(['trops', 'getkm', '-a', '-u', '-f', self.target_path])
+                if result.returncode != 0:
+                    raise TropsError('trops getkm -auf failed')
             self._serve_web(self.target_path)
         else:
             cmd = self.git_cmd + ['show', f'{self.commit}:{self.rel_path}']
@@ -306,6 +312,7 @@ def add_view_subparsers(subparsers):
     parser_view.add_argument('-e', '--env', help='Set environment name')
     parser_view.add_argument('--commit', help='Commit-ish (default: HEAD)')
     parser_view.add_argument('--web', action='store_true', help='Start a local web viewer for a folder of .md files')
+    parser_view.add_argument('-u', '--update-km', action='store_true', help='Before starting --web, run "trops getkm -auf <path>" to refresh KM files into <path>')
     parser_view.add_argument('--no-browser', action='store_true', help='Do not open the browser automatically')
     parser_view.add_argument('file', help='Absolute path to file (or folder with --web) in work tree')
     parser_view.set_defaults(handler=run)
