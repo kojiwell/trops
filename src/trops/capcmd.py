@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Tuple
 from configparser import ConfigParser
 
-from .trops import TropsBase
+from .trops import TropsBase, TropsError
 import re
 from .utils import absolute_path
 
@@ -18,7 +18,7 @@ class TropsCapCmd(TropsBase):
     def __init__(self, args, other_args):
         # Enforce TROPS_DIR for capture-cmd only (per project requirement)
         if 'TROPS_DIR' not in os.environ:
-            raise SystemExit('ERROR: The TROPS_DIR environment variable has not been set.')
+            raise TropsError('ERROR: The TROPS_DIR environment variable has not been set.')
         super().__init__(args, other_args)
 
         # If TROPS_ENV is specified but missing in config, error out early with a clear message
@@ -27,7 +27,7 @@ class TropsCapCmd(TropsBase):
             config = ConfigParser()
             config.read(conf_path)
             if not config.has_section(self.trops_env):
-                raise SystemExit(f"ERROR: TROPS_ENV '{self.trops_env}' does not exist in your configuration at {conf_path}.")
+                raise TropsError(f"ERROR: TROPS_ENV '{self.trops_env}' does not exist in your configuration at {conf_path}.")
 
         # Ensure attributes exist even when no config section is present
         # This avoids AttributeError later and provides sane defaults
