@@ -41,8 +41,8 @@ def test_joinkm_merges_and_sorts(tmp_path):
         """
 | Date       | Time     | User@host       | Command | Directory/O,G,M      | Exit   |
 |------------|----------|-----------------|---------|----------------------|--------|
-| 2025-08-12 | 12:03:49 | root@icep01     | A       | /root                | 0      |
-| 2025-08-12 | 12:03:52 | root@icep01     | B       | /root                | 0      |
+| 2025-08-12 | 12:03:49 | root@myhost01     | A       | /root                | 0      |
+| 2025-08-12 | 12:03:52 | root@myhost01     | B       | /root                | 0      |
         """.strip()
     )
 
@@ -51,7 +51,7 @@ def test_joinkm_merges_and_sorts(tmp_path):
         """
 | Date       | Time     | User@host     | Command | Directory/O,G,M       | Exit   |
 |------------|----------|---------------|---------|-----------------------|--------|
-| 2025-08-07 | 14:40:25 | root@icep01   | C       | /root/oistops/ansible | 0      |
+| 2025-08-07 | 14:40:25 | root@myhost01   | C       | /root/myops/ansible | 0      |
         """.strip()
     )
 
@@ -60,8 +60,8 @@ def test_joinkm_merges_and_sorts(tmp_path):
         """
 | Date       | Time     | User@host   | Command | Directory/O,G,M      | Exit   |
 |------------|----------|-------------|---------|----------------------|--------|
-| 2025-08-10 | 12:50:15 | root@icep01 | D       | /root                | 0      |
-| 2025-08-10 | 12:50:23 | root@icep01 | E       | /root                | 0      |
+| 2025-08-10 | 12:50:15 | root@myhost01 | D       | /root                | 0      |
+| 2025-08-10 | 12:50:23 | root@myhost01 | E       | /root                | 0      |
         """.strip()
     )
 
