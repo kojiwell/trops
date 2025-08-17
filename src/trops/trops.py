@@ -11,6 +11,11 @@ from typing import Any, List
 
 from .utils import absolute_path, strtobool
 
+
+class TropsError(Exception):
+    """Base exception for Trops-related errors."""
+    pass
+
 class TropsBase:
     """Base context for Trops
 
@@ -110,8 +115,7 @@ class TropsBase:
         except KeyError:
             if default is not None:
                 return default
-            print(f'{key} does not exist in your configuration file')
-            exit(1)
+            raise TropsError(f'{key} does not exist in your configuration file')
         
     def add_and_commit_file(self, file_path) -> None:
         rel_path = self.to_work_tree_rel_path(file_path)
@@ -182,8 +186,7 @@ class TropsCLI(TropsBase):
                     $ ontrops <envname>
                 """
             ).strip()
-            print(message)
-            exit(1)
+            raise TropsError(message)
 
         # Build base command and environment variables
         git_env = os.environ.copy()
@@ -211,7 +214,7 @@ class TropsCLI(TropsBase):
             print('WRAP:', ' '.join(full_cmd))
         result = subprocess.run(full_cmd, env=git_env)
         if result.returncode != 0:
-            exit(result.returncode)
+            raise TropsError(f'git command failed with exit code {result.returncode}')
 
     def glab(self) -> None:
         """Glab wrapper command"""
@@ -234,7 +237,7 @@ class TropsCLI(TropsBase):
         """Shows the list of git-tracked files"""
 
         if os.getenv('TROPS_ENV') == None:
-            raise SystemExit("You're not under any trops environment")
+            raise TropsError("You're not under any trops environment")
 
         # Normalize directory arguments using shared helper
         rel_dirs = self.normalize_paths_for_work_tree(self.args.dirs)
@@ -406,15 +409,13 @@ class TropsCLI(TropsBase):
 
         # Check if the path exists
         if not os.path.exists(file_path):
-            print(f"{ file_path } doesn't exists")
-            exit(1)
+            raise TropsError(f"{ file_path } doesn't exist")
         # TODO: Allow touch directory later
         if not os.path.isfile(file_path):
             message = f"""\
                 Error: { file_path } is not a file
                 Only file is allowed to be touched"""
-            print(dedent(message))
-            exit(1)
+            raise TropsError(dedent(message))
 
         # Use path relative to work_tree for git commands
         rel_path = self.to_work_tree_rel_path(file_path)
@@ -422,8 +423,8 @@ class TropsCLI(TropsBase):
         cmd = self.git_cmd + ['ls-files', rel_path]
         result = subprocess.run(cmd, capture_output=True)
         if result.returncode != 0:
-            print(result.stderr.decode('utf-8'))
-            exit(result.returncode)
+            stderr = result.stderr.decode('utf-8')
+            raise TropsError(stderr or 'git ls-files failed')
         output = result.stdout.decode('utf-8')
         # Set the message based on the output
         if output:
@@ -472,15 +473,13 @@ class TropsCLI(TropsBase):
 
         # Check if the path exists
         if not os.path.exists(file_path):
-            print(f"{ file_path } doesn't exists")
-            exit(1)
+            raise TropsError(f"{ file_path } doesn't exist")
         # TODO: Allow touch directory later
         if not os.path.isfile(file_path):
             message = f"""\
                 Error: { file_path } is not a file.
                 A directory is not allowed to say goodbye"""
-            print(dedent(message))
-            exit(1)
+            raise TropsError(dedent(message))
 
         rel_path = self.to_work_tree_rel_path(file_path)
         # Check if the path is in the git repo
@@ -497,7 +496,7 @@ class TropsCLI(TropsBase):
             subprocess.call(cmd)
         else:
             message = f"{ file_path } is not in the git repo"
-            exit(1)
+            raise TropsError(message)
         cmd = self.git_cmd + ['log', '--oneline', '-1', '--', rel_path]
         output = subprocess.check_output(cmd).decode("utf-8").split()
         message = f"FL trops show { output[0] }:{ rel_path }  #> BYE BYE"
