@@ -5,6 +5,14 @@ Changelog
 `Unreleased`_
 =============
 
+`v0.2.32`_ - 2025-08-17
+=======================
+- getkm: Add `-f/--force` to overwrite existing files and `-u/--update` to run `trops fetch` beforehand.
+- view --web: Add `-u/--update-km` to run `trops getkm -a -u -f <path>` before starting the viewer.
+- joinkm: New subcommand to merge multiple KM markdown logs into a single time-sorted table; support append mode and header handling.
+- Errors: Replace many `print + exit` paths with structured `TropsError` exceptions; top-level CLI prints the error and exits with non-zero code.
+- Core: Rename classes `Trops`→`TropsBase`, `TropsMain`→`TropsCLI` (backward-compatible aliases maintained).
+
 `v0.2.31`_ - 2025-08-13
 =======================
 - view --web: Use `trops show <hash>[:<path>]` for the web endpoint instead of raw `git show`, so it respects trops configuration.
@@ -83,7 +91,8 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.31...develop
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.32...develop
+.. _v0.2.32: https://github.com/kojiwell/trops/compare/v0.2.31...v0.2.32
 .. _v0.2.31: https://github.com/kojiwell/trops/compare/v0.2.30...v0.2.31
 .. _v0.2.30: https://github.com/kojiwell/trops/compare/v0.2.29...v0.2.30
 .. _v0.2.29: https://github.com/kojiwell/trops/compare/v0.2.28...v0.2.29
