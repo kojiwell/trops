@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 
 from .capcmd import add_capture_cmd_subparsers
 from .env import add_env_subparsers
@@ -9,7 +10,7 @@ from .koumyo import add_koumyo_subparsers
 from .log import add_log_subparsers
 from .release import __version__
 from .repo import add_repo_subparsers
-from .trops import TropsCLI
+from .trops import TropsCLI, TropsError
 from .utils import generate_sid
 from .view import add_view_subparsers
 from .getkm import add_getkm_subparsers
@@ -190,7 +191,11 @@ def main():
 
     # Pass args and other args to the hander
     args, other_args = parser.parse_known_args()
-    if hasattr(args, 'handler'):
-        args.handler(args, other_args)
-    else:
-        parser.print_help()
+    try:
+        if hasattr(args, 'handler'):
+            args.handler(args, other_args)
+        else:
+            parser.print_help()
+    except TropsError as e:
+        print(str(e), file=sys.stderr)
+        raise SystemExit(1)
