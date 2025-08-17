@@ -6,6 +6,9 @@ from textwrap import dedent
 import subprocess
 
 
+from .trops import TropsError
+
+
 class TropsGetKm:
     def __init__(self, args, other_args):
         self.args = args
@@ -15,30 +18,25 @@ class TropsGetKm:
             msg = f"""\
                 Unsupported argments: {', '.join(other_args)}
                 > trops getkm --help"""
-            print(dedent(msg))
-            exit(1)
+            raise TropsError(dedent(msg))
 
         # Validate flags
         all_flag = getattr(args, 'all', False)
         env_flag = getattr(args, 'env', None)
         if (not all_flag and not env_flag) or (all_flag and env_flag):
-            print('ERROR: specify exactly one of -a/--all or -e/--env <env>')
-            exit(1)
+            raise TropsError('ERROR: specify exactly one of -a/--all or -e/--env <env>')
 
         # Validate target path presence (existence is checked later)
         if not hasattr(args, 'path') or not args.path:
-            print('ERROR: target <path> is required')
-            exit(1)
+            raise TropsError('ERROR: target <path> is required')
 
         # Load config from $TROPS_DIR/trops.cfg
         trops_dir = os.getenv('TROPS_DIR')
         if not trops_dir:
-            print('ERROR: TROPS_DIR is not set')
-            exit(1)
+            raise TropsError('ERROR: TROPS_DIR is not set')
         cfg_path = os.path.join(trops_dir, 'trops.cfg')
         if not os.path.isfile(cfg_path):
-            print(f"ERROR: config not found: {cfg_path}")
-            exit(1)
+            raise TropsError(f"ERROR: config not found: {cfg_path}")
 
         self.config = ConfigParser()
         self.config.read(cfg_path)
@@ -48,15 +46,14 @@ class TropsGetKm:
             self.envs = [s for s in self.config.sections()]
         else:
             if not self.config.has_section(env_flag):
-                print(f"ERROR: env '{env_flag}' not found in config")
-                exit(1)
+                raise TropsError(f"ERROR: env '{env_flag}' not found in config")
             self.envs = [env_flag]
 
     def _git_for_env(self, env_name, args_list):
         # Call git directly; do not depend on TropsMain/git_dir/work_tree
         result = subprocess.run(['git'] + args_list)
         if result.returncode != 0:
-            exit(result.returncode)
+            raise TropsError(f"git {' '.join(args_list[:2])} failed with code {result.returncode}")
 
     def run(self):
         # Resolve and prepare output directory now; create it if it does not exist
@@ -85,7 +82,8 @@ class TropsGetKm:
                 try:
                     km_dir = self.config[env_name]['km_dir']
                 except KeyError:
-                    print(f"WARNING: skipping env '{env_name}' due to missing km_dir")
+                    # Non-fatal: skip this env with a warning to stderr
+                    print(f"WARNING: skipping env '{env_name}' due to missing km_dir", flush=True)
                     continue
 
                 # If km_dir begins with '/', remove only the first '/' for the git ref

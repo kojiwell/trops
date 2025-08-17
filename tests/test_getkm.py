@@ -37,7 +37,8 @@ def test_getkm_env_missing_in_config(monkeypatch, tmp_path, capsys):
         subparsers = parser.add_subparsers()
         add_getkm_subparsers(subparsers)
         args, other_args = parser.parse_known_args()
-    with pytest.raises(SystemExit):
+    from trops.trops import TropsError
+    with pytest.raises(TropsError):
         getkm_run(args, other_args)
 
 
