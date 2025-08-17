@@ -3,7 +3,7 @@ import subprocess
 
 from textwrap import dedent
 
-from .trops import TropsBase
+from .trops import TropsBase, TropsError
 from .utils import absolute_path, strtobool
 
 
@@ -16,8 +16,7 @@ class TropsFile(TropsBase):
             msg = f"""\
                 Unsupported argments: { ', '.join(other_args)}
                 > trops file <subcommand> --help"""
-            print(dedent(msg))
-            exit(1)
+            raise TropsError(dedent(msg))
 
         # trops file put <path> <dest>
         if hasattr(args, 'path'):
@@ -35,8 +34,7 @@ class TropsFile(TropsBase):
                 if sudo_true:
                     self.git_cmd = ['sudo'] + self.git_cmd
             else:
-                print(f"ERROR: '{ args.dest }' is not a directory")
-                exit(1)
+                raise TropsError(f"ERROR: '{ args.dest }' is not a directory")
 
     def list(self):
 
