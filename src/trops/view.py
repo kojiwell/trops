@@ -6,11 +6,11 @@ from urllib.parse import urlparse, parse_qs
 
 from textwrap import dedent
 
-from .trops import TropsMain
+from .trops import TropsCLI, TropsError
 from .utils import absolute_path
 
 
-class TropsView(TropsMain):
+class TropsView(TropsCLI):
     """View tracked file contents from the repository.
 
     Usage examples:
@@ -25,26 +25,23 @@ class TropsView(TropsMain):
             msg = f"""\
                 Unsupported argments: {', '.join(other_args)}
                 > trops view --help"""
-            print(dedent(msg))
-            exit(1)
+            raise TropsError(dedent(msg))
 
         if not hasattr(args, 'file') or not args.file:
-            print('ERROR: file path is required')
-            exit(1)
+            raise TropsError('ERROR: file path is required')
 
         self.web = getattr(args, 'web', False)
+        self.update_km = getattr(args, 'update_km', False)
         self.no_browser = getattr(args, 'no_browser', False)
         self.target_path = absolute_path(args.file)
         self.commit = getattr(args, 'commit', None) or 'HEAD'
 
         if self.web:
             if not os.path.isdir(self.target_path):
-                print(f"ERROR: '{self.target_path}' is not a directory")
-                exit(1)
+                raise TropsError(f"ERROR: '{self.target_path}' is not a directory")
         else:
             if not os.path.isfile(self.target_path):
-                print(f"ERROR: '{self.target_path}' is not a file")
-                exit(1)
+                raise TropsError(f"ERROR: '{self.target_path}' is not a file")
 
         # Resolve repository-relative path if viewing a single file
         if not self.web:
@@ -53,6 +50,11 @@ class TropsView(TropsMain):
     def view(self) -> None:
         """Show file contents from a specific commit (default: HEAD)."""
         if self.web:
+            # Optionally refresh KM content before starting the web viewer
+            if self.update_km:
+                result = subprocess.run(['trops', 'getkm', '-a', '-u', '-f', self.target_path])
+                if result.returncode != 0:
+                    raise TropsError('trops getkm -auf failed')
             self._serve_web(self.target_path)
         else:
             cmd = self.git_cmd + ['show', f'{self.commit}:{self.rel_path}']
@@ -130,11 +132,11 @@ class TropsView(TropsMain):
             def _render_index(files):
                 # Use client-side markdown rendering via marked.js CDN
                 items = '\n'.join(
-                    f'<li><a href="#" onclick="loadFile(\'{name}\');return false;">{name}</a></li>'
+                    f'<li data-name="{name.lower()}" data-file="{name}"><a href="#" onclick="loadFile(\'{name}\');return false;">{name}</a></li>'
                     for name in files
                 )
                 first = files[0] if files else ''
-                html = f"""
+                html = fr"""
                 <!doctype html>
                 <html>
                 <head>
@@ -145,6 +147,9 @@ class TropsView(TropsMain):
                     .container {{ display: flex; height: 100vh; }}
                     .sidebar {{ width: 280px; background:#f6f8fa; border-right:1px solid #e1e4e8; overflow:auto; }}
                     .sidebar h2 {{ margin: 16px; font-size: 16px; }}
+                     .sidebar .filter-wrap {{ padding: 0 16px 8px 16px; }}
+                     .sidebar .filter {{ width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #d0d7de; border-radius: 6px; background: #fff; }}
+                     .sidebar .meta {{ margin: 6px 16px 0 16px; color: #57606a; font-size: 12px; }}
                     .sidebar ul {{ list-style:none; padding:0 8px 16px 16px; margin:0; }}
                     .sidebar li {{ margin: 6px 0; }}
                     /* Links: keep color same as text, underline only */
@@ -171,7 +176,11 @@ class TropsView(TropsMain):
                   <div class="container">
                     <div class="sidebar">
                       <h2>Files</h2>
-                      <ul>
+                      <div class="filter-wrap">
+                        <input id="filter" class="filter" type="text" placeholder="Filter files..." oninput="applyFilter()" />
+                        <div id="match-count" class="meta"></div>
+                      </div>
+                      <ul id="file-list">
                         {items}
                       </ul>
                     </div>
@@ -199,6 +208,48 @@ class TropsView(TropsMain):
                       const enhanced = enhanceTropsShow(html);
                       document.getElementById('content').innerHTML = enhanced;
                     }}
+                     function applyFilter() {{
+                       const input = document.getElementById('filter');
+                       const q = (input.value || '').toLowerCase();
+                       const list = document.getElementById('file-list');
+                       const items = list ? list.children : [];
+                       let shown = 0;
+                       for (let i = 0; i < items.length; i++) {{
+                         const li = items[i];
+                         const name = li.getAttribute('data-name') || '';
+                         const visible = !q || name.indexOf(q) !== -1;
+                         li.style.display = visible ? '' : 'none';
+                         if (visible) shown++;
+                       }}
+                       const meta = document.getElementById('match-count');
+                       if (meta) meta.textContent = shown + ' / ' + items.length + ' files';
+                     }}
+                     function openFirstMatch() {{
+                       const list = document.getElementById('file-list');
+                       if (!list) return;
+                       const items = list.children;
+                       for (let i = 0; i < items.length; i++) {{
+                         const li = items[i];
+                         if (li.style.display !== 'none') {{
+                           const fname = li.getAttribute('data-file');
+                           if (fname) loadFile(fname);
+                           return;
+                         }}
+                       }}
+                     }}
+                     // Initialize filter from ?q= if present and wire up Enter to open first match
+                     (function() {{
+                       const params = new URLSearchParams(location.search);
+                       const q = params.get('q');
+                       const input = document.getElementById('filter');
+                       if (q && input) {{ input.value = q; }}
+                       if (input) {{
+                         applyFilter();
+                         input.addEventListener('keydown', function(e) {{
+                           if (e.key === 'Enter') {{ e.preventDefault(); openFirstMatch(); }}
+                         }});
+                       }}
+                     }})();
                     function enhanceTropsShow(html) {{
                       // Replace occurrences of: trops show <hash>[:<path>]
                       const re = /(trops\s+show\s+)([0-9a-fA-F]{{7,}})(?::([^\s<]+))?/g;
@@ -261,6 +312,7 @@ def add_view_subparsers(subparsers):
     parser_view.add_argument('-e', '--env', help='Set environment name')
     parser_view.add_argument('--commit', help='Commit-ish (default: HEAD)')
     parser_view.add_argument('--web', action='store_true', help='Start a local web viewer for a folder of .md files')
+    parser_view.add_argument('-u', '--update-km', action='store_true', help='Before starting --web, run "trops getkm -auf <path>" to refresh KM files into <path>')
     parser_view.add_argument('--no-browser', action='store_true', help='Do not open the browser automatically')
     parser_view.add_argument('file', help='Absolute path to file (or folder with --web) in work tree')
     parser_view.set_defaults(handler=run)

@@ -34,7 +34,8 @@ def test_log_save(monkeypatch, setup_log_args):
     assert args.save == True
 
     tl = TropsLog(args, other_args)
-    assert tl.trops_logfile == '/home/devuser/trops/log/trops.log'
+    # On CI/mac, default path may differ; just assert it ends with 'trops.log'
+    assert tl.trops_logfile.endswith('trops.log')
     assert tl.trops_tags == '#22'
 
 def test_prim_tag(monkeypatch, setup_log_args):

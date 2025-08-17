@@ -12,11 +12,19 @@ from typing import Any, List
 from .utils import absolute_path, strtobool
 
 
-class Trops:
-    """Trops Class"""
+class TropsError(Exception):
+    """Base exception for Trops-related errors."""
+    pass
+
+class TropsBase:
+    """Base context for Trops
+
+    Responsible for environment/config initialization, logging setup,
+    and shared utilities used by CLI command implementations.
+    """
 
     def __init__(self, args: Any, other_args: List[str]) -> None:
-        """Initialize the Trops class"""
+        """Initialize the base context"""
 
         # Initialize basic attributes
         self.args = args
@@ -107,8 +115,7 @@ class Trops:
         except KeyError:
             if default is not None:
                 return default
-            print(f'{key} does not exist in your configuration file')
-            exit(1)
+            raise TropsError(f'{key} does not exist in your configuration file')
         
     def add_and_commit_file(self, file_path) -> None:
         rel_path = self.to_work_tree_rel_path(file_path)
@@ -152,11 +159,14 @@ class Trops:
             print('No update')
 
 
-class TropsMain(Trops):
-    """TropsMain Class"""
+class TropsCLI(TropsBase):
+    """CLI command implementations for Trops
+
+    Builds on top of TropsBase and exposes concrete subcommand behaviors.
+    """
 
     def __init__(self, args: Any, other_args: List[str]) -> None:
-        """Initialize the TropsMain class"""
+        """Initialize the CLI implementation layer"""
         super().__init__(args, other_args)
 
     def git(self) -> None:
@@ -176,8 +186,7 @@ class TropsMain(Trops):
                     $ ontrops <envname>
                 """
             ).strip()
-            print(message)
-            exit(1)
+            raise TropsError(message)
 
         # Build base command and environment variables
         git_env = os.environ.copy()
@@ -205,7 +214,7 @@ class TropsMain(Trops):
             print('WRAP:', ' '.join(full_cmd))
         result = subprocess.run(full_cmd, env=git_env)
         if result.returncode != 0:
-            exit(result.returncode)
+            raise TropsError(f'git command failed with exit code {result.returncode}')
 
     def glab(self) -> None:
         """Glab wrapper command"""
@@ -228,7 +237,7 @@ class TropsMain(Trops):
         """Shows the list of git-tracked files"""
 
         if os.getenv('TROPS_ENV') == None:
-            raise SystemExit("You're not under any trops environment")
+            raise TropsError("You're not under any trops environment")
 
         # Normalize directory arguments using shared helper
         rel_dirs = self.normalize_paths_for_work_tree(self.args.dirs)
@@ -366,6 +375,10 @@ class TropsMain(Trops):
                 if i + 1 < len(args):
                     skip_next = True
                 continue
+            # Pass through flags (do not treat as paths), including combined flags like -ar
+            if token.startswith('-') and token != '-':
+                result_args.append(token)
+                continue
 
             # Do not rewrite probable revision specifiers like "HASH:path"
             maybe_token = token
@@ -396,15 +409,13 @@ class TropsMain(Trops):
 
         # Check if the path exists
         if not os.path.exists(file_path):
-            print(f"{ file_path } doesn't exists")
-            exit(1)
+            raise TropsError(f"{ file_path } doesn't exist")
         # TODO: Allow touch directory later
         if not os.path.isfile(file_path):
             message = f"""\
                 Error: { file_path } is not a file
                 Only file is allowed to be touched"""
-            print(dedent(message))
-            exit(1)
+            raise TropsError(dedent(message))
 
         # Use path relative to work_tree for git commands
         rel_path = self.to_work_tree_rel_path(file_path)
@@ -412,8 +423,8 @@ class TropsMain(Trops):
         cmd = self.git_cmd + ['ls-files', rel_path]
         result = subprocess.run(cmd, capture_output=True)
         if result.returncode != 0:
-            print(result.stderr.decode('utf-8'))
-            exit(result.returncode)
+            stderr = result.stderr.decode('utf-8')
+            raise TropsError(stderr or 'git ls-files failed')
         output = result.stdout.decode('utf-8')
         # Set the message based on the output
         if output:
@@ -462,15 +473,13 @@ class TropsMain(Trops):
 
         # Check if the path exists
         if not os.path.exists(file_path):
-            print(f"{ file_path } doesn't exists")
-            exit(1)
+            raise TropsError(f"{ file_path } doesn't exist")
         # TODO: Allow touch directory later
         if not os.path.isfile(file_path):
             message = f"""\
                 Error: { file_path } is not a file.
                 A directory is not allowed to say goodbye"""
-            print(dedent(message))
-            exit(1)
+            raise TropsError(dedent(message))
 
         rel_path = self.to_work_tree_rel_path(file_path)
         # Check if the path is in the git repo
@@ -487,7 +496,7 @@ class TropsMain(Trops):
             subprocess.call(cmd)
         else:
             message = f"{ file_path } is not in the git repo"
-            exit(1)
+            raise TropsError(message)
         cmd = self.git_cmd + ['log', '--oneline', '-1', '--', rel_path]
         output = subprocess.check_output(cmd).decode("utf-8").split()
         message = f"FL trops show { output[0] }:{ rel_path }  #> BYE BYE"
@@ -530,3 +539,8 @@ class TropsMain(Trops):
                 continue
             normalized.append(rel)
         return normalized
+
+
+# Backward-compatible aliases (export old names)
+Trops = TropsBase
+TropsMain = TropsCLI

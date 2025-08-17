@@ -25,7 +25,8 @@ def test_init_args(setup_init_args):
 
 def test_init_unsupported_args(setup_init_args):
     args, other_args = setup_init_args
-    with pytest.raises(SystemExit):
+    from trops.trops import TropsError
+    with pytest.raises(TropsError):
         ti = TropsInit(args, other_args)
 
 

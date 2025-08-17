@@ -4,10 +4,10 @@ import time
 from configparser import ConfigParser
 from textwrap import dedent
 
-from .trops import TropsMain
+from .trops import TropsCLI, TropsError
 from .utils import pick_out_repo_name_from_git_remote
 
-class TropsLog(TropsMain):
+class TropsLog(TropsCLI):
 
     def __init__(self, args, other_args):
         super().__init__(args, other_args)
@@ -113,8 +113,7 @@ class TropsLog(TropsMain):
         if self.args.name:
             file_name = self.args.name.replace(' ', '_') + '.log'
         elif not self.trops_tags:
-            print("You don't have a tag. Please set a tag or add --name <name> option")
-            exit(1)
+            raise TropsError("You don't have a tag. Please set a tag or add --name <name> option")
         else:
             if ',' in self.trops_tags:
                 primary_tag = self.trops_tags.split(',')[0]

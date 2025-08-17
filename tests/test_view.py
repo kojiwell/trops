@@ -19,19 +19,26 @@ def setup_view_args():
 def test_view_invokes_git_show(monkeypatch, setup_view_args):
     args, other_args = setup_view_args
 
-    # Monkeypatch TropsMain.__init__ to avoid reading real config
+    # Monkeypatch TropsCLI.__init__ to avoid reading real config
     def fake_init(self, a, b):
         self.args = a
         self.other_args = b
         self.work_tree = '/'
         self.git_cmd = ['echo', 'git']
-    monkeypatch.setattr('trops.view.TropsMain.__init__', fake_init)
+    monkeypatch.setattr('trops.view.TropsCLI.__init__', fake_init)
 
     called = {}
     def fake_call(cmd):
         called['cmd'] = cmd
         return 0
     monkeypatch.setattr('subprocess.call', fake_call)
+
+    # Ensure the target file exists to pass TropsView file check
+    import os
+    try:
+        open('/tmp/test', 'a').close()
+    except Exception:
+        pass
 
     tv = TropsView(args, other_args)
     tv.view()
@@ -51,13 +58,19 @@ def test_view_commit_override(monkeypatch):
         self.other_args = b
         self.work_tree = '/'
         self.git_cmd = ['echo', 'git']
-    monkeypatch.setattr('trops.view.TropsMain.__init__', fake_init)
+    monkeypatch.setattr('trops.view.TropsCLI.__init__', fake_init)
 
     captured = {}
     def fake_call(cmd):
         captured['cmd'] = cmd
         return 0
     monkeypatch.setattr('subprocess.call', fake_call)
+
+    # Ensure the target file exists to pass TropsView file check
+    try:
+        open('/tmp/test2', 'a').close()
+    except Exception:
+        pass
 
     tv = TropsView(args, other_args)
     tv.view()

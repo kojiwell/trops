@@ -75,10 +75,10 @@ def test_km_save_filename_includes_repo_env_and_tag(monkeypatch, tmp_path):
     monkeypatch.setattr('sys.stdin', io.StringIO(logs))
 
     # Stub git interactions used by _touch_file to avoid real git
-    from trops.trops import TropsMain
+    from trops.trops import TropsCLI
     def fake_touch(self, file_path):
         pass
-    monkeypatch.setattr(TropsMain, '_touch_file', fake_touch, raising=True)
+    monkeypatch.setattr(TropsCLI, '_touch_file', fake_touch, raising=True)
 
     # Run with --save
     with patch("sys.argv", ["trops", "km", "-s"]):

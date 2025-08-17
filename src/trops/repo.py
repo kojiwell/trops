@@ -4,10 +4,10 @@ import subprocess
 from configparser import ConfigParser
 from textwrap import dedent
 
-from .trops import Trops
+from .trops import TropsBase, TropsError
 
 
-class TropsRepo(Trops):
+class TropsRepo(TropsBase):
 
     def __init__(self, args, other_args):
         super().__init__(args, other_args)
@@ -16,16 +16,15 @@ class TropsRepo(Trops):
             msg = f"""\
                 Unsupported argments: { ', '.join(other_args)}
                 > trops repo --help"""
-            print(dedent(msg))
-            exit(1)
+            raise TropsError(dedent(msg))
 
     def _check_current_branch(self):
 
         cmd = self.git_cmd + ['branch', '--show-current']
         result = subprocess.run(cmd, capture_output=True)
         if result.returncode != 0:
-            print(result.stderr.decode('utf-8'))
-            exit(result.returncode)
+            stderr = result.stderr.decode('utf-8')
+            raise TropsError(stderr or 'git branch --show-current failed')
         return result.stdout.decode('utf-8').strip()
 
     def push(self):

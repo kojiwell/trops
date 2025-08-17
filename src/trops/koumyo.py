@@ -5,10 +5,10 @@ import sys
 from tabulate import tabulate
 from textwrap import dedent
 
-from .trops import TropsMain
+from .trops import TropsCLI, TropsError
 from .utils import pick_out_repo_name_from_git_remote
 
-class TropsKoumyo(TropsMain):
+class TropsKoumyo(TropsCLI):
 
     def __init__(self, args, other_args):
         super().__init__(args, other_args)
@@ -19,8 +19,7 @@ class TropsKoumyo(TropsMain):
             msg = f"""\
                 Unsupported argments: { ', '.join(other_args)}
                 > trops km --help"""
-            print(dedent(msg))
-            exit(1)
+            raise TropsError(dedent(msg))
 
         try:
             input = sys.stdin.read()
@@ -42,8 +41,7 @@ class TropsKoumyo(TropsMain):
                     %i: ID
                     %e: Env
                     %t: Tags'''
-            print(dedent(msg))
-            exit(1)
+            raise TropsError(dedent(msg))
 
         self.logs = input.splitlines()
         if hasattr(args, 'only') and args.only != None:
@@ -192,8 +190,7 @@ class TropsKoumyo(TropsMain):
                 formatted_logs.append(formatted_log)
 
         if 'headers' not in locals():
-            print('Koumyo(km) ignored everything in the output')
-            exit(1)
+            raise TropsError('Koumyo(km) ignored everything in the output')
         elif self.args.save:
             self._save(tabulate(formatted_logs, headers, tablefmt="github"))
         elif self.args.markdown:
@@ -219,8 +216,7 @@ class TropsKoumyo(TropsMain):
         if self.args.name:
             file_name = self.args.name.replace(' ', '_') + '.md'
         elif not self.trops_tags:
-            print("You don't have a tag. Please set --name <name> option")
-            exit(1)
+            raise TropsError("You don't have a tag. Please set --name <name> option")
         else:
             check_list = [',', ';']
             if ',' in self.trops_tags:

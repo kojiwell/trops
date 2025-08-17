@@ -43,7 +43,8 @@ def test_env_invalid_name_spaces(monkeypatch, tmp_path):
         subparsers = parser.add_subparsers()
         add_env_subparsers(subparsers)
         args, other_args = parser.parse_known_args()
-    with pytest.raises(SystemExit):
+    from trops.trops import TropsError
+    with pytest.raises(TropsError):
         _ = TropsEnv(args, other_args)
 
 
@@ -73,5 +74,6 @@ def test_env_unsupported_other_args(monkeypatch, tmp_path):
         add_env_subparsers(subparsers)
         args, other_args = parser.parse_known_args()
     assert other_args == ["oops"]
-    with pytest.raises(SystemExit):
+    from trops.trops import TropsError
+    with pytest.raises(TropsError):
         _ = TropsEnv(args, other_args)

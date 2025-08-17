@@ -1,9 +1,9 @@
 from textwrap import dedent
 
-from .trops import Trops
+from .trops import TropsBase, TropsError
 
 
-class TropsInit(Trops):
+class TropsInit(TropsBase):
 
     def __init__(self, args, other_args):
         super().__init__(args, other_args)
@@ -12,12 +12,10 @@ class TropsInit(Trops):
             msg = f"""\
                 # Unsupported argments { ", ".join(other_args)}
                 # > trops init --help"""
-            print(dedent(msg))
-            exit(1)
+            raise TropsError(dedent(msg))
 
         if self.args.shell not in ['bash', 'zsh']:
-            print("# usage: trops init [bash/zsh]")
-            exit(1)
+            raise TropsError("# usage: trops init [bash/zsh]")
 
     def _init_zsh(self):
 
@@ -48,6 +46,8 @@ class TropsInit(Trops):
                 tmux rename-window "$TROPS_TAGS"
             fi
             }}
+            
+            alias ttee="tee"
             """
 
         return dedent(zsh_lines)
@@ -75,7 +75,7 @@ class TropsInit(Trops):
 
             offtrops() {{
                 unset TROPS_ENV TROPS_SID
-                PROMPT_COMMAND=${{PROMPT_COMMAND//_trops_capcmd\;}}
+                PROMPT_COMMAND=${{PROMPT_COMMAND//_trops_capcmd;}}
             }}
 
             ttags() {{
@@ -84,6 +84,8 @@ class TropsInit(Trops):
                 tmux rename-window "$TROPS_TAGS"
             fi
             }}
+            
+            alias ttee="tee"
             """
 
         return dedent(bash_lines)
