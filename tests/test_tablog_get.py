@@ -12,7 +12,7 @@ def _write_cfg(path, content):
         f.write(content)
 
 
-def test_getkm_requires_flag_and_path(monkeypatch, tmp_path, capsys):
+def test_tablog_get_requires_flag_and_path(monkeypatch, tmp_path, capsys):
     trops_dir = tmp_path / 'trops'
     trops_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv('TROPS_DIR', str(trops_dir))
@@ -26,7 +26,7 @@ def test_getkm_requires_flag_and_path(monkeypatch, tmp_path, capsys):
             _ = parser.parse_known_args()
 
 
-def test_getkm_env_missing_in_config(monkeypatch, tmp_path, capsys):
+def test_tablog_get_env_missing_in_config(monkeypatch, tmp_path, capsys):
     trops_dir = tmp_path / 'trops'
     trops_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv('TROPS_DIR', str(trops_dir))
@@ -42,7 +42,7 @@ def test_getkm_env_missing_in_config(monkeypatch, tmp_path, capsys):
         tablog_get_run(args, other_args)
 
 
-def test_getkm_invokes_git_with_temp_index_for_env(monkeypatch, tmp_path):
+def test_tablog_get_invokes_git_with_temp_index_for_env(monkeypatch, tmp_path):
     # Setup TROPS_DIR and config
     trops_dir = tmp_path / 'trops'
     trops_dir.mkdir(parents=True, exist_ok=True)
@@ -82,7 +82,7 @@ def test_getkm_invokes_git_with_temp_index_for_env(monkeypatch, tmp_path):
     assert calls[1][2:] == ['checkout-index', '-a']
 
 
-def test_getkm_overwrite_flag_adds_force(monkeypatch, tmp_path):
+def test_tablog_get_overwrite_flag_adds_force(monkeypatch, tmp_path):
     # Setup TROPS_DIR and config
     trops_dir = tmp_path / 'trops'
     trops_dir.mkdir(parents=True, exist_ok=True)
@@ -115,7 +115,7 @@ def test_getkm_overwrite_flag_adds_force(monkeypatch, tmp_path):
     assert '-f' in calls[1]
 
 
-def test_getkm_update_runs_fetch(monkeypatch, tmp_path):
+def test_tablog_get_update_runs_fetch(monkeypatch, tmp_path):
     trops_dir = tmp_path / 'trops'
     trops_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv('TROPS_DIR', str(trops_dir))
@@ -141,4 +141,5 @@ def test_getkm_update_runs_fetch(monkeypatch, tmp_path):
 
     # First call should be trops fetch
     assert run_calls[0][0:2] == ['trops', 'fetch']
+
 
