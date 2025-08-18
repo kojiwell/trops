@@ -78,8 +78,7 @@ class TropsBase:
                 self.ignore_cmds = {item.strip() for item in self.get_config_value('ignore_cmds', default='ttags').split(',') if item.strip()}
 
                 self.git_remote = self.get_config_value('git_remote', default=False)
-                if self.git_remote:
-                    self.glab_cmd = ['glab', '-R', self.git_remote]
+                # glab support removed
 
                 # Prefer environment variable over config for tags
                 self.trops_tags = os.getenv('TROPS_TAGS', self.get_config_value('tags', default=False))
@@ -216,16 +215,7 @@ class TropsCLI(TropsBase):
         if result.returncode != 0:
             raise TropsError(f'git command failed with exit code {result.returncode}')
 
-    def glab(self) -> None:
-        """Glab wrapper command"""
-
-        if self.other_args == ['auth', 'login']:
-            hostname = input(
-                'Your GitLab hostname(default: gitlab.com): ') or 'gitlab.com'
-            cmd = ['glab', 'auth', 'login', '--hostname', hostname]
-        else:
-            cmd = self.glab_cmd + self.other_args
-        subprocess.call(cmd)
+    
 
     def check(self) -> None:
         """Git status wrapper command"""
@@ -332,6 +322,20 @@ class TropsCLI(TropsBase):
         resolving symlinks, and insert "--" before the first pathspec to avoid
         ambiguity with revisions."""
         if not args or not hasattr(self, 'work_tree'):
+            return args
+
+        # Determine subcommand early (first non-option token before "--").
+        # Some subcommands (e.g., branch) take branch names, not paths.
+        # In those cases, skip path normalization entirely to avoid mangling
+        # branch names containing slashes like "home/user/-a".
+        subcommand = None
+        for tok in args:
+            if tok == '--':
+                break
+            if not tok.startswith('-'):
+                subcommand = tok
+                break
+        if subcommand in {'branch'}:
             return args
 
         has_double_dash = '--' in args

@@ -5,7 +5,7 @@ import argparse
 from textwrap import dedent
 from unittest.mock import patch
 
-from trops.koumyo import TropsKoumyo, add_koumyo_subparsers
+from trops.tldr import TropsTLDR, add_tldr_subparsers
 
 TEST_LOGS = """\
 2023-04-21 14:27:59 user1@node01 WARNING CM ls -la  #> PWD=/home/user1, EXIT=0, TROPS_SID=hyn7224, TROPS_ENV=node01 TROPS_TAGS=#124,test
@@ -13,40 +13,40 @@ TEST_LOGS = """\
 
 
 @pytest.fixture
-def setup_koumyo_args():
-    with patch("sys.argv", ["trops", "km"]):
+def setup_tldr_args():
+    with patch("sys.argv", ["trops", "tldr"]):
         parser = argparse.ArgumentParser(
             prog='trops', description='Trops - Tracking Operations')
         subparsers = parser.add_subparsers()
-        add_koumyo_subparsers(subparsers)
+        add_tldr_subparsers(subparsers)
         args, other_args = parser.parse_known_args()
     return args, other_args
 
 
-def test_sys_stdin_read(monkeypatch, setup_koumyo_args):
-    args, other_args = setup_koumyo_args
+def test_sys_stdin_read(monkeypatch, setup_tldr_args):
+    args, other_args = setup_tldr_args
 
     list_test_logs = TEST_LOGS.splitlines()
 
     monkeypatch.setattr('sys.stdin', io.StringIO(TEST_LOGS))
 
-    tk = TropsKoumyo(args, other_args)
+    tk = TropsTLDR(args, other_args)
     assert len(tk.logs) == len(list_test_logs)
     assert all([a == b for a, b in zip(tk.logs, list_test_logs)])
 
 
-def test_ignore_empty_cmd(monkeypatch, setup_koumyo_args):
-    args, other_args = setup_koumyo_args
+def test_ignore_empty_cmd(monkeypatch, setup_tldr_args):
+    args, other_args = setup_tldr_args
 
     list_test_logs = TEST_LOGS.splitlines()
 
     monkeypatch.setattr('sys.stdin', io.StringIO(TEST_LOGS))
 
-    tk = TropsKoumyo(args, other_args)
+    tk = TropsTLDR(args, other_args)
     tk._ignore_cmd([])
 
 
-def test_km_save_filename_includes_repo_env_and_tag(monkeypatch, tmp_path):
+def test_tldr_save_filename_includes_repo_env_and_tag(monkeypatch, tmp_path):
     # Prepare minimal Trops env
     trops_dir = tmp_path / 'trops'
     trops_dir.mkdir(parents=True, exist_ok=True)
@@ -81,24 +81,24 @@ def test_km_save_filename_includes_repo_env_and_tag(monkeypatch, tmp_path):
     monkeypatch.setattr(TropsCLI, '_touch_file', fake_touch, raising=True)
 
     # Run with --save
-    with patch("sys.argv", ["trops", "km", "-s"]):
+    with patch("sys.argv", ["trops", "tldr", "-s"]):
         parser = argparse.ArgumentParser(prog='trops', description='Trops - Tracking Operations')
         subparsers = parser.add_subparsers()
-        add_koumyo_subparsers(subparsers)
+        add_tldr_subparsers(subparsers)
         args, other_args = parser.parse_known_args()
 
-    tk = TropsKoumyo(args, other_args)
+    tk = TropsTLDR(args, other_args)
     tk.run()
 
     expected = trops_dir / 'km' / 'testmyenv_myenv_task-17.md'
     assert expected.exists(), f"Expected file not found: {expected}"
 
 
-def test_split_pipe_in_cmd_splits_pipes_and_redirects(monkeypatch, setup_koumyo_args):
-    args, other_args = setup_koumyo_args
+def test_split_pipe_in_cmd_splits_pipes_and_redirects(monkeypatch, setup_tldr_args):
+    args, other_args = setup_tldr_args
     # Provide stdin logs to satisfy constructor
     monkeypatch.setattr('sys.stdin', io.StringIO(TEST_LOGS))
-    tk = TropsKoumyo(args, other_args)
+    tk = TropsTLDR(args, other_args)
 
     result = tk._split_pipe_in_cmd(['a|b', 'c>>d', 'e|f|g', 'h', 'nochange'])
     assert result == ['a', '|', 'b', 'c', '>>', 'd', 'e', '|', 'f', '|', 'g', 'h', 'nochange']
@@ -106,19 +106,21 @@ def test_split_pipe_in_cmd_splits_pipes_and_redirects(monkeypatch, setup_koumyo_
 
 def test_markdown_escapes_special_characters_in_command(monkeypatch, capsys):
     # Build args with --markdown
-    with patch("sys.argv", ["trops", "km", "-m"]):
+    with patch("sys.argv", ["trops", "tldr", "-m"]):
         parser = argparse.ArgumentParser(prog='trops', description='Trops - Tracking Operations')
         subparsers = parser.add_subparsers()
-        add_koumyo_subparsers(subparsers)
+        add_tldr_subparsers(subparsers)
         args, other_args = parser.parse_known_args()
 
     # Command includes pipe and dollar; presence of '|' prevents declutter ignore
     log = "2025-08-13 00:00:00 u@h WARNING CM echo a|b$c  #> PWD=/, EXIT=0, TROPS_ENV=e TROPS_TAGS=x\n"
     monkeypatch.setattr('sys.stdin', io.StringIO(log))
 
-    tk = TropsKoumyo(args, other_args)
+    tk = TropsTLDR(args, other_args)
     tk.run()
 
     out = capsys.readouterr().out
     # Ensure the command cell contains escaped special characters
     assert 'a\\|b\\$c' in out
+
+

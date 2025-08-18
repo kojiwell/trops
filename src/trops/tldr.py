@@ -8,7 +8,8 @@ from textwrap import dedent
 from .trops import TropsCLI, TropsError
 from .utils import pick_out_repo_name_from_git_remote
 
-class TropsKoumyo(TropsCLI):
+
+class TropsTLDR(TropsCLI):
 
     def __init__(self, args, other_args):
         super().__init__(args, other_args)
@@ -18,7 +19,7 @@ class TropsKoumyo(TropsCLI):
         if other_args:
             msg = f"""\
                 Unsupported argments: { ', '.join(other_args)}
-                > trops km --help"""
+                > trops tldr --help"""
             raise TropsError(dedent(msg))
 
         try:
@@ -26,9 +27,9 @@ class TropsKoumyo(TropsCLI):
         except KeyboardInterrupt:
             msg = '''\
 
-                Usage example of trops km:
-                    > trops log | trops km
-                    > trops log | trops km --only=%D,%T,%u,%c,%d,%x
+                Usage example of trops tldr:
+                    > trops log | trops tldr
+                    > trops log | trops tldr --only=%D,%T,%u,%c,%d,%x
                     
                     %D: Date
                     %T: Time
@@ -190,7 +191,7 @@ class TropsKoumyo(TropsCLI):
                 formatted_logs.append(formatted_log)
 
         if 'headers' not in locals():
-            raise TropsError('Koumyo(km) ignored everything in the output')
+            raise TropsError('TLDR(tldr) ignored everything in the output')
         elif self.args.save:
             self._save(tabulate(formatted_logs, headers, tablefmt="github"))
         elif self.args.markdown:
@@ -248,40 +249,44 @@ class TropsKoumyo(TropsCLI):
 
         self._format()
 
+
 def escape_special_characters(text):
     """Escape special characters for Markdown."""
     return text.replace('|', r'\|').replace('$', r'\$')
 
+
 def run(args, other_args):
 
-    tk = TropsKoumyo(args, other_args)
+    tk = TropsTLDR(args, other_args)
     tk.run()
 
 
-def add_koumyo_subparsers(subparsers):
+def add_tldr_subparsers(subparsers):
 
-    # trops koumyo
-    parser_koumyo = subparsers.add_parser(
-        'km', help=dedent('kou-myo(km) sheds light on trops log'))
-    parser_koumyo.add_argument(
+    # trops tldr
+    parser_tldr = subparsers.add_parser(
+        'tldr', help=dedent('tldr summarizes trops log'))
+    parser_tldr.add_argument(
         '-o', '--only', default='%D,%T,%u,%c,%d,%x',
         help='list of items (default: %(default)s)')
-    parser_koumyo.add_argument(
+    parser_tldr.add_argument(
         '-n', '--no-declutter', action='store_true',
         help='disable log-decluttering')
-    parser_koumyo.add_argument(
+    parser_tldr.add_argument(
         '-a', '--all', action='store_true',
         help='all items in the log')
-    parser_koumyo.add_argument(
+    parser_tldr.add_argument(
         '-s', '--save', action='store_true',
         help='save the km log')
-    parser_koumyo.add_argument(
+    parser_tldr.add_argument(
         '--name', help='with --save, you can specify the name')
-    group = parser_koumyo.add_mutually_exclusive_group()
+    group = parser_tldr.add_mutually_exclusive_group()
     group.add_argument(
         '-m', '--markdown', action='store_true',
         help='markdown table format')
     group.add_argument(
         '--html', action='store_true',
         help='HTML table format')
-    parser_koumyo.set_defaults(handler=run)
+    parser_tldr.set_defaults(handler=run)
+
+

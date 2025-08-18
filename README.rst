@@ -88,9 +88,9 @@ When activated, every command is logged in a log file located at $TROPS_DIR/log/
     # Get your work done, and then check log
     trops log
 
-    # You can also pass the output to Trops KouMyo(km), 
+    # You can also pass the output to Trops TLDR(tldr), 
     # which unclutters and shows log in a table
-    trops log | trops km
+    trops log | trops tldr
 
 If you use tools such as GitLab and Redmine as an internal, remote, private repository for your Trops, you can set it by `--git-remote` option like this::
 
@@ -112,7 +112,7 @@ Trops now transforms your system operations into an issue-driven project. Create
 Once your work is done, you can save and push the log::
 
     # Save the log as a markdown table
-    trops log | trops km --save
+    trops log | trops tldr --save
 
     # And then, push your trops' commits to the remote repository
     trops repo push
