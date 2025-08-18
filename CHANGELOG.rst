@@ -5,6 +5,12 @@ Changelog
 `Unreleased`_
 =============
 
+`v0.2.33`_ - 2025-08-18
+=======================
+- Rename: `km`→`tldr` subcommand; `getkm`→`tablog get`; `joinkm`→`tablog join`.
+- CLI: Remove `glab` (GitLab) subcommand.
+- view --web: Use `trops tablog get -a -u -f <path>` for `--update-km` refresh.
+
 `v0.2.32`_ - 2025-08-17
 =======================
 - tablog get: Add `-f/--force` to overwrite existing files and `-u/--update` to run `trops fetch` beforehand.
@@ -91,7 +97,8 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.32...develop
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.33...develop
+.. _v0.2.33: https://github.com/kojiwell/trops/compare/v0.2.32...v0.2.33
 .. _v0.2.32: https://github.com/kojiwell/trops/compare/v0.2.31...v0.2.32
 .. _v0.2.31: https://github.com/kojiwell/trops/compare/v0.2.30...v0.2.31
 .. _v0.2.30: https://github.com/kojiwell/trops/compare/v0.2.29...v0.2.30
