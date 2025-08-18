@@ -334,6 +334,20 @@ class TropsCLI(TropsBase):
         if not args or not hasattr(self, 'work_tree'):
             return args
 
+        # Determine subcommand early (first non-option token before "--").
+        # Some subcommands (e.g., branch) take branch names, not paths.
+        # In those cases, skip path normalization entirely to avoid mangling
+        # branch names containing slashes like "home/user/-a".
+        subcommand = None
+        for tok in args:
+            if tok == '--':
+                break
+            if not tok.startswith('-'):
+                subcommand = tok
+                break
+        if subcommand in {'branch'}:
+            return args
+
         has_double_dash = '--' in args
         result_args: List[str] = []
         first_path_index: int = -1
