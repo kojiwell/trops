@@ -6,7 +6,7 @@ from .capcmd import add_capture_cmd_subparsers
 from .env import add_env_subparsers
 from .file import add_file_subparsers
 from .init import add_init_subparsers
-from .koumyo import add_koumyo_subparsers
+from .tldr import add_tldr_subparsers
 from .log import add_log_subparsers
 from .release import __version__
 from .repo import add_repo_subparsers
@@ -179,7 +179,7 @@ def main():
     add_git_subparsers(subparsers)
     add_glab_subparsers(subparsers)
     add_init_subparsers(subparsers)
-    add_koumyo_subparsers(subparsers)
+    add_tldr_subparsers(subparsers)
     add_ll_subparsers(subparsers)
     add_log_subparsers(subparsers)
     add_getkm_subparsers(subparsers)
