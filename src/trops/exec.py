@@ -13,7 +13,7 @@ from .repo import add_repo_subparsers
 from .trops import TropsCLI, TropsError
 from .utils import generate_sid
 from .view import add_view_subparsers
-from .getkm import add_getkm_subparsers
+from .tablog import add_tablog_subparsers
 from .joinkm import add_joinkm_subparsers
 
 
@@ -182,7 +182,7 @@ def main():
     add_tldr_subparsers(subparsers)
     add_ll_subparsers(subparsers)
     add_log_subparsers(subparsers)
-    add_getkm_subparsers(subparsers)
+    add_tablog_subparsers(subparsers)
     add_joinkm_subparsers(subparsers)
     add_repo_subparsers(subparsers)
     add_view_subparsers(subparsers)

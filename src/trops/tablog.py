@@ -9,7 +9,7 @@ import subprocess
 from .trops import TropsError
 
 
-class TropsGetKm:
+class TropsTablogGet:
     def __init__(self, args, other_args):
         self.args = args
         self.other_args = other_args
@@ -120,18 +120,35 @@ class TropsGetKm:
 
 
 def run(args, other_args):
-    gk = TropsGetKm(args, other_args)
-    gk.run()
+    tg = TropsTablogGet(args, other_args)
+    tg.run()
 
 
-def add_getkm_subparsers(subparsers):
-    parser_getkm = subparsers.add_parser('getkm', help='extract km files to a target path using a temporary index')
-    group = parser_getkm.add_mutually_exclusive_group(required=False)
+def _tablog_help(args, other_args):
+    # Fallback handler when no subcommand is provided
+    print(dedent('''\
+        usage: trops tablog <command> [<args>]
+        
+        Commands:
+          get    extract km files to a target path using a temporary index
+    '''))
+
+
+def add_tablog_subparsers(subparsers):
+    parser_tablog = subparsers.add_parser('tablog', help='table/log utilities')
+    tablog_sub = parser_tablog.add_subparsers()
+
+    # tablog get
+    parser_get = tablog_sub.add_parser('get', help='extract km files to a target path using a temporary index')
+    group = parser_get.add_mutually_exclusive_group(required=False)
     group.add_argument('-a', '--all', action='store_true', help='process all environments found in config')
     group.add_argument('-e', '--env', help='process a specific environment name')
-    parser_getkm.add_argument('-f', '--force', action='store_true', help='overwrite existing files in the target directory')
-    parser_getkm.add_argument('-u', '--update', action='store_true', help='run "trops fetch" before extracting')
-    parser_getkm.add_argument('path', help='target directory path to extract files into (used as --prefix)')
-    parser_getkm.set_defaults(handler=run)
+    parser_get.add_argument('-f', '--force', action='store_true', help='overwrite existing files in the target directory')
+    parser_get.add_argument('-u', '--update', action='store_true', help='run "trops fetch" before extracting')
+    parser_get.add_argument('path', help='target directory path to extract files into (used as --prefix)')
+    parser_get.set_defaults(handler=run)
+
+    # If no subcommand is given, show help
+    parser_tablog.set_defaults(handler=_tablog_help)
 
 
