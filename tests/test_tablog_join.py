@@ -3,14 +3,14 @@ from unittest.mock import patch
 
 import pytest
 
-from trops.joinkm import add_joinkm_subparsers, run as joinkm_run
+from trops.tablog import add_tablog_subparsers, run_join as tablog_join_run
 
 
 def _write(path, content: str):
     path.write_text(content, encoding='utf-8')
 
 
-def test_joinkm_requires_output(tmp_path):
+def test_tablog_join_requires_output(tmp_path):
     f1 = tmp_path / 'f1.md'
     _write(
         f1,
@@ -21,15 +21,15 @@ def test_joinkm_requires_output(tmp_path):
         """.strip()
     )
 
-    with patch('sys.argv', ['trops', 'joinkm', str(f1)]):
+    with patch('sys.argv', ['trops', 'tablog', 'join', str(f1)]):
         parser = argparse.ArgumentParser(prog='trops')
         subparsers = parser.add_subparsers()
-        add_joinkm_subparsers(subparsers)
+        add_tablog_subparsers(subparsers)
         with pytest.raises(SystemExit):
             _ = parser.parse_known_args()
 
 
-def test_joinkm_merges_and_sorts(tmp_path):
+def test_tablog_join_merges_and_sorts(tmp_path):
     # Prepare three input files
     f1 = tmp_path / 'file1.md'
     f2 = tmp_path / 'file2.md'
@@ -66,13 +66,13 @@ def test_joinkm_merges_and_sorts(tmp_path):
     )
 
     # Build CLI args and run
-    with patch('sys.argv', ['trops', 'joinkm', str(f1), str(f2), str(f3), '-o', str(out)]):
+    with patch('sys.argv', ['trops', 'tablog', 'join', str(f1), str(f2), str(f3), '-o', str(out)]):
         parser = argparse.ArgumentParser(prog='trops')
         subparsers = parser.add_subparsers()
-        add_joinkm_subparsers(subparsers)
+        add_tablog_subparsers(subparsers)
         args, other_args = parser.parse_known_args()
 
-    joinkm_run(args, other_args)
+    tablog_join_run(args, other_args)
 
     # Validate output
     text = out.read_text(encoding='utf-8').strip().splitlines()
@@ -91,7 +91,7 @@ def test_joinkm_merges_and_sorts(tmp_path):
     assert rows[4].startswith('| 2025-08-12 | 12:03:52 |')
 
 
-def test_joinkm_append_mode(tmp_path):
+def test_tablog_join_append_mode(tmp_path):
     # Initial output
     out = tmp_path / 'out.md'
     f1 = tmp_path / 'f1.md'
@@ -107,12 +107,12 @@ def test_joinkm_append_mode(tmp_path):
     )
 
     # First write (overwrite)
-    with patch('sys.argv', ['trops', 'joinkm', str(f1), '-o', str(out)]):
+    with patch('sys.argv', ['trops', 'tablog', 'join', str(f1), '-o', str(out)]):
         parser = argparse.ArgumentParser(prog='trops')
         subparsers = parser.add_subparsers()
-        add_joinkm_subparsers(subparsers)
+        add_tablog_subparsers(subparsers)
         args, other_args = parser.parse_known_args()
-    joinkm_run(args, other_args)
+    tablog_join_run(args, other_args)
 
     text1 = out.read_text(encoding='utf-8').strip().splitlines()
     assert len(text1) == 3  # header, sep, 1 row
@@ -127,12 +127,12 @@ def test_joinkm_append_mode(tmp_path):
         """.strip()
     )
 
-    with patch('sys.argv', ['trops', 'joinkm', str(f2), '-o', str(out), '--apend']):
+    with patch('sys.argv', ['trops', 'tablog', 'join', str(f2), '-o', str(out), '--apend']):
         parser = argparse.ArgumentParser(prog='trops')
         subparsers = parser.add_subparsers()
-        add_joinkm_subparsers(subparsers)
+        add_tablog_subparsers(subparsers)
         args, other_args = parser.parse_known_args()
-    joinkm_run(args, other_args)
+    tablog_join_run(args, other_args)
 
     text2 = out.read_text(encoding='utf-8').strip().splitlines()
     # First block: 3 lines, then append writes another header+sep+row -> +3 lines

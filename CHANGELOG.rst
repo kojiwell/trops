@@ -9,7 +9,7 @@ Changelog
 =======================
 - tablog get: Add `-f/--force` to overwrite existing files and `-u/--update` to run `trops fetch` beforehand.
 - view --web: Add `-u/--update-km` to run `trops tablog get -a -u -f <path>` before starting the viewer.
-- joinkm: New subcommand to merge multiple KM markdown logs into a single time-sorted table; support append mode and header handling.
+- tablog join: New subcommand to merge multiple KM markdown logs into a single time-sorted table; support append mode and header handling.
 - Errors: Replace many `print + exit` paths with structured `TropsError` exceptions; top-level CLI prints the error and exits with non-zero code.
 - Core: Rename classes `Trops`→`TropsBase`, `TropsMain`→`TropsCLI` (backward-compatible aliases maintained).
 
