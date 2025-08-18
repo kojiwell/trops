@@ -78,8 +78,7 @@ class TropsBase:
                 self.ignore_cmds = {item.strip() for item in self.get_config_value('ignore_cmds', default='ttags').split(',') if item.strip()}
 
                 self.git_remote = self.get_config_value('git_remote', default=False)
-                if self.git_remote:
-                    self.glab_cmd = ['glab', '-R', self.git_remote]
+                # glab support removed
 
                 # Prefer environment variable over config for tags
                 self.trops_tags = os.getenv('TROPS_TAGS', self.get_config_value('tags', default=False))
@@ -216,16 +215,7 @@ class TropsCLI(TropsBase):
         if result.returncode != 0:
             raise TropsError(f'git command failed with exit code {result.returncode}')
 
-    def glab(self) -> None:
-        """Glab wrapper command"""
-
-        if self.other_args == ['auth', 'login']:
-            hostname = input(
-                'Your GitLab hostname(default: gitlab.com): ') or 'gitlab.com'
-            cmd = ['glab', 'auth', 'login', '--hostname', hostname]
-        else:
-            cmd = self.glab_cmd + self.other_args
-        subprocess.call(cmd)
+    
 
     def check(self) -> None:
         """Git status wrapper command"""

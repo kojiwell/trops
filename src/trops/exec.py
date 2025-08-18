@@ -22,10 +22,7 @@ def trops_git(args, other_args):
     tr.git()
 
 
-def trops_glab(args, other_args):
-
-    tr = TropsCLI(args, other_args)
-    tr.glab()
+ 
 
 
 def trops_check(args, other_args):
@@ -86,11 +83,7 @@ def add_git_subparsers(subparsers):
     parser_git.set_defaults(handler=trops_git)
 
 
-def add_glab_subparsers(subparsers):
-
-    parser_glab = subparsers.add_parser('glab', help='glab wrapper')
-    parser_glab.add_argument('-e', '--env', help="Set env")
-    parser_glab.set_defaults(handler=trops_glab)
+ 
 
 
 def add_show_subparsers(subparsers):
@@ -176,7 +169,7 @@ def main():
     add_file_subparsers(subparsers)
     add_gensid_subparsers(subparsers)
     add_git_subparsers(subparsers)
-    add_glab_subparsers(subparsers)
+ 
     add_init_subparsers(subparsers)
     add_tldr_subparsers(subparsers)
     add_ll_subparsers(subparsers)
