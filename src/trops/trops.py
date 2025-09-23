@@ -335,7 +335,7 @@ class TropsCLI(TropsBase):
             if not tok.startswith('-'):
                 subcommand = tok
                 break
-        if subcommand in {'branch'}:
+        if subcommand in {'branch', 'config'}:
             return args
 
         has_double_dash = '--' in args
