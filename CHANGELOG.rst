@@ -5,6 +5,10 @@ Changelog
 `Unreleased`_
 =============
 
+`v0.2.34`_ - 2025-09-23
+=======================
+- tldr: Fix save when git_remote is not configured.
+
 `v0.2.33`_ - 2025-08-18
 =======================
 - Rename: `km`→`tldr` subcommand; `getkm`→`tablog get`; `joinkm`→`tablog join`.
@@ -97,7 +101,8 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.33...develop
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.34...develop
+.. _v0.2.34: https://github.com/kojiwell/trops/compare/v0.2.33...v0.2.34
 .. _v0.2.33: https://github.com/kojiwell/trops/compare/v0.2.32...v0.2.33
 .. _v0.2.32: https://github.com/kojiwell/trops/compare/v0.2.31...v0.2.32
 .. _v0.2.31: https://github.com/kojiwell/trops/compare/v0.2.30...v0.2.31
