@@ -209,8 +209,9 @@ class TropsTLDR(TropsCLI):
         if not os.path.isdir(km_dir):
             os.mkdir(km_dir)
 
-        if hasattr(self, 'git_remote'):
-            file_prefix = pick_out_repo_name_from_git_remote(self.git_remote) + '_' + self.trops_env
+        git_remote = getattr(self, 'git_remote', None)
+        if git_remote:
+            file_prefix = pick_out_repo_name_from_git_remote(git_remote) + '_' + self.trops_env
         else:
             file_prefix = self.trops_env
 
