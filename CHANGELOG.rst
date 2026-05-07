@@ -4,6 +4,8 @@ Changelog
 
 `Unreleased`_
 =============
+- perf: cut ``capture-cmd`` baseline overhead by lazy-loading subcommand modules in ``exec.py`` (only the invoked subcommand is imported) and deferring ``subprocess`` / ``re`` imports in ``capcmd.py`` to the editor / tee / package paths that actually need them. Trivial-command import chain drops ~146ms → ~64ms cumulative; user CPU per prompt drops ~50ms → ~30ms (#166).
+- capcmd: skip ``tmp/`` ``mkdir`` when the directory already exists; fast-skip the tee-pipeline tokenizer when no ``|`` is in the command; remove the dead duplicated ``_sanitize_for_sudo`` block.
 
 `v0.2.35`_ - 2025-09-23
 =======================
