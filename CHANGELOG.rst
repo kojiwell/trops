@@ -4,6 +4,16 @@ Changelog
 
 `Unreleased`_
 =============
+- perf: cut ``capture-cmd`` baseline overhead by lazy-loading subcommand modules in ``exec.py`` (only the invoked subcommand is imported) and deferring ``subprocess`` / ``re`` imports in ``capcmd.py`` to the editor / tee / package paths that actually need them. Trivial-command import chain drops ~146ms → ~64ms cumulative; user CPU per prompt drops ~50ms → ~30ms (#166).
+- capcmd: skip ``tmp/`` ``mkdir`` when the directory already exists; fast-skip the tee-pipeline tokenizer when no ``|`` is in the command; remove the dead duplicated ``_sanitize_for_sudo`` block.
+
+`v0.2.35`_ - 2025-09-23
+=======================
+- Packaging/docs: bump version to 0.2.35.
+
+`v0.2.34`_ - 2025-09-23
+=======================
+- tldr: Fix save when git_remote is not configured.
 
 `v0.2.33`_ - 2025-08-18
 =======================
@@ -97,7 +107,9 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.33...develop
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.35...develop
+.. _v0.2.35: https://github.com/kojiwell/trops/compare/v0.2.34...v0.2.35
+.. _v0.2.34: https://github.com/kojiwell/trops/compare/v0.2.33...v0.2.34
 .. _v0.2.33: https://github.com/kojiwell/trops/compare/v0.2.32...v0.2.33
 .. _v0.2.32: https://github.com/kojiwell/trops/compare/v0.2.31...v0.2.32
 .. _v0.2.31: https://github.com/kojiwell/trops/compare/v0.2.30...v0.2.31

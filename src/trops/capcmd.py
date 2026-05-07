@@ -1,5 +1,4 @@
 import os
-import subprocess
 import sys
 
 from datetime import datetime
@@ -8,7 +7,6 @@ from typing import List, Tuple
 from configparser import ConfigParser
 
 from .trops import TropsBase, TropsError
-import re
 from .utils import absolute_path
 
 
@@ -80,9 +78,11 @@ class TropsCapCmd(TropsBase):
             self.print_header()
             sys.exit(0)
 
-        # Ensure tmp directory exists
+        # Ensure tmp directory exists (avoid mkdir syscall on the hot path
+        # when it already exists, which is the steady state).
         tmp_dir = Path(self.trops_dir) / 'tmp'
-        tmp_dir.mkdir(parents=True, exist_ok=True)
+        if not tmp_dir.is_dir():
+            tmp_dir.mkdir(parents=True, exist_ok=True)
         last_cmd_path = tmp_dir / 'last_cmd'
 
         # Side-effect operations that should happen even if the command is repeated
@@ -104,14 +104,6 @@ class TropsCapCmd(TropsBase):
 
         # Save last command signature
         self._save_last_command(str(last_cmd_path), time_and_cmd)
-
-        # (kept for clarity; normally unreachable due to early fast-path above)
-        sanitized_for_ignore = self._sanitize_for_sudo(executed_cmd)
-        if self.ignore_cmds and sanitized_for_ignore and sanitized_for_ignore[0] in self.ignore_cmds:
-            # Ignored command; flush deferred logs to preserve previous behavior
-            self._flush_deferred_file_logs()
-            self.print_header()
-            sys.exit(0)
 
         # Log command message
         message = self._compose_capture_message(executed_cmd, return_code)
@@ -156,6 +148,7 @@ class TropsCapCmd(TropsBase):
         print(f'\n-= {"|".join(self.trops_header)} =-')
 
     def _yum_log(self, executed_cmd: List[str]) -> None:
+        import subprocess
 
         # Check if sudo is used
         executed_cmd = executed_cmd[1:] if executed_cmd[0] == 'sudo' else executed_cmd
@@ -178,6 +171,7 @@ class TropsCapCmd(TropsBase):
         # TODO: Add log trops git show hex
 
     def _update_pkg_list(self, args: str) -> None:
+        import subprocess
 
         # Update the pkg_List
         cmd = ['apt', 'list', '--installed']
@@ -229,6 +223,7 @@ class TropsCapCmd(TropsBase):
 
     def _add_file_log(self, file_path: str, log_note: str) -> None:
         """Add an FL log entry"""
+        import subprocess
         rel_path = os.path.relpath(os.path.realpath(absolute_path(file_path)), start=os.path.realpath(self.work_tree))
         cmd = self.git_cmd + ['log', '--oneline', '-1', rel_path]
         output = subprocess.check_output(
@@ -249,14 +244,16 @@ class TropsCapCmd(TropsBase):
             else:
                 self.logger.info(message)
 
-    def _add_and_commit_file(self, file_path: str, git_msg: str) -> subprocess.CompletedProcess:
+    def _add_and_commit_file(self, file_path: str, git_msg: str):
         """Add a file in the git repo and commit if changed"""
+        import subprocess
         rel_path = os.path.relpath(os.path.realpath(absolute_path(file_path)), start=os.path.realpath(self.work_tree))
         subprocess.run(self.git_cmd + ['add', rel_path], capture_output=True)
         return subprocess.run(self.git_cmd + ['commit', '-m', git_msg, rel_path], capture_output=True)
 
     def _generate_git_msg_and_log_note(self, file_path: str) -> Tuple[str, str]:
         """Generate the git commit message and log note"""
+        import subprocess
         rel_path = os.path.relpath(os.path.realpath(absolute_path(file_path)), start=os.path.realpath(self.work_tree))
         result = subprocess.run(self.git_cmd + ['ls-files', rel_path], capture_output=True)
         is_tracked = bool(result.stdout.decode('utf-8'))
@@ -286,6 +283,11 @@ class TropsCapCmd(TropsBase):
           - cmd |tee path/to/file
           - cmd1 | cmd2 | ... | tee path/to/file
         """
+        # Fast skip: no '|' anywhere means no pipeline, so no tee target.
+        if not any('|' in tok for tok in executed_cmd):
+            return False
+
+        import re
         # First normalize tokens so that every '|' is its own token
         normalized: List[str] = []
         for tok in executed_cmd:
@@ -336,6 +338,7 @@ class TropsCapCmd(TropsBase):
         if not os.path.isfile(git_config_path):
             return
 
+        import subprocess
         # Determine current branch
         result = subprocess.run(self.git_cmd + ['branch', '--show-current'], capture_output=True)
         current_branch = result.stdout.decode('utf-8').strip() if result.returncode == 0 else ''
@@ -370,6 +373,7 @@ def add_capture_cmd_subparsers(subparsers):
     parser_capture_cmd.set_defaults(handler=capture_cmd)
 
 def file_is_in_a_git_repo(file_path: str) -> bool:
+    import subprocess
     parent_dir = os.path.dirname(file_path) or '.'
     # Use git -C to avoid changing global working directory
     result = subprocess.run(['git', '-C', parent_dir, 'rev-parse', '--is-inside-work-tree'], capture_output=True)
