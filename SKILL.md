@@ -10,6 +10,7 @@ When this skill loads, follow the phase appropriate to the user's request:
 - User wants to install trops, or `trops` is not on PATH → start at **Install**, then continue through **Setup**.
 - User has trops installed but no env active (`echo $TROPS_DIR` empty, no `ontrops`/`offtrops` aliases) → start at **Setup**.
 - User asks about `ontrops`, `offtrops`, `trops env`, `trops log`, or other commands → jump to **Daily Usage**.
+- User wants the same trops tag (e.g., an issue number) to follow them across SSH hops and through `sudo` → jump to **Sharing trops tags across hosts and sudoers**.
 - User reports trops misbehaving → jump to **Troubleshooting**.
 
 ## Execution model (read this first)
@@ -250,6 +251,105 @@ trops fetch            # fetch from the configured git remote
 If the user asks about a subcommand not listed here, run `trops <subcmd> --help` to get the authoritative usage. Do not invent flags.
 
 To link a trops env to a remote private repo after creation, the user can use `trops git` to operate on the env's git repo directly (e.g., `trops git remote add origin ...` then `trops git push -u origin main`).
+
+## Sharing trops tags across hosts and sudoers
+
+This section is for a more advanced workflow: the user wants `TROPS_TAGS` (a tag like an issue number, e.g. `1234`) to propagate from their workstation through SSH to remote hosts, and through `sudo` to root sessions, so every command they run anywhere gets attributed to the same issue. trops then auto-activates a per-host env on each remote machine when the tag is set.
+
+This involves edits to SSH config and `sudoers` on **every host** the user wants tag propagation to reach. All of these are confirmation-required actions per the hybrid execution model — most need root access on the remote host.
+
+### Step S1 — Client side: forward the env var over SSH
+
+Edit `~/.ssh/config` on the user's workstation. Append (or create the file with):
+
+```
+SendEnv TROPS_TAGS
+```
+
+This tells the SSH client to send `TROPS_TAGS` to the server. Confirm with the user before editing. Idempotency check: `grep -F 'SendEnv TROPS_TAGS' ~/.ssh/config`.
+
+### Step S2 — Server side: accept the env var
+
+For each remote host the user SSHs into, edit `/etc/ssh/sshd_config` and add:
+
+```
+AcceptEnv TROPS_TAGS
+```
+
+Then restart sshd:
+
+- Debian/Ubuntu: `sudo systemctl restart ssh`
+- RHEL/Rocky/Fedora: `sudo systemctl restart sshd`
+- macOS: not typically used as an SSH server target for this workflow.
+
+These commands need root on the remote host. **Do not run them yourself.** Show them to the user and let them run them in their own session on the remote.
+
+### Step S3 — Preserve the env var across `sudo`
+
+`sudo` strips environment variables by default. To keep `TROPS_TAGS` when escalating to root, use `visudo` to add to `/etc/sudoers`:
+
+```
+Defaults    env_keep += "TROPS_TAGS"
+```
+
+Always recommend `sudo visudo` (not direct editing) — a syntax error in `/etc/sudoers` can lock the user out of sudo. Show the line; let the user run `visudo`.
+
+### Step S4 — Gate tropsrc on `TROPS_TAGS` (remote hosts)
+
+On each remote host, install trops (rerun **Install** above on that host) and write a tag-aware `tropsrc`. The remote tropsrc auto-creates a per-host env and activates it whenever `TROPS_TAGS` is set:
+
+`$TROPS_DIR/tropsrc` on the remote host:
+
+```
+# trops activation (tag-driven) — sourced from ~/.bashrc or ~/.zshrc
+export TROPS_DIR="$HOME/.trops"
+test -d "$TROPS_DIR" || mkdir -p "$TROPS_DIR"
+
+if [ -n "$ZSH_VERSION" ]; then
+    eval "$(trops init zsh)"
+elif [ -n "$BASH_VERSION" ]; then
+    eval "$(trops init bash)"
+fi
+
+if [ ! -d "$TROPS_DIR/repo/$(hostname -s).git" ]; then
+    trops env create $(hostname -s)
+fi
+
+ontrops $(hostname -s)
+```
+
+And in the user's `~/.bashrc` (or `~/.zshrc`) on each remote host, gate the source line on `TROPS_TAGS`:
+
+```
+if [ -n "${TROPS_TAGS}" ] && [ -f "$HOME/.trops/tropsrc" ]; then
+    . "$HOME/.trops/tropsrc"
+fi
+```
+
+This means trops only activates on the remote host when the user's session has a tag set — so casual SSH logins do not get tracked, but tagged work sessions do.
+
+### Step S5 — Use it
+
+On the workstation, before SSHing:
+
+```
+export TROPS_TAGS=1234
+ssh remote-host
+```
+
+The remote shell now has `TROPS_TAGS=1234`. Sourcing the gated tropsrc will activate trops for the per-host env, and any commands run there are attributed to tag `1234`. The same applies after `sudo -i` if Step S3 is in place.
+
+To clear the tag in a session:
+
+```
+unset TROPS_TAGS
+```
+
+### Notes for the skill
+
+- This whole flow is opt-in and per-host. Do not apply it to the user's machine unless they explicitly ask for tag sharing.
+- If the user asks "why isn't my tag showing up after `ssh`?", check Steps S1 + S2 in order (`SendEnv` → `AcceptEnv` → sshd restarted on the remote). If after `sudo`, also check S3.
+- The basic Setup flow earlier in this file uses an *unconditional* source of tropsrc. The tag-sharing flow uses a *gated* source. They are mutually exclusive on a single host — pick one or the other.
 
 ## Troubleshooting
 
