@@ -123,6 +123,83 @@ Now, you can update the tasks and recipes in your Ansible roles, Dockerfiles, an
 
 Trops helps you easily try new things, and you don't have to worry about forgetting what you've done. And then, once you've got used to it, it will actually help you organize your day-to-day multitasking, which is probably something that a lot of system admins cannot avoid.
 
+Reviewing and sharing logs
+==========================
+
+Once you have been using ``ontrops`` for a while, three subcommands turn the raw ``trops.log`` into shareable artifacts and a browsable history: ``trops tldr`` renders the log as a table, ``trops tablog`` collects and merges the saved tables, and ``trops view`` opens a tracked file or a folder of tables in a local web viewer.
+
+trops tldr
+----------
+
+``trops tldr`` (Table Log Direct, "Too Long Don't Read") consumes the output of ``trops log`` on stdin and renders it as a table. By default the output is plaintext for terminal viewing; with ``-m`` or ``--html`` you get Markdown or HTML, and with ``-s`` the table is saved as Markdown into the env's ``km_dir`` so that it can be committed and shared (for example, pasted into a GitLab or Redmine issue).
+
+Pipe ``trops log`` into ``tldr``, and optionally save::
+
+    trops log | trops tldr
+    trops log | trops tldr -s
+
+Notable options:
+
+- ``-o, --only <fmt>`` -- ``%``-placeholder string controlling which columns appear. Supported codes: ``%D`` Date, ``%T`` Time, ``%u`` ``User@host``, ``%ll`` Log level, ``%lt`` Log type, ``%c`` Command, ``%d`` Directory/Owner,Group,Mode, ``%x`` Exit code, ``%i`` ID, ``%e`` Env, ``%t`` Tags. Default: ``%D,%T,%u,%c,%d,%x``.
+- ``-s, --save`` -- save the rendered table as Markdown under the env's ``km_dir`` (default ``$TROPS_DIR/km`` per env config). The filename is auto-generated from repo + env + tag.
+- ``--name <name>`` -- override the auto-generated filename when used with ``--save``.
+- ``-m, --markdown`` / ``--html`` -- output format selectors (mutually exclusive); default is plaintext.
+- ``-n, --no-declutter`` -- disable noise filtering. ``-a, --all`` -- include all log entries.
+
+trops tablog
+------------
+
+``trops tablog`` works on the Markdown tables that ``trops tldr -s`` saves. The saved tables live as commits inside each env's git repo (under ``km_dir``); ``tablog get`` extracts them onto the filesystem so they can be browsed, merged, or served by ``trops view --web``, and ``tablog join`` merges multiple of them into a single time-sorted table.
+
+tablog get
+~~~~~~~~~~
+
+Extract the saved tables from one or all envs into a target directory::
+
+    trops tablog get -a -u -f /path/to/extract
+
+Notable options:
+
+- positional ``path`` -- destination directory; created if missing. Used as ``--prefix`` for the underlying ``git checkout-index``.
+- ``-a, --all`` -- process every env in ``trops.cfg``. Mutually exclusive with ``-e``.
+- ``-e, --env <name>`` -- process a single env.
+- ``-u, --update`` -- run ``trops fetch`` before extracting (refreshes from the configured remote).
+- ``-f, --force`` -- overwrite existing files in the target directory.
+
+tablog join
+~~~~~~~~~~~
+
+Merge multiple Markdown tables into one time-sorted table::
+
+    trops tablog join -o merged.md file1.md file2.md
+
+Notable options:
+
+- ``-o, --output <path>`` -- required output file path.
+- ``-a, --append`` -- append to the output file instead of overwriting it.
+
+trops view
+----------
+
+``trops view`` has two modes. In **file mode** it shows a tracked file's content at a given commit (default ``HEAD``); useful for inspecting historical state without leaving the shell. In **web mode** (``--web``) it serves a folder of ``.md`` tablog files in a browser, with each ``trops show <hex>:<path>`` entry hyperlinked: clicking ``<hex>`` opens a diff view, and clicking ``<path>`` opens the file's content at that commit.
+
+File mode::
+
+    trops view /etc/hosts
+    trops view --commit 1a2b3c /etc/hosts
+
+Web mode (after extracting tablog files with ``trops tablog get``)::
+
+    trops view --web /path/to/extract
+
+Notable options:
+
+- positional ``file`` -- absolute path to a tracked file (file mode), or a folder of ``.md`` tablog files (with ``--web``).
+- ``-e, --env <name>`` -- select the env. ``--commit <hash>`` -- commit-ish to view; default ``HEAD``.
+- ``--web`` -- start a local web viewer. The server binds to ``http://localhost:8001`` and the default browser opens automatically.
+- ``-u, --update-km`` -- before starting the web viewer, run ``trops tablog get -a -u -f <folder>`` to refresh the tablog files into the served folder.
+- ``--no-browser`` -- do not auto-open a browser tab (useful for headless or remote sessions; you can still navigate to ``http://localhost:8001`` manually, e.g., via an SSH port-forward).
+
 Sharing trops tags among hosts and sudoers
 ==========================================
 

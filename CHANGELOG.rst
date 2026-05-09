@@ -4,8 +4,14 @@ Changelog
 
 `Unreleased`_
 =============
+
+`v0.2.36`_ - 2026-05-09
+=======================
+- capcmd: differentiate ``tee`` and ``ttee`` in pipeline detection. Plain ``cmd | tee out`` now commits ``out`` as a transparent passthrough -- the file is no longer mutated. ``cmd | ttee out`` (using the trops-aliased ``ttee`` defined in ``trops init``) commits the file *and* prepends ``# <left-command>`` as the first line, so that the originating command is recorded inside the artifact. ``-a`` / ``--append`` skips the prepend so that growing log files are not silently rewritten. **Backward-compat note**: anyone whose current workflow relied on ``tee`` implicitly prepending ``# <cmd>`` should switch to ``ttee``; existing files in the env git repo are unaffected. (#162)
 - perf: cut ``capture-cmd`` baseline overhead by lazy-loading subcommand modules in ``exec.py`` (only the invoked subcommand is imported) and deferring ``subprocess`` / ``re`` imports in ``capcmd.py`` to the editor / tee / package paths that actually need them. Trivial-command import chain drops ~146ms → ~64ms cumulative; user CPU per prompt drops ~50ms → ~30ms (#166).
 - capcmd: skip ``tmp/`` ``mkdir`` when the directory already exists; fast-skip the tee-pipeline tokenizer when no ``|`` is in the command; remove the dead duplicated ``_sanitize_for_sudo`` block.
+- docs: add "Reviewing and sharing logs" section to README covering ``trops tldr``, ``trops tablog`` (``get`` / ``join``), and ``trops view`` -- including the ``%``-placeholder map for ``--only`` and the ``view --web`` URL/clickable behavior (#165).
+- chore(release): make ``release.sh`` portable across BSD and GNU sed, exit on missing/invalid argument, pre-flight check the working tree, and print the git tag/push steps so future releases get a matching annotated tag.
 
 `v0.2.35`_ - 2025-09-23
 =======================
@@ -107,7 +113,8 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.35...develop
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.36...develop
+.. _v0.2.36: https://github.com/kojiwell/trops/compare/v0.2.35...v0.2.36
 .. _v0.2.35: https://github.com/kojiwell/trops/compare/v0.2.34...v0.2.35
 .. _v0.2.34: https://github.com/kojiwell/trops/compare/v0.2.33...v0.2.34
 .. _v0.2.33: https://github.com/kojiwell/trops/compare/v0.2.32...v0.2.33
