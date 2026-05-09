@@ -4,6 +4,7 @@ Changelog
 
 `Unreleased`_
 =============
+- capcmd: differentiate ``tee`` and ``ttee`` in pipeline detection. Plain ``cmd | tee out`` now commits ``out`` as a transparent passthrough -- the file is no longer mutated. ``cmd | ttee out`` (using the trops-aliased ``ttee`` defined in ``trops init``) commits the file *and* prepends ``# <left-command>`` as the first line, so that the originating command is recorded inside the artifact. ``-a`` / ``--append`` skips the prepend so that growing log files are not silently rewritten. **Backward-compat note**: anyone whose current workflow relied on ``tee`` implicitly prepending ``# <cmd>`` should switch to ``ttee``; existing files in the env git repo are unaffected. (#162)
 - perf: cut ``capture-cmd`` baseline overhead by lazy-loading subcommand modules in ``exec.py`` (only the invoked subcommand is imported) and deferring ``subprocess`` / ``re`` imports in ``capcmd.py`` to the editor / tee / package paths that actually need them. Trivial-command import chain drops ~146ms → ~64ms cumulative; user CPU per prompt drops ~50ms → ~30ms (#166).
 - capcmd: skip ``tmp/`` ``mkdir`` when the directory already exists; fast-skip the tee-pipeline tokenizer when no ``|`` is in the command; remove the dead duplicated ``_sanitize_for_sudo`` block.
 
