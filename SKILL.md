@@ -127,9 +127,36 @@ Create the directory:
 mkdir -p "$TROPS_DIR"
 ```
 
-### Step 4 — Configure shell init
+### Step 4 — Write `$TROPS_DIR/tropsrc` and source it from the shell rc
 
-Detect the user's shell:
+trops uses a two-file split: the shell-specific activation lives in `$TROPS_DIR/tropsrc`, and the user's shell rc has a single line that sources it. This keeps the user's `.bashrc`/`.zshrc` minimal and lets all trops config live with trops.
+
+**Step 4a — create `$TROPS_DIR/tropsrc`.** It is auto-run, low-risk (writing into the user's `TROPS_DIR`, not their shell rc), but still confirm the path before writing if the file already exists.
+
+The contents (substitute the user's actual `TROPS_DIR` for `$HOME/.trops` if they overrode the default):
+
+```
+# trops activation — sourced from ~/.bashrc or ~/.zshrc
+export TROPS_DIR="$HOME/.trops"
+test -d "$TROPS_DIR" || mkdir -p "$TROPS_DIR"
+
+# Conda-forge users only: keep $HOME/bin on PATH
+[ -d "$HOME/bin" ] && case ":$PATH:" in *":$HOME/bin:"*) ;; *) export PATH="$HOME/bin:$PATH";; esac
+
+if [ -n "$ZSH_VERSION" ]; then
+    eval "$(trops init zsh)"
+elif [ -n "$BASH_VERSION" ]; then
+    eval "$(trops init bash)"
+fi
+```
+
+The shell detection inside tropsrc means the same file works whether the user is in bash or zsh — no need to maintain two variants.
+
+If `$TROPS_DIR/tropsrc` already exists, **do not overwrite without confirmation.** Show the diff between current contents and proposed contents; let the user decide.
+
+**Step 4b — source tropsrc from the shell rc.** This *is* an edit to the user's shell rc, so pause for confirmation per the hybrid model.
+
+Detect the shell:
 
 ```
 echo "$SHELL"
@@ -144,24 +171,16 @@ Map to the rc file:
 | `*/zsh` | `~/.zshrc` |
 | anything else | ask the user which file to edit |
 
-The lines to append (Bash example — substitute `bash` → `zsh` for zsh):
+The line to append (substitute the user's actual `TROPS_DIR` if they overrode the default):
 
 ```
-export TROPS_DIR="$HOME/.trops"
-test -d "$TROPS_DIR" || mkdir -p "$TROPS_DIR"
-eval "$(trops init bash)"
-```
-
-For Conda-forge users, also prepend to PATH:
-
-```
-export PATH="$HOME/bin:$PATH"
+[ -f "$HOME/.trops/tropsrc" ] && . "$HOME/.trops/tropsrc"
 ```
 
 **Idempotency check before appending.** Run:
 
 ```
-grep -F 'trops init' ~/.bashrc
+grep -F 'tropsrc' ~/.bashrc
 ```
 
 (Substitute the appropriate rc file.) If a matching line is already there, **skip the append** and tell the user it is already configured.
