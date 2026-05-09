@@ -1,0 +1,378 @@
+---
+name: trops
+description: Guide for installing, setting up, and using trops — a CLI for tracking commands and file changes on Linux/macOS systems. Use when the user mentions installing trops, asks how to start tracking with trops, or asks about trops commands like `ontrops`, `offtrops`, `trops env`, `trops log`.
+---
+
+# trops — install, setup, and daily usage
+
+When this skill loads, follow the phase appropriate to the user's request:
+
+- User wants to install trops, or `trops` is not on PATH → start at **Install**, then continue through **Setup**.
+- User has trops installed but no env active (`echo $TROPS_DIR` empty, no `ontrops`/`offtrops` aliases) → start at **Setup**.
+- User asks about `ontrops`, `offtrops`, `trops env`, `trops log`, or other commands → jump to **Daily Usage**.
+- User wants the same trops tag (e.g., an issue number) to follow them across SSH hops and through `sudo` → jump to **Sharing trops tags across hosts and sudoers**.
+- User reports trops misbehaving → jump to **Troubleshooting**.
+
+## Execution model (read this first)
+
+This skill follows a **hybrid execution model**:
+
+- **Auto-run (no confirmation):** OS detection, version checks, `trops --version`, `trops env list`, `trops log`, idempotency checks, reading shell rc files, `mkdir` of `TROPS_DIR`.
+- **Pause for user confirmation:** any `sudo` command, any append/edit to `~/.bashrc` / `~/.zshrc` / `~/.bash_profile`, anything that overwrites existing files, `trops env create` (because it initializes a git repo).
+
+When you reach a confirmation point, show the exact command(s) you would run, briefly explain the effect, and wait for the user to say yes or run it themselves.
+
+## Install
+
+### Step 1 — Detect the OS
+
+Run:
+
+```
+uname -s
+```
+
+If the result is `Darwin`, the platform is macOS. If `Linux`, also read:
+
+```
+cat /etc/os-release
+```
+
+Map `ID` (and `ID_LIKE` if present) to a path:
+
+| Detected | Path to use |
+|---|---|
+| `Darwin` | macOS / Homebrew |
+| `ID=ubuntu` or `ID=debian`, or `ID_LIKE` contains `debian` | apt |
+| `ID=rocky`, `rhel`, `centos`, `fedora`, or `ID_LIKE` contains `rhel`/`fedora` | dnf |
+| anything else, or detection fails | ask user (menu below) |
+
+**Narrate what you observed and confirm before continuing.** Example:
+
+> I see `ID=ubuntu` in `/etc/os-release`, so I'll use the apt install path. OK to proceed?
+
+If the user is in a restricted environment (no sudo, locked-down distro, HPC node) and the detected path does not work, fall back to the **Conda-forge** path.
+
+If detection is ambiguous, ask:
+
+```
+Which install path do you want to use?
+ 1) Ubuntu/Debian (apt + pipx)
+ 2) Rocky/RHEL/Fedora (dnf + pipx)
+ 3) macOS (brew + pipx)
+ 4) Conda-forge (no sudo required)
+```
+
+### Step 2 — Install the package
+
+Show the commands for the chosen path and **wait for the user to confirm** before running anything with `sudo`. The user may prefer to paste the `sudo` lines into their own terminal — that is fine.
+
+**Ubuntu / Debian:**
+
+```
+sudo apt install pipx git
+pipx install trops
+```
+
+**Rocky / RHEL / Fedora:**
+
+```
+sudo dnf install epel-release git
+sudo dnf install python3.12-pip
+pip3.12 install --user pipx
+pipx install trops
+```
+
+**macOS:**
+
+```
+brew install pipx git
+pipx install trops
+```
+
+**Conda-forge (fallback for restricted environments):**
+
+```
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+bash Miniforge3-Linux-x86_64.sh -b -p $HOME/miniforge3
+$HOME/miniforge3/bin/conda install git
+$HOME/miniforge3/bin/pip install trops
+mkdir -p $HOME/bin
+ln -sf $HOME/miniforge3/bin/git $HOME/bin/git
+ln -sf $HOME/miniforge3/bin/trops $HOME/bin/trops
+```
+
+For Conda-forge, the user must also have `$HOME/bin` on their `PATH`. The shell-rc step in **Setup** will add it.
+
+After install, run `pipx ensurepath` if pipx was used. Then verify:
+
+```
+trops --version
+```
+
+If `trops` is not found, ask the user to open a new shell (so `pipx`'s PATH change takes effect), or check whether `~/.local/bin` is on PATH.
+
+## Setup
+
+### Step 3 — Choose `TROPS_DIR`
+
+Default is `$HOME/.trops`. Propose this and let the user override:
+
+> I'll set `TROPS_DIR=$HOME/.trops`. Press enter to accept, or give me a different path.
+
+If the chosen directory already exists and contains files (especially a `repo/` subdirectory), **do not clobber**. Confirm with the user that they want to reuse it or pick a different path.
+
+Create the directory:
+
+```
+mkdir -p "$TROPS_DIR"
+```
+
+### Step 4 — Write `$TROPS_DIR/tropsrc` and source it from the shell rc
+
+trops uses a two-file split: the shell-specific activation lives in `$TROPS_DIR/tropsrc`, and the user's shell rc has a single line that sources it. This keeps the user's `.bashrc`/`.zshrc` minimal and lets all trops config live with trops.
+
+**Step 4a — create `$TROPS_DIR/tropsrc`.** It is auto-run, low-risk (writing into the user's `TROPS_DIR`, not their shell rc), but still confirm the path before writing if the file already exists.
+
+The contents (substitute the user's actual `TROPS_DIR` for `$HOME/.trops` if they overrode the default):
+
+```
+# trops activation — sourced from ~/.bashrc or ~/.zshrc
+export TROPS_DIR="$HOME/.trops"
+test -d "$TROPS_DIR" || mkdir -p "$TROPS_DIR"
+
+# Conda-forge users only: keep $HOME/bin on PATH
+[ -d "$HOME/bin" ] && case ":$PATH:" in *":$HOME/bin:"*) ;; *) export PATH="$HOME/bin:$PATH";; esac
+
+if [ -n "$ZSH_VERSION" ]; then
+    eval "$(trops init zsh)"
+elif [ -n "$BASH_VERSION" ]; then
+    eval "$(trops init bash)"
+fi
+```
+
+The shell detection inside tropsrc means the same file works whether the user is in bash or zsh — no need to maintain two variants.
+
+If `$TROPS_DIR/tropsrc` already exists, **do not overwrite without confirmation.** Show the diff between current contents and proposed contents; let the user decide.
+
+**Step 4b — source tropsrc from the shell rc.** This *is* an edit to the user's shell rc, so pause for confirmation per the hybrid model.
+
+Detect the shell:
+
+```
+echo "$SHELL"
+```
+
+Map to the rc file:
+
+| `$SHELL` | Rc file |
+|---|---|
+| `*/bash` on Linux | `~/.bashrc` |
+| `*/bash` on macOS | `~/.bash_profile` (fall back to `~/.bashrc` if it exists) |
+| `*/zsh` | `~/.zshrc` |
+| anything else | ask the user which file to edit |
+
+The line to append (substitute the user's actual `TROPS_DIR` if they overrode the default):
+
+```
+[ -f "$HOME/.trops/tropsrc" ] && . "$HOME/.trops/tropsrc"
+```
+
+**Idempotency check before appending.** Run:
+
+```
+grep -F 'tropsrc' ~/.bashrc
+```
+
+(Substitute the appropriate rc file.) If a matching line is already there, **skip the append** and tell the user it is already configured.
+
+If no match, show the diff that would be applied and ask the user to confirm. Then append. Do **not** auto-overwrite or modify existing lines.
+
+After appending, tell the user to either open a new shell or `source` the rc file:
+
+```
+source ~/.bashrc
+```
+
+### Step 5 — Create the first env
+
+A trops "env" is a git repository under `$TROPS_DIR/repo/` that records command history and modified-file commits.
+
+Ask the user for an env name (suggest the hostname or project name as a default). Then run, after confirming:
+
+```
+trops env create <name>
+```
+
+Optionally, if the user has a private remote (GitLab / Gitea / private GitHub) for storing this env's history:
+
+```
+trops env create --git-remote=git@example.local:user/trops-history.git <name>
+```
+
+Verify:
+
+```
+trops env list
+```
+
+### Step 6 — Activate tracking
+
+```
+ontrops <name>
+```
+
+After this, every command the user runs in the shell is logged to `$TROPS_DIR/log/trops.log`, and any modified file is auto-committed to the env's git repo. To stop tracking:
+
+```
+offtrops
+```
+
+Tell the user that activation is per-shell — opening a new terminal starts un-tracked. They re-run `ontrops <name>` to resume.
+
+## Daily Usage
+
+Common operations:
+
+```
+ontrops <env>          # activate background tracking in this shell
+offtrops               # deactivate
+trops env list         # show all envs
+trops log              # show the log
+trops log | trops tldr # cleaner tabular view (uses the tldr subcommand)
+trops tablog           # alternate tabular log view
+trops branch           # git branch operations on the env's repo
+trops show <commit>    # inspect a commit in the env's repo
+trops touch <path>     # add/update a tracked file
+trops drop <path>      # remove a file from tracking
+trops fetch            # fetch from the configured git remote
+```
+
+If the user asks about a subcommand not listed here, run `trops <subcmd> --help` to get the authoritative usage. Do not invent flags.
+
+To link a trops env to a remote private repo after creation, the user can use `trops git` to operate on the env's git repo directly (e.g., `trops git remote add origin ...` then `trops git push -u origin main`).
+
+## Sharing trops tags across hosts and sudoers
+
+This section is for a more advanced workflow: the user wants `TROPS_TAGS` (a tag like an issue number, e.g. `1234`) to propagate from their workstation through SSH to remote hosts, and through `sudo` to root sessions, so every command they run anywhere gets attributed to the same issue. trops then auto-activates a per-host env on each remote machine when the tag is set.
+
+This involves edits to SSH config and `sudoers` on **every host** the user wants tag propagation to reach. All of these are confirmation-required actions per the hybrid execution model — most need root access on the remote host.
+
+### Step S1 — Client side: forward the env var over SSH
+
+Edit `~/.ssh/config` on the user's workstation. Append (or create the file with):
+
+```
+SendEnv TROPS_TAGS
+```
+
+This tells the SSH client to send `TROPS_TAGS` to the server. Confirm with the user before editing. Idempotency check: `grep -F 'SendEnv TROPS_TAGS' ~/.ssh/config`.
+
+### Step S2 — Server side: accept the env var
+
+For each remote host the user SSHs into, edit `/etc/ssh/sshd_config` and add:
+
+```
+AcceptEnv TROPS_TAGS
+```
+
+Then restart sshd:
+
+- Debian/Ubuntu: `sudo systemctl restart ssh`
+- RHEL/Rocky/Fedora: `sudo systemctl restart sshd`
+- macOS: not typically used as an SSH server target for this workflow.
+
+These commands need root on the remote host. **Do not run them yourself.** Show them to the user and let them run them in their own session on the remote.
+
+### Step S3 — Preserve the env var across `sudo`
+
+`sudo` strips environment variables by default. To keep `TROPS_TAGS` when escalating to root, use `visudo` to add to `/etc/sudoers`:
+
+```
+Defaults    env_keep += "TROPS_TAGS"
+```
+
+Always recommend `sudo visudo` (not direct editing) — a syntax error in `/etc/sudoers` can lock the user out of sudo. Show the line; let the user run `visudo`.
+
+### Step S4 — Gate tropsrc on `TROPS_TAGS` (remote hosts)
+
+On each remote host, install trops (rerun **Install** above on that host) and write a tag-aware `tropsrc`. The remote tropsrc auto-creates a per-host env and activates it whenever `TROPS_TAGS` is set:
+
+`$TROPS_DIR/tropsrc` on the remote host:
+
+```
+# trops activation (tag-driven) — sourced from ~/.bashrc or ~/.zshrc
+export TROPS_DIR="$HOME/.trops"
+test -d "$TROPS_DIR" || mkdir -p "$TROPS_DIR"
+
+if [ -n "$ZSH_VERSION" ]; then
+    eval "$(trops init zsh)"
+elif [ -n "$BASH_VERSION" ]; then
+    eval "$(trops init bash)"
+fi
+
+if [ ! -d "$TROPS_DIR/repo/$(hostname -s).git" ]; then
+    trops env create $(hostname -s)
+fi
+
+ontrops $(hostname -s)
+```
+
+And in the user's `~/.bashrc` (or `~/.zshrc`) on each remote host, gate the source line on `TROPS_TAGS`:
+
+```
+if [ -n "${TROPS_TAGS}" ] && [ -f "$HOME/.trops/tropsrc" ]; then
+    . "$HOME/.trops/tropsrc"
+fi
+```
+
+This means trops only activates on the remote host when the user's session has a tag set — so casual SSH logins do not get tracked, but tagged work sessions do.
+
+### Step S5 — Use it
+
+On the workstation, before SSHing:
+
+```
+export TROPS_TAGS=1234
+ssh remote-host
+```
+
+The remote shell now has `TROPS_TAGS=1234`. Sourcing the gated tropsrc will activate trops for the per-host env, and any commands run there are attributed to tag `1234`. The same applies after `sudo -i` if Step S3 is in place.
+
+To clear the tag in a session:
+
+```
+unset TROPS_TAGS
+```
+
+### Notes for the skill
+
+- This whole flow is opt-in and per-host. Do not apply it to the user's machine unless they explicitly ask for tag sharing.
+- If the user asks "why isn't my tag showing up after `ssh`?", check Steps S1 + S2 in order (`SendEnv` → `AcceptEnv` → sshd restarted on the remote). If after `sudo`, also check S3.
+- The basic Setup flow earlier in this file uses an *unconditional* source of tropsrc. The tag-sharing flow uses a *gated* source. They are mutually exclusive on a single host — pick one or the other.
+
+## Troubleshooting
+
+**`trops: command not found` after install**
+- Run `pipx ensurepath`, then open a new shell.
+- Check that `~/.local/bin` (pipx) or `~/bin` (Conda-forge) is on `PATH`.
+
+**`ontrops` / `offtrops` not recognized**
+- The shell-init step (Step 4) was skipped or has not been sourced. Run `source ~/.bashrc` (or the appropriate rc file), or open a new shell.
+
+**`echo $TROPS_DIR` is empty**
+- Same root cause as above — `eval "$(trops init bash)"` has not run in this shell.
+
+**Tracking does not seem to capture commands**
+- Confirm `ontrops <env>` was run in *this* shell. Activation does not propagate across shells.
+- Run `trops env list` to confirm the env exists.
+- Check `$TROPS_DIR/log/trops.log` directly to see what is being captured.
+
+**`trops env create` fails on git**
+- Ensure git ≥ 2.28 is installed: `git --version`.
+- Ensure `$TROPS_DIR` is writable.
+
+**Multiple shells, multiple envs**
+- One env per shell. If the user wants different envs in different shells, that is fine — each `ontrops` activation is shell-local.
+
+For anything else, suggest the user file an issue at https://github.com/kojiwell/trops/issues with the output of `trops --version`, their OS, and the failing command.

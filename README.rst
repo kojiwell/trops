@@ -58,6 +58,17 @@ Conda-forge::
     ln -s ../miniforge3/bin/trops trops
     export PATH=$HOME/bin:$PATH # Add this line in your .bashrc
 
+Install as a Claude Code skill
+==============================
+
+If you use `Claude Code <https://claude.com/claude-code>`_, you can install a skill that walks Claude through installing, setting up, and using trops on your machine. Run::
+
+    mkdir -p ~/.claude/skills/trops && \
+      wget -O ~/.claude/skills/trops/SKILL.md \
+        https://raw.githubusercontent.com/kojiwell/trops/main/SKILL.md
+
+After installing, ask Claude something like "install trops" or "set up a trops env for this project" and the skill will load automatically. Re-run the command above any time to pull the latest version of the skill.
+
 Quickstart
 ==========
 
