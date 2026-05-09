@@ -276,9 +276,15 @@ class TropsCapCmd(TropsBase):
             self._add_file_in_git_repo(executed_cmd, 1)
 
     def _add_tee_output_file(self, executed_cmd: List[str]) -> bool:
-        """Detect tee after one or more pipes and add the target file(s).
+        """Detect tee/ttee after one or more pipes and add the target file(s).
 
-        Supported forms:
+        Plain ``tee`` commits the file as-is. ``ttee`` (an alias for ``tee``
+        declared in ``trops init``) additionally prepends ``# <left-command>``
+        as the first line of the file, unless ``-a/--append`` is among the
+        args after ``ttee`` (in append mode the prepend would silently rewrite
+        the head of an unrelated growing log).
+
+        Supported forms (same with ``ttee`` in place of ``tee``):
           - cmd | tee path/to/file
           - cmd |tee path/to/file
           - cmd1 | cmd2 | ... | tee path/to/file
@@ -297,22 +303,29 @@ class TropsCapCmd(TropsBase):
             else:
                 normalized.append(tok)
 
-        # Scan for the last occurrence of '|' followed by 'tee'
+        # Scan for the last occurrence of '|' followed by 'tee' or 'ttee'
         last_pipe_index = -1
+        tee_word = None
         for i in range(len(normalized) - 1):
-            if normalized[i] == '|' and normalized[i + 1] == 'tee':
-                last_pipe_index = i  # index of '|' just before tee
+            if normalized[i] == '|' and normalized[i + 1] in ('tee', 'ttee'):
+                last_pipe_index = i  # index of '|' just before tee/ttee
+                tee_word = normalized[i + 1]
 
-        if last_pipe_index != -1:
-            # Determine the left-hand command (before the last pipe that precedes tee)
-            left_cmd_tokens = normalized[:last_pipe_index]
-            left_cmd = ' '.join(left_cmd_tokens).strip()
+        if last_pipe_index == -1:
+            return False
+
+        tee_index = last_pipe_index + 1  # 'tee' or 'ttee'
+        args_after_tee = normalized[tee_index + 1:]
+        is_append = '-a' in args_after_tee or '--append' in args_after_tee
+
+        if tee_word == 'ttee' and not is_append:
+            left_cmd = ' '.join(normalized[:last_pipe_index]).strip()
             comment = f"# {left_cmd}" if left_cmd else None
-            # Start collecting path arguments after 'tee'
-            tee_index = last_pipe_index + 1  # 'tee'
-            self._add_file_in_git_repo(normalized, tee_index + 1, first_line_comment=comment)
-            return True
-        return False
+        else:
+            comment = None
+
+        self._add_file_in_git_repo(normalized, tee_index + 1, first_line_comment=comment)
+        return True
 
     def _sanitize_for_sudo(self, executed_cmd: List[str]) -> List[str]:
         """Remove leading sudo if present. TODO: handle sudo options."""

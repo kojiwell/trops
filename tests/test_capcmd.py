@@ -270,3 +270,119 @@ def test_editor_file_log_is_deferred_until_after_command(monkeypatch, tmp_path, 
 
 	# Verify ordering: command log should appear before file log
 	assert cm_indices[0] < fl_indices[0], f"Expected CM before FL; got order: {[(i, messages[i]) for i in (cm_indices[0], fl_indices[0])]}"
+
+
+def _make_capcmd(monkeypatch, tmp_path):
+	"""Build a TropsCapCmd instance with TROPS_DIR set and no env, for unit tests."""
+	trops_dir = tmp_path / 'trops'
+	trops_dir.mkdir(parents=True, exist_ok=True)
+	monkeypatch.setenv("TROPS_DIR", str(trops_dir))
+	with patch("sys.argv", ["trops", "capture-cmd", '0', "echo", "hi"]):
+		parser = argparse.ArgumentParser(prog='trops', description='Trops - Tracking Operations')
+		subparsers = parser.add_subparsers()
+		add_capture_cmd_subparsers(subparsers)
+		args, other_args = parser.parse_known_args()
+	return TropsCapCmd(args, other_args)
+
+
+def test_tee_does_not_prepend_comment(monkeypatch, tmp_path):
+	"""Plain `cmd | tee path` is detected and the file is committed without a comment prepend (#162)."""
+	captured = {}
+
+	def fake_add(self, executed_cmd, start_index, first_line_comment=None):
+		captured['paths'] = executed_cmd[start_index:]
+		captured['first_line_comment'] = first_line_comment
+
+	monkeypatch.setattr(TropsCapCmd, '_add_file_in_git_repo', fake_add, raising=True)
+
+	tcc = _make_capcmd(monkeypatch, tmp_path)
+	rv = tcc._add_tee_output_file(['echo', 'hi', '|', 'tee', '/tmp/out.txt'])
+
+	assert rv is True
+	assert captured['paths'] == ['/tmp/out.txt']
+	assert captured['first_line_comment'] is None
+
+
+def test_ttee_prepends_left_command(monkeypatch, tmp_path):
+	"""`cmd | ttee path` is detected; `# <left-cmd>` is passed as first_line_comment (#162)."""
+	captured = {}
+
+	def fake_add(self, executed_cmd, start_index, first_line_comment=None):
+		captured['paths'] = executed_cmd[start_index:]
+		captured['first_line_comment'] = first_line_comment
+
+	monkeypatch.setattr(TropsCapCmd, '_add_file_in_git_repo', fake_add, raising=True)
+
+	tcc = _make_capcmd(monkeypatch, tmp_path)
+	rv = tcc._add_tee_output_file(['echo', 'hi', '|', 'ttee', '/tmp/out.txt'])
+
+	assert rv is True
+	assert captured['paths'] == ['/tmp/out.txt']
+	assert captured['first_line_comment'] == '# echo hi'
+
+
+def test_ttee_with_short_append_skips_prepend(monkeypatch, tmp_path):
+	"""`cmd | ttee -a path` skips the prepend (append mode) but still commits the file (#162)."""
+	captured = {}
+
+	def fake_add(self, executed_cmd, start_index, first_line_comment=None):
+		captured['first_line_comment'] = first_line_comment
+
+	monkeypatch.setattr(TropsCapCmd, '_add_file_in_git_repo', fake_add, raising=True)
+
+	tcc = _make_capcmd(monkeypatch, tmp_path)
+	rv = tcc._add_tee_output_file(['echo', 'hi', '|', 'ttee', '-a', '/tmp/out.txt'])
+
+	assert rv is True
+	assert captured['first_line_comment'] is None
+
+
+def test_ttee_with_long_append_skips_prepend(monkeypatch, tmp_path):
+	"""`cmd | ttee --append path` skips the prepend (append mode) (#162)."""
+	captured = {}
+
+	def fake_add(self, executed_cmd, start_index, first_line_comment=None):
+		captured['first_line_comment'] = first_line_comment
+
+	monkeypatch.setattr(TropsCapCmd, '_add_file_in_git_repo', fake_add, raising=True)
+
+	tcc = _make_capcmd(monkeypatch, tmp_path)
+	rv = tcc._add_tee_output_file(['echo', 'hi', '|', 'ttee', '--append', '/tmp/out.txt'])
+
+	assert rv is True
+	assert captured['first_line_comment'] is None
+
+
+def test_ttee_multifile_collects_all_paths_and_prepends(monkeypatch, tmp_path):
+	"""`cmd | ttee a b c` passes all three paths to _add_file_in_git_repo and supplies the comment (#162)."""
+	captured = {}
+
+	def fake_add(self, executed_cmd, start_index, first_line_comment=None):
+		captured['paths'] = executed_cmd[start_index:]
+		captured['first_line_comment'] = first_line_comment
+
+	monkeypatch.setattr(TropsCapCmd, '_add_file_in_git_repo', fake_add, raising=True)
+
+	tcc = _make_capcmd(monkeypatch, tmp_path)
+	rv = tcc._add_tee_output_file(
+		['echo', 'hi', '|', 'ttee', '/tmp/a', '/tmp/b', '/tmp/c'])
+
+	assert rv is True
+	assert captured['paths'] == ['/tmp/a', '/tmp/b', '/tmp/c']
+	assert captured['first_line_comment'] == '# echo hi'
+
+
+def test_sudo_ttee_is_not_detected(monkeypatch, tmp_path):
+	"""`cmd | sudo ttee path` is out of scope for #162 (tracked in #170); detector returns False."""
+	called = {'add': False}
+
+	def fake_add(self, executed_cmd, start_index, first_line_comment=None):
+		called['add'] = True
+
+	monkeypatch.setattr(TropsCapCmd, '_add_file_in_git_repo', fake_add, raising=True)
+
+	tcc = _make_capcmd(monkeypatch, tmp_path)
+	rv = tcc._add_tee_output_file(['echo', 'hi', '|', 'sudo', 'ttee', '/etc/foo'])
+
+	assert rv is False
+	assert called['add'] is False
