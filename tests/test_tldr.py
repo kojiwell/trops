@@ -90,7 +90,7 @@ def test_tldr_save_filename_includes_repo_env_and_tag(monkeypatch, tmp_path):
     tk = TropsTLDR(args, other_args)
     tk.run()
 
-    expected = trops_dir / 'km' / 'testmyenv_myenv_task-17.md'
+    expected = trops_dir / 'tablog' / 'testmyenv_myenv_task-17.md'
     assert expected.exists(), f"Expected file not found: {expected}"
 
 

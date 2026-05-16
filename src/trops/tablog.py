@@ -86,20 +86,28 @@ class TropsTablogGet:
         try:
             os.environ['GIT_INDEX_FILE'] = tmp_index_path
             for env_name in self.envs:
-                # Pull km_dir from config for each env
+                # Reject legacy 'km_dir' config key. Renamed to 'tablog_dir' in v0.3.0.
+                if 'km_dir' in self.config[env_name]:
+                    raise TropsError(
+                        f"env '{env_name}': 'km_dir' is no longer supported; "
+                        "rename to 'tablog_dir' in ~/.trops/trops.cfg "
+                        "(see v0.3.0 CHANGELOG)"
+                    )
+
+                # Pull tablog_dir from config for each env
                 try:
-                    km_dir = self.config[env_name]['km_dir']
+                    tablog_dir = self.config[env_name]['tablog_dir']
                 except KeyError:
                     # Non-fatal: skip this env with a warning to stderr
-                    print(f"WARNING: skipping env '{env_name}' due to missing km_dir", flush=True)
+                    print(f"WARNING: skipping env '{env_name}' due to missing tablog_dir", flush=True)
                     continue
 
-                # If km_dir begins with '/', remove only the first '/' for the git ref
-                km_dir_ref = km_dir[1:] if km_dir.startswith('/') else km_dir
+                # If tablog_dir begins with '/', remove only the first '/' for the git ref
+                tablog_dir_ref = tablog_dir[1:] if tablog_dir.startswith('/') else tablog_dir
 
                 # 1) read-tree (no prefix; will override work-tree on checkout)
                 read_tree_args = [
-                    'read-tree', f'origin/trops/{env_name}:{km_dir_ref}'
+                    'read-tree', f'origin/trops/{env_name}:{tablog_dir_ref}'
                 ]
                 self._git_for_env(env_name, read_tree_args)
 
@@ -264,8 +272,8 @@ def _tablog_help(args, other_args):
         usage: trops tablog <command> [<args>]
         
         Commands:
-          get     extract km files to a target path using a temporary index
-          join    join multiple KM markdown tables into a single, time-sorted table
+          get     extract tablog files to a target path using a temporary index
+          join    join multiple tablog markdown tables into a single, time-sorted table
     '''))
 
 
@@ -274,7 +282,7 @@ def add_tablog_subparsers(subparsers):
     tablog_sub = parser_tablog.add_subparsers()
 
     # tablog get
-    parser_get = tablog_sub.add_parser('get', help='extract km files to a target path using a temporary index')
+    parser_get = tablog_sub.add_parser('get', help='extract tablog files to a target path using a temporary index')
     group = parser_get.add_mutually_exclusive_group(required=False)
     group.add_argument('-a', '--all', action='store_true', help='process all environments found in config')
     group.add_argument('-e', '--env', help='process a specific environment name')
@@ -284,7 +292,7 @@ def add_tablog_subparsers(subparsers):
     parser_get.set_defaults(handler=run)
 
     # tablog join
-    parser_join = tablog_sub.add_parser('join', help='join multiple KM markdown tables into a single, time-sorted table')
+    parser_join = tablog_sub.add_parser('join', help='join multiple tablog markdown tables into a single, time-sorted table')
     parser_join.add_argument('files', nargs='+', help='input markdown files to merge')
     parser_join.add_argument('-o', '--output', required=True, help='output file path')
     # support both --append and misspelled --apend for convenience
