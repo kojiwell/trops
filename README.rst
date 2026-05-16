@@ -142,7 +142,7 @@ Once you have been using ``ontrops`` for a while, three subcommands turn the raw
 trops tldr
 ----------
 
-``trops tldr`` (Table Log Direct, "Too Long Don't Read") consumes the output of ``trops log`` on stdin and renders it as a table. By default the output is plaintext for terminal viewing; with ``-m`` or ``--html`` you get Markdown or HTML, and with ``-s`` the table is saved as Markdown into the env's ``km_dir`` so that it can be committed and shared (for example, pasted into a GitLab or Redmine issue).
+``trops tldr`` (Table Log Direct, "Too Long Don't Read") consumes the output of ``trops log`` on stdin and renders it as a table. By default the output is plaintext for terminal viewing; with ``-m`` or ``--html`` you get Markdown or HTML, and with ``-s`` the table is saved as Markdown into the env's ``tablog_dir`` so that it can be committed and shared (for example, pasted into a GitLab or Redmine issue).
 
 Pipe ``trops log`` into ``tldr``, and optionally save::
 
@@ -152,7 +152,7 @@ Pipe ``trops log`` into ``tldr``, and optionally save::
 Notable options:
 
 - ``-o, --only <fmt>`` -- ``%``-placeholder string controlling which columns appear. Supported codes: ``%D`` Date, ``%T`` Time, ``%u`` ``User@host``, ``%ll`` Log level, ``%lt`` Log type, ``%c`` Command, ``%d`` Directory/Owner,Group,Mode, ``%x`` Exit code, ``%i`` ID, ``%e`` Env, ``%t`` Tags. Default: ``%D,%T,%u,%c,%d,%x``.
-- ``-s, --save`` -- save the rendered table as Markdown under the env's ``km_dir`` (default ``$TROPS_DIR/km`` per env config). The filename is auto-generated from repo + env + tag.
+- ``-s, --save`` -- save the rendered table as Markdown under the env's ``tablog_dir`` (default ``$TROPS_DIR/tablog`` per env config). The filename is auto-generated from repo + env + tag.
 - ``--name <name>`` -- override the auto-generated filename when used with ``--save``.
 - ``-m, --markdown`` / ``--html`` -- output format selectors (mutually exclusive); default is plaintext.
 - ``-n, --no-declutter`` -- disable noise filtering. ``-a, --all`` -- include all log entries.
@@ -160,7 +160,7 @@ Notable options:
 trops tablog
 ------------
 
-``trops tablog`` works on the Markdown tables that ``trops tldr -s`` saves. The saved tables live as commits inside each env's git repo (under ``km_dir``); ``tablog get`` extracts them onto the filesystem so they can be browsed, merged, or served by ``trops view --web``, and ``tablog join`` merges multiple of them into a single time-sorted table.
+``trops tablog`` works on the Markdown tables that ``trops tldr -s`` saves. The saved tables live as commits inside each env's git repo (under ``tablog_dir``); ``tablog get`` extracts them onto the filesystem so they can be browsed, merged, or served by ``trops view --web``, and ``tablog join`` merges multiple of them into a single time-sorted table.
 
 tablog get
 ~~~~~~~~~~
@@ -208,7 +208,7 @@ Notable options:
 - positional ``file`` -- absolute path to a tracked file (file mode), or a folder of ``.md`` tablog files (with ``--web``).
 - ``-e, --env <name>`` -- select the env. ``--commit <hash>`` -- commit-ish to view; default ``HEAD``.
 - ``--web`` -- start a local web viewer. The server binds to ``http://localhost:8001`` and the default browser opens automatically.
-- ``-u, --update-km`` -- before starting the web viewer, run ``trops tablog get -a -u -f <folder>`` to refresh the tablog files into the served folder.
+- ``-u, --update-tablog`` -- before starting the web viewer, run ``trops tablog get -a -u -f <folder>`` to refresh the tablog files into the served folder.
 - ``--no-browser`` -- do not auto-open a browser tab (useful for headless or remote sessions; you can still navigate to ``http://localhost:8001`` manually, e.g., via an SSH port-forward).
 
 Sharing trops tags among hosts and sudoers

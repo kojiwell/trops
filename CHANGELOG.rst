@@ -5,6 +5,11 @@ Changelog
 `Unreleased`_
 =============
 
+`v0.3.0`_ - 2026-05-16
+======================
+- **Breaking**: rename ``km`` to ``tablog`` across the codebase. The hardcoded ``/km`` default directory under ``$TROPS_DIR`` becomes ``/tablog``; the per-env ``km_dir`` config key in ``trops.cfg`` becomes ``tablog_dir``; the ``trops view --update-km`` CLI flag becomes ``--update-tablog``; internal variables and help text follow suit. Encountering the legacy ``km_dir`` key now raises ``TropsError`` with a pointer to this changelog entry -- no silent fallback. (#161)
+- **Migration**: for each env in ``~/.trops/trops.cfg`` that still has ``km_dir = ...``, rename the key to ``tablog_dir``. If your env's git history contains files committed under ``km/`` (from ``trops tldr -s`` runs prior to this release) and you want ``trops tablog get`` to keep finding them, set ``tablog_dir = /km`` for that env. New envs get ``tablog_dir = /tablog`` going forward. The orphaned ``~/.trops/km/`` directory can be moved or deleted manually (e.g., ``mv ~/.trops/km ~/.trops/tablog``).
+
 `v0.2.36`_ - 2026-05-09
 =======================
 - capcmd: differentiate ``tee`` and ``ttee`` in pipeline detection. Plain ``cmd | tee out`` now commits ``out`` as a transparent passthrough -- the file is no longer mutated. ``cmd | ttee out`` (using the trops-aliased ``ttee`` defined in ``trops init``) commits the file *and* prepends ``# <left-command>`` as the first line, so that the originating command is recorded inside the artifact. ``-a`` / ``--append`` skips the prepend so that growing log files are not silently rewritten. **Backward-compat note**: anyone whose current workflow relied on ``tee`` implicitly prepending ``# <cmd>`` should switch to ``ttee``; existing files in the env git repo are unaffected. (#162)
@@ -113,7 +118,8 @@ Changelog
 `v0.2.18`_ - 2023-08-07
 =======================
 
-.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.2.36...develop
+.. _Unreleased: https://github.com/kojiwell/trops/compare/v0.3.0...develop
+.. _v0.3.0: https://github.com/kojiwell/trops/compare/v0.2.36...v0.3.0
 .. _v0.2.36: https://github.com/kojiwell/trops/compare/v0.2.35...v0.2.36
 .. _v0.2.35: https://github.com/kojiwell/trops/compare/v0.2.34...v0.2.35
 .. _v0.2.34: https://github.com/kojiwell/trops/compare/v0.2.33...v0.2.34

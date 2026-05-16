@@ -202,12 +202,12 @@ class TropsTLDR(TropsCLI):
             print(tabulate(formatted_logs, headers))
 
 
-    def _save(self, kmout):
+    def _save(self, tablog_out):
 
-        km_dir = self.trops_dir + '/km'
+        tablog_dir = self.trops_dir + '/tablog'
 
-        if not os.path.isdir(km_dir):
-            os.mkdir(km_dir)
+        if not os.path.isdir(tablog_dir):
+            os.mkdir(tablog_dir)
 
         git_remote = getattr(self, 'git_remote', None)
         if git_remote:
@@ -236,10 +236,10 @@ class TropsTLDR(TropsCLI):
                 normalized = primary_tag.replace('#', '__i').replace('!', '__c')
                 file_name = f"{file_prefix}_{normalized}.md"
 
-        file_path = km_dir + '/' + file_name
+        file_path = tablog_dir + '/' + file_name
 
         with open(file_path, mode='w') as f:
-            f.write(kmout)
+            f.write(tablog_out)
 
         self._touch_file(file_path)
         # If saved, push to remote when configured
@@ -278,7 +278,7 @@ def add_tldr_subparsers(subparsers):
         help='all items in the log')
     parser_tldr.add_argument(
         '-s', '--save', action='store_true',
-        help='save the km log')
+        help='save the tablog')
     parser_tldr.add_argument(
         '--name', help='with --save, you can specify the name')
     group = parser_tldr.add_mutually_exclusive_group()
