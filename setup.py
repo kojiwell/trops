@@ -19,7 +19,7 @@ setuptools.setup(
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
     long_description=read('README.rst'),
-    python_requires='>=3.8',
+    python_requires='>=3.10',
     install_requires=[
         "tabulate >= 0.8.9"
     ],
