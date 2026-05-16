@@ -4,6 +4,8 @@ Changelog
 
 `Unreleased`_
 =============
+- **Breaking**: raise minimum Python to 3.10 (was 3.8). Python 3.8 reached end-of-life in October 2024 and 3.9 reaches it in October 2025; supporting them was holding the lockfile on older transitive dependencies (urllib3 2.6.x, cryptography 43.x) that had open dependabot advisories. With ``python = "^3.10"``, the lockfile collapses to a single resolution per package and picks current versions (urllib3 2.7.0, cryptography 48.0.0, requests 2.34.2, Pygments 2.20.0). Users on Python 3.8 or 3.9 should stay on trops v0.3.x.
+- dev: bump ``pytest`` constraint from ``^7.1.2`` to ``^8.0`` (resolves the open ``pytest`` dependabot advisory about ``tmpdir`` handling); pulls in pytest 8.4.2.
 
 `v0.3.0`_ - 2026-05-16
 ======================

@@ -23,7 +23,7 @@ Prerequisites
 
 - OS: Linux, MacOS
 - Shell: Bash, Zsh
-- Python: 3.8 or higher
+- Python: 3.10 or higher
 - Git: 2.28 or higher
 
 Installation
