@@ -16,7 +16,7 @@ def test_tablog_get_requires_flag_and_path(monkeypatch, tmp_path, capsys):
     trops_dir = tmp_path / 'trops'
     trops_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv('TROPS_DIR', str(trops_dir))
-    _write_cfg(trops_dir / 'trops.cfg', "[e1]\nkm_dir=/km1\n")
+    _write_cfg(trops_dir / 'trops.cfg', "[e1]\ntablog_dir=/km1\n")
 
     with patch('sys.argv', ['trops', 'tablog', 'get']):
         parser = argparse.ArgumentParser(prog='trops')
@@ -30,7 +30,7 @@ def test_tablog_get_env_missing_in_config(monkeypatch, tmp_path, capsys):
     trops_dir = tmp_path / 'trops'
     trops_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv('TROPS_DIR', str(trops_dir))
-    _write_cfg(trops_dir / 'trops.cfg', "[e1]\nkm_dir=/km1\n")
+    _write_cfg(trops_dir / 'trops.cfg', "[e1]\ntablog_dir=/km1\n")
 
     with patch('sys.argv', ['trops', 'tablog', 'get', '-e', 'nope', str(tmp_path / 'out')]):
         parser = argparse.ArgumentParser(prog='trops')
@@ -47,7 +47,7 @@ def test_tablog_get_invokes_git_with_temp_index_for_env(monkeypatch, tmp_path):
     trops_dir = tmp_path / 'trops'
     trops_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv('TROPS_DIR', str(trops_dir))
-    _write_cfg(trops_dir / 'trops.cfg', "[env1]\nkm_dir=/path/to/km\n")
+    _write_cfg(trops_dir / 'trops.cfg', "[env1]\ntablog_dir=/path/to/km\n")
 
     # Capture os.environ changes and subprocess calls
     calls = []
@@ -87,7 +87,7 @@ def test_tablog_get_overwrite_flag_adds_force(monkeypatch, tmp_path):
     trops_dir = tmp_path / 'trops'
     trops_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv('TROPS_DIR', str(trops_dir))
-    _write_cfg(trops_dir / 'trops.cfg', "[env1]\nkm_dir=/path/to/km\n")
+    _write_cfg(trops_dir / 'trops.cfg', "[env1]\ntablog_dir=/path/to/km\n")
 
     # Capture subprocess calls
     calls = []
@@ -115,11 +115,31 @@ def test_tablog_get_overwrite_flag_adds_force(monkeypatch, tmp_path):
     assert '-f' in calls[1]
 
 
+def test_tablog_get_rejects_legacy_km_dir(monkeypatch, tmp_path):
+    # Configs still using the pre-v0.3.0 'km_dir' key must raise a clear
+    # TropsError (not silently fall back).
+    trops_dir = tmp_path / 'trops'
+    trops_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv('TROPS_DIR', str(trops_dir))
+    _write_cfg(trops_dir / 'trops.cfg', "[env1]\nkm_dir=/path/to/km\n")
+
+    out_dir = tmp_path / 'out'
+    with patch('sys.argv', ['trops', 'tablog', 'get', '-e', 'env1', str(out_dir)]):
+        parser = argparse.ArgumentParser(prog='trops')
+        subparsers = parser.add_subparsers()
+        add_tablog_subparsers(subparsers)
+        args, other_args = parser.parse_known_args()
+
+    from trops.trops import TropsError
+    with pytest.raises(TropsError, match="km_dir"):
+        tablog_get_run(args, other_args)
+
+
 def test_tablog_get_update_runs_fetch(monkeypatch, tmp_path):
     trops_dir = tmp_path / 'trops'
     trops_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv('TROPS_DIR', str(trops_dir))
-    _write_cfg(trops_dir / 'trops.cfg', "[env1]\nkm_dir=/km\n")
+    _write_cfg(trops_dir / 'trops.cfg', "[env1]\ntablog_dir=/km\n")
 
     # Record trops fetch and git calls
     run_calls = []
