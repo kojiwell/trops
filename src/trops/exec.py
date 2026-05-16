@@ -56,61 +56,13 @@ def _lazy_tablog_subparsers(subparsers):
     add_tablog_subparsers(subparsers)
 
 
-def trops_git(args, other_args):
+def _cli_handler(method_name):
+    """Return an argparse handler that dispatches to TropsCLI.<method_name>."""
 
-    tr = TropsCLI(args, other_args)
-    tr.git()
+    def handler(args, other_args):
+        getattr(TropsCLI(args, other_args), method_name)()
 
-
- 
-
-
-def trops_check(args, other_args):
-
-    tr = TropsCLI(args, other_args)
-    tr.check()
-
-
-def trops_ll(args, other_args):
-
-    tr = TropsCLI(args, other_args)
-    tr.ll()
-
-
-def trops_show(args, other_args):
-
-    tr = TropsCLI(args, other_args)
-    tr.show()
-
-
-def trops_branch(args, other_args):
-
-    tr = TropsCLI(args, other_args)
-    tr.branch()
-
-
-def trops_fetch(args, other_args):
-
-    tr = TropsCLI(args, other_args)
-    tr.fetch()
-
-
-def trops_log(args, other_args):
-
-    tr = TropsCLI(args, other_args)
-    tr.log()
-
-
-def trops_touch(args, other_args):
-
-    tr = TropsCLI(args, other_args)
-    tr.touch()
-
-
-def trops_drop(args, other_args):
-
-    tr = TropsCLI(args, other_args)
-    tr.drop()
+    return handler
 
 
 def add_git_subparsers(subparsers):
@@ -120,7 +72,7 @@ def add_git_subparsers(subparsers):
                             action='store_true')
     parser_git.add_argument('-e', '--env', help="Set env")
     parser_git.add_argument('-v', '--verbose', help='Verbose: print wrapped git command', action='store_true')
-    parser_git.set_defaults(handler=trops_git)
+    parser_git.set_defaults(handler=_cli_handler('git'))
 
 
  
@@ -132,20 +84,20 @@ def add_show_subparsers(subparsers):
         'show', help='trops show commit[:path]')
     parser_show.add_argument('-e', '--env', help="environment name")
     parser_show.add_argument('commit', help='Set commit[:path]')
-    parser_show.set_defaults(handler=trops_show)
+    parser_show.set_defaults(handler=_cli_handler('show'))
 
 def add_branch_subparsers(subparsers):
 
     parser_branch = subparsers.add_parser(
         'branch', help='trops branch')
-    parser_branch.set_defaults(handler=trops_branch)
+    parser_branch.set_defaults(handler=_cli_handler('branch'))
 
 
 def add_fetch_subparsers(subparsers):
 
     parser_fetch = subparsers.add_parser(
         'fetch', help='trops fetch')
-    parser_fetch.set_defaults(handler=trops_fetch)
+    parser_fetch.set_defaults(handler=_cli_handler('fetch'))
 
 
 def add_ll_subparsers(subparsers):
@@ -155,7 +107,7 @@ def add_ll_subparsers(subparsers):
         'dirs', help='directory path', nargs='*', default=[os.getcwd()])
     parser_ll.add_argument(
         '-e', '--env', help='Set environment name')
-    parser_ll.set_defaults(handler=trops_ll)
+    parser_ll.set_defaults(handler=_cli_handler('ll'))
 
 
 def add_touch_subparsers(subparsers):
@@ -164,7 +116,7 @@ def add_touch_subparsers(subparsers):
         'touch', help="add/update file in the git repo")
     parser_touch.add_argument('paths', nargs='+', help='path of file')
     parser_touch.add_argument('-v', '--verbose', help='Verbose: print wrapped git command(s)', action='store_true')
-    parser_touch.set_defaults(handler=trops_touch)
+    parser_touch.set_defaults(handler=_cli_handler('touch'))
 
 
 def add_drop_subparsers(subparsers):
@@ -172,7 +124,7 @@ def add_drop_subparsers(subparsers):
     parser_drop = subparsers.add_parser(
         'drop', help="remove file from the git repo")
     parser_drop.add_argument('paths', nargs='+', help='path of file')
-    parser_drop.set_defaults(handler=trops_drop)
+    parser_drop.set_defaults(handler=_cli_handler('drop'))
 
 
 def add_gensid_subparsers(subparsers):
@@ -188,7 +140,7 @@ def add_check_subparsers(subparsers):
     parser_check.add_argument('-s', '--sudo', help="Use sudo",
                               action='store_true')
     parser_check.add_argument('-e', '--env', help="Set env")
-    parser_check.set_defaults(handler=trops_check)
+    parser_check.set_defaults(handler=_cli_handler('check'))
 
 
 _SUBCOMMAND_REGISTRARS = {
