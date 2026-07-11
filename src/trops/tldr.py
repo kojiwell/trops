@@ -93,6 +93,24 @@ class TropsTLDR(TropsCLI):
         else:
             return False
 
+    def _parse_tail_fields(self, tokens):
+        """Parse trailing ``KEY=value`` tokens into a dict keyed by name.
+
+        The ``#>`` note of a log line carries fields such as ``PWD``, ``EXIT``
+        and the optional ``TROPS_SID`` / ``TROPS_ENV`` / ``TROPS_TAGS``. Their
+        separators are inconsistent (``, `` after some, a bare space before
+        ``TROPS_TAGS``), and the optional ones may be absent, so they can't be
+        read positionally. Split each token on its first ``=`` after dropping a
+        trailing comma; absent fields simply don't appear in the result.
+        """
+        fields = {}
+        for tok in tokens:
+            token = tok.rstrip(',')
+            if '=' in token:
+                key, value = token.split('=', 1)
+                fields.setdefault(key, value)
+        return fields
+
     def _format(self):
 
         formatted_logs = []
@@ -103,63 +121,49 @@ class TropsTLDR(TropsCLI):
             if 'CM' in splitted_log:
                 cmd_start_idx = splitted_log.index('CM') + 1
                 cmd_end_idx = splitted_log.index('#>')
-                formatted_log = splitted_log[:cmd_start_idx]
                 splitted_cmd = splitted_log[cmd_start_idx:cmd_end_idx]
                 if not self.args.no_declutter and \
                         self._ignore_cmd(self._split_pipe_in_cmd(splitted_cmd)):
                     continue
+                command_text = ' '.join(splitted_cmd)
                 if self.args.markdown or self.args.save:
-                    command_text = ' '.join(splitted_log[cmd_start_idx:cmd_end_idx])
-                    formatted_log.append(escape_special_characters(command_text))
-                else:
-                    formatted_log.append(
-                        ' '.join(splitted_log[cmd_start_idx:cmd_end_idx]))
-                formatted_log = formatted_log + splitted_log[cmd_end_idx:]
-                # formatted_log.remove('CM')
-                formatted_log.remove('#>')
-                for i, n in enumerate(formatted_log):
-                    # Skip until after the command(0~5)
-                    if i < 6:
-                        continue
-                    elif 'PWD=' in n:
-                        formatted_log[i] = n.replace('PWD=', '').rstrip(',')
-                    elif 'EXIT=' in n:
-                        formatted_log[i] = n.replace('EXIT=', '').rstrip(',')
-                    elif 'TROPS_SID=' in n:
-                        formatted_log[i] = n.replace(
-                            'TROPS_SID=', '').rstrip(',')
-                    elif 'TROPS_ENV=' in n:
-                        formatted_log[i] = n.replace(
-                            'TROPS_ENV=', '').rstrip(',')
-                    elif 'TROPS_TAGS=' in n:
-                        formatted_log[i] = n.replace(
-                            'TROPS_TAGS=', '').rstrip(',')
-
-                while len(formatted_log) < 10:
-                    formatted_log.append('-')
+                    command_text = escape_special_characters(command_text)
+                # prefix: Date, Time, User@host, Log level, Log type('CM')
+                prefix = splitted_log[:cmd_start_idx]
+                # Trailing PWD/EXIT/TROPS_* fields are optional and positionally
+                # unstable, so key them by name rather than by index.
+                fields = self._parse_tail_fields(splitted_log[cmd_end_idx + 1:])
+                formatted_log = [
+                    prefix[0], prefix[1], prefix[2], prefix[3], prefix[4],
+                    command_text,
+                    fields.get('PWD', '-'),          # %d Directory
+                    fields.get('EXIT', '-'),         # %x Exit
+                    fields.get('TROPS_SID', '-'),    # %i ID
+                    fields.get('TROPS_ENV', '-'),    # %e Env
+                    fields.get('TROPS_TAGS', '-'),   # %t Tags
+                ]
             elif 'FL' in splitted_log:
                 cmd_start_idx = splitted_log.index('FL') + 1
                 cmd_end_idx = splitted_log.index('#>')
-                formatted_log = splitted_log[:cmd_start_idx]
-                formatted_log.append(
-                    ' '.join(splitted_log[cmd_start_idx:cmd_end_idx]))
-                formatted_log = formatted_log + splitted_log[cmd_end_idx:]
-                # formatted_log.remove('FL')
-                formatted_log.remove('#>')
-                formatted_log.pop(6)
-                formatted_log.insert(7, '-')
-                for i, n in enumerate(formatted_log):
-                    if 'TROPS_SID=' in n:
-                        formatted_log[i] = n.replace(
-                            'TROPS_SID=', '').rstrip(',')
-                    elif 'TROPS_ENV=' in n:
-                        formatted_log[i] = n.replace(
-                            'TROPS_ENV=', '').rstrip(',')
-                    elif 'TROPS_TAGS=' in n:
-                        formatted_log[i] = n.replace(
-                            'TROPS_TAGS=', '').rstrip(',')
-                while len(formatted_log) < 10:
-                    formatted_log.append('-')
+                command_text = ' '.join(splitted_log[cmd_start_idx:cmd_end_idx])
+                # prefix: Date, Time, User@host, Log level, Log type('FL')
+                prefix = splitted_log[:cmd_start_idx]
+                tail = splitted_log[cmd_end_idx + 1:]  # note, O=,G=,M=, TROPS_*
+                ogm = '-'
+                for tok in tail:
+                    if tok.startswith('O=') and ',G=' in tok and ',M=' in tok:
+                        ogm = tok.rstrip(',')
+                        break
+                fields = self._parse_tail_fields(tail)
+                formatted_log = [
+                    prefix[0], prefix[1], prefix[2], prefix[3], prefix[4],
+                    command_text,
+                    ogm,                             # %d Directory/O,G,M
+                    '-',                             # %x Exit (n/a for file logs)
+                    fields.get('TROPS_SID', '-'),    # %i ID
+                    fields.get('TROPS_ENV', '-'),    # %e Env
+                    fields.get('TROPS_TAGS', '-'),   # %t Tags
+                ]
             dict_headers = {
                 '%D': 'Date',
                 '%T': 'Time',
