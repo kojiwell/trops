@@ -104,6 +104,40 @@ def test_split_pipe_in_cmd_splits_pipes_and_redirects(monkeypatch, setup_tldr_ar
     assert result == ['a', '|', 'b', 'c', '>>', 'd', 'e', '|', 'f', '|', 'g', 'h', 'nochange']
 
 
+def test_tags_column_renders_and_optional_fields_align(monkeypatch, capsys):
+    # %t (Tags) used to crash with IndexError, and a missing TROPS_SID shifted
+    # Env/Tags into the wrong columns. Cover both a CM line with all optional
+    # fields and one without TROPS_SID, plus an FL line.
+    logs = (
+        "2023-04-21 14:27:59 user1@node01 WARNING CM vi /etc/hosts  "
+        "#> PWD=/home/user1, EXIT=0, TROPS_SID=hyn7224, TROPS_ENV=node01 TROPS_TAGS=#124,test\n"
+        "2026-07-11 19:10:23 me@host INFO CM systemctl restart nginx  "
+        "#> PWD=/etc, EXIT=0, TROPS_ENV=testenv, TROPS_TAGS=claude\n"
+        "2026-07-11 19:09:59 me@host INFO FL trops show 99c7986:hello.txt  "
+        "#> ADD O=me,G=staff,M=0644 TROPS_ENV=testenv TROPS_TAGS=claude\n"
+    )
+    monkeypatch.setattr('sys.stdin', io.StringIO(logs))
+
+    # -a to keep all rows, -o to force the previously-crashing %t column
+    with patch("sys.argv", ["trops", "tldr", "-a", "-o", "%c,%i,%e,%t"]):
+        parser = argparse.ArgumentParser(prog='trops', description='Trops - Tracking Operations')
+        subparsers = parser.add_subparsers()
+        add_tldr_subparsers(subparsers)
+        args, other_args = parser.parse_known_args()
+
+    tk = TropsTLDR(args, other_args)
+    tk.run()  # must not raise IndexError
+
+    out = capsys.readouterr().out
+    # Tags column is present and populated
+    assert 'Tags[%t]' in out
+    assert '#124,test' in out
+    assert 'claude' in out
+    # SID present on the first line, and its value stays out of the Env column
+    assert 'hyn7224' in out
+    assert 'node01' in out
+
+
 def test_markdown_escapes_special_characters_in_command(monkeypatch, capsys):
     # Build args with --markdown
     with patch("sys.argv", ["trops", "tldr", "-m"]):
