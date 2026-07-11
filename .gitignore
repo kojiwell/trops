@@ -142,3 +142,8 @@ test/docker-compose/example3/root/.ssh/*
 
 # macOS
 **/.DS_Store
+
+# Claude Code worktrees
+.claude/worktrees/
+# Claude Code personal settings (where /trops-log installs its hooks)
+.claude/settings.local.json
