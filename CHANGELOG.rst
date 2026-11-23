@@ -5,6 +5,7 @@ Changelog
 `Unreleased`_
 =============
 - **Breaking**: raise minimum Python to 3.10 (was 3.8). Python 3.8 reached end-of-life in October 2024 and 3.9 reaches it in October 2025; supporting them was holding the lockfile on older transitive dependencies (urllib3 2.6.x, cryptography 43.x) that had open dependabot advisories. With ``python = "^3.10"``, the lockfile collapses to a single resolution per package and picks current versions (urllib3 2.7.0, cryptography 48.0.0, requests 2.34.2, Pygments 2.20.0). Users on Python 3.8 or 3.9 should stay on trops v0.3.x.
+- init(zsh): capture commands with a ``preexec`` + ``precmd`` hook pair instead of ``precmd`` + ``fc -ln -1 -1``. The executed command line is taken directly from ``preexec``, so pressing Enter on an empty line no longer re-logs the previous command, and commands not stored in history (``HIST_IGNORE_SPACE``, ``HIST_NO_STORE``) are logged correctly instead of the previous one. Re-source ``trops init zsh`` and run ``ontrops`` again to pick up the new hooks. (#186)
 - dev: bump ``pytest`` constraint from ``^7.1.2`` to ``^8.0`` (resolves the open ``pytest`` dependabot advisory about ``tmpdir`` handling); pulls in pytest 8.4.2.
 
 `v0.3.0`_ - 2026-05-16
