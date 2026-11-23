@@ -28,15 +28,26 @@ class TropsInit(TropsBase):
                     echo "# upsage: on-trops <env>"
                 else
                     export TROPS_ENV=$1
-                    _tr_capcmd() {{
-                        trops capture-cmd $? $(fc -ln -1 -1)
+                    # preexec receives the command line as typed ($1) and is
+                    # not called for an empty line, so nothing depends on
+                    # history and empty Enter does not re-log the last command.
+                    _tr_preexec() {{
+                        _TR_CMD=$1
                     }}
+                    _tr_capcmd() {{
+                        local rc=$?
+                        [[ -n ${{_TR_CMD-}} ]] || return 0
+                        trops capture-cmd $rc ${{=_TR_CMD}}
+                        unset _TR_CMD
+                    }}
+                    add-zsh-hook preexec _tr_preexec
                     add-zsh-hook precmd _tr_capcmd
                 fi
             }}
 
             offtrops() {{
-                unset TROPS_ENV TROPS_SID
+                unset TROPS_ENV TROPS_SID _TR_CMD
+                add-zsh-hook -D preexec _tr_preexec
                 add-zsh-hook -D precmd _tr_capcmd
             }}
 
